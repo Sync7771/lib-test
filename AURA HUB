@@ -1,5 +1,5 @@
 --[[
-    AURA UI 3.3 — LAYOUT REPAIR
+    AURA UI 3.4 — LAYOUT REPAIR
     Client-side Roblox Luau interface library.
     License: MIT. Use in a LocalScript, or with a permitted script loader.
 
@@ -33,6 +33,18 @@
       local win = Aura:CreateWindow({Title="AURA", Size=Vector2.new(820,560)})
       win:CreateAllBuiltins() -- optional showcase, no gameplay actions
 
+    BACKGROUND / BUBBLE:
+      CreateWindow({Title="AURA HUB", BackgroundImage="rbxassetid://ID",
+        BackgroundTransparency=.35, FloatingButton={Image="rbxassetid://ID",Size=46}})
+      Window:SetBackgroundImage(assetId, transparency) -- nil removes the image
+      Window:SetFloatingButton({Image=assetId,Size=46}) -- false removes the bubble
+      Tab icons: home, users, camera, eye, gamepad, monitor, bell, sun, moon,
+        heart, star, zap, play, pause, check, x, plus, minus, lock, info,
+        download, upload, trash, settings, shield, map-pin, baby, box, music,
+        crown, shirt, wrench, palette, folder, search, book, terminal.
+      Emoji strings, image IDs and lucide- prefixes are also accepted.
+      Background and bubble images must be Roblox-accessible image assets.
+
     NOTES:
       File config persistence uses optional readfile/writefile only when available.
       Without those APIs, ExportConfig/ImportConfig and in-session state work.
@@ -40,7 +52,7 @@
       No claim that this code has been executed in Roblox Studio yet.
 ]]
 
-local Aura = { Version = "3.3.0" }
+local Aura = { Version = "3.4.0" }
 Aura.__index = Aura
 
 local Players = game:GetService("Players")
@@ -55,9 +67,9 @@ local player = Players.LocalPlayer
 
 local function C(r,g,b) return Color3.fromRGB(r,g,b) end
 local BASE = {
-    Background=C(9,13,12), Surface=C(14,21,18), SurfaceAlt=C(20,30,25),
-    Hover=C(28,43,35), Accent=C(65,220,124), AccentSoft=C(22,58,38),
-    Text=C(233,252,241), Muted=C(138,173,153), Stroke=C(48,83,62),
+    Background=C(23,29,27), Surface=C(31,39,35), SurfaceAlt=C(40,50,44),
+    Hover=C(51,65,56), Accent=C(100,230,155), AccentSoft=C(41,79,56),
+    Text=C(242,250,245), Muted=C(177,199,184), Stroke=C(84,110,94),
     Success=C(65,220,124), Warning=C(254,193,84), Danger=C(246,102,109),
     Overlay=C(5,13,9),
 }
@@ -134,7 +146,8 @@ local function textbutton(parent,w,value,role)
         TextColor3=w.Theme.Text,BackgroundColor3=w.Theme[role or "SurfaceAlt"],
         AutoButtonColor=false,BorderSizePixel=0,Size=UDim2.fromOffset(100,34),
     },parent)
-    round(b,10);bind(w,b,"TextColor3","Text");bind(w,b,"BackgroundColor3",role or "SurfaceAlt")
+    round(b,7);bind(w,b,"TextColor3","Text");bind(w,b,"BackgroundColor3",role or "SurfaceAlt")
+    bind(w,stroke(b,w.Theme.Stroke,.65,1),"Color","Stroke")
     return b
 end
 local function tween(w, obj, properties, secs)
@@ -285,10 +298,34 @@ function Aura:RegisterIcon(name,paths)
     assert(type(name)=="string" and type(paths)=="table","RegisterIcon expects a name and path table")
     ICONS[name:lower()]=paths
 end
+ICONS["chevron-down"]={{{4,8},{12,16},{20,8}}}
+ICONS["chevron-right"]={{{8,4},{16,12},{8,20}}}
+ICONS.eye={{{1,12},{5,6},{12,3},{19,6},{23,12},{19,18},{12,21},{5,18},{1,12}},{circle={12,12,4}}}
+ICONS.camera={{{2,6},{7,6},{9,2},{15,2},{17,6},{22,6},{22,21},{2,21},{2,6}},{circle={12,13,5}}}
+ICONS.heart={{{12,21},{3,12},{2,7},{5,3},{9,3},{12,6},{15,3},{19,3},{22,7},{21,12},{12,21}}}
+ICONS.star={{{12,2},{15,8},{22,9},{17,14},{18,22},{12,18},{6,22},{7,14},{2,9},{9,8},{12,2}}}
+ICONS.zap={{{13,1},{3,14},{11,14},{10,23},{22,9},{14,9},{13,1}}}
+ICONS.play={{{6,3},{22,12},{6,21},{6,3}}}
+ICONS.pause={{{7,3},{7,21}},{{17,3},{17,21}}}
+ICONS.check={{{3,12},{9,18},{21,5}}}
+ICONS.x={{{4,4},{20,20}},{{20,4},{4,20}}}
+ICONS.plus={{{12,3},{12,21}},{{3,12},{21,12}}}
+ICONS.minus={{{3,12},{21,12}}}
+ICONS.bell={{{4,18},{7,14},{7,7},{10,3},{14,3},{17,7},{17,14},{20,18},{4,18}},{{10,21},{14,21}}}
+ICONS.gamepad={{{5,6},{19,6},{22,18},{19,21},{15,17},{9,17},{5,21},{2,18},{5,6}},{{5,11},{11,11}},{{8,8},{8,14}},{circle={16,10,1}},{circle={19,13,1}}}
+ICONS.monitor={{{2,3},{22,3},{22,17},{2,17},{2,3}},{{12,17},{12,22}},{{7,22},{17,22}}}
+ICONS.lock={{{5,10},{19,10},{19,22},{5,22},{5,10}},{{8,10},{8,5},{10,2},{14,2},{16,5},{16,10}}}
+ICONS.download={{{12,2},{12,16}},{{6,10},{12,16},{18,10}},{{3,18},{3,22},{21,22},{21,18}}}
+ICONS.upload={{{12,16},{12,2}},{{6,8},{12,2},{18,8}},{{3,18},{3,22},{21,22},{21,18}}}
+ICONS.trash={{{3,5},{21,5}},{{6,5},{7,22},{17,22},{18,5}},{{9,5},{9,2},{15,2},{15,5}}}
+ICONS.info={{circle={12,12,10}},{{12,10},{12,18}},{circle={12,6,1}}}
+ICONS.sun={{circle={12,12,5}},{{12,1},{12,4}},{{12,20},{12,23}},{{1,12},{4,12}},{{20,12},{23,12}},{{4,4},{6,6}},{{18,18},{20,20}},{{4,20},{6,18}},{{18,6},{20,4}}}
+ICONS.moon={{{20,16},{15,16},{10,13},{8,8},{9,3},{4,6},{2,12},{5,19},{12,22},{18,20},{20,16}}}
 local ICON_ALIASES={troll="users",audio="music",boombox="music",op="crown",avatar="shirt",tools="wrench",["local"]="user",protection="shield",teleports="map-pin",child="baby",scripts="book",objetos="box",commands="terminal",["book-open"]="book",["book-text"]="book",["shield-check"]="shield",["baby-icon"]="baby",["user-round"]="user",["users-round"]="users",["map-pinned"]="map-pin",["paintbrush"]="palette"}
 local function renderIcon(parent,w,value,size,role)
     local host=new("Frame",{Name="Icon",BackgroundTransparency=1,Size=UDim2.fromOffset(size or 22,size or 22)},parent)
     local raw=tostring(value or "circle")
+    if type(value)=="table" then raw=tostring(value.Image or value.Id or value.Name or "circle") end
     local key=raw:lower():gsub("^lucide%-",""):gsub("^lucide:",""):gsub("^rbxassetid://", "rbxassetid://")
     key=ICON_ALIASES[key] or key
     local parts={}
@@ -494,9 +531,9 @@ function Window:Center()
     local view=screenSize();local sz=self:GetSize()
     self.Root.Position=UDim2.fromOffset(math.max(0,(view.X-sz.X)/2),math.max(0,(view.Y-sz.Y)/2))
 end
-function Window:Toggle()
-    self.Root.Visible=not self.Root.Visible
-    if self.FloatingButton then self.FloatingButton.Visible=not self.Root.Visible end
+function Window:Toggle(visible)
+    if type(visible)=="boolean" then self.Root.Visible=visible else self.Root.Visible=not self.Root.Visible end
+    if self.FloatingButton then self.FloatingButton.Visible=true end
     return self.Root.Visible
 end
 function Window:Minimize(state)
@@ -570,7 +607,7 @@ local function createMain(window,root)
     },aside)
     bind(window,tabs,"ScrollBarImageColor3","Accent")
     padding(tabs,3,4,3,7);list(tabs,7)
-    local foot=textlabel(aside,window,"AURA  /  3.3",10,true,"Muted")
+    local foot=textlabel(aside,window,"AURA  /  3.4",10,true,"Muted")
     foot.Position=UDim2.new(0,15,1,-42);foot.Size=UDim2.new(1,-30,0,20)
     window.Sidebar=aside;window.TabButtons=tabs;window.SidebarFooter=foot
     window.TabListLayout=tabs:FindFirstChildOfClass("UIListLayout")
@@ -723,6 +760,75 @@ local function createKeyOverlay(window,settings)
     track(window,input.FocusLost,function(enter)if enter then check() end end)
 end
 
+local function imageAsset(value)
+    local raw=tostring(value or "")
+    return raw:match("^%d+$") and "rbxassetid://"..raw or raw
+end
+function Window:SetBackgroundImage(value,transparency)
+    local enabled=value~=nil and value~=false and tostring(value)~=""
+    if not self.BackgroundImage then
+        self.BackgroundImage=new("ImageLabel",{Name="BackgroundImage",BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.fromScale(1,1),ScaleType=Enum.ScaleType.Crop,ZIndex=1},self.Root)
+        round(self.BackgroundImage,19)
+        for _,child in ipairs(self.Root:GetChildren()) do
+            if child~=self.BackgroundImage and child:IsA("Frame") then child.ZIndex=2 end
+        end
+    end
+    self.BackgroundImage.Image=enabled and imageAsset(value) or ""
+    self.BackgroundImage.ImageTransparency=math.clamp(tonumber(transparency) or .35,0,1)
+    self.BackgroundImage.Visible=enabled
+    self.Root.BackgroundTransparency=0
+    if self.Main then self.Main.BackgroundTransparency=enabled and .22 or 0 end
+    if self.Sidebar then self.Sidebar.BackgroundTransparency=enabled and .16 or 0 end
+    if self.ActiveTab then self:SelectTab(self.ActiveTab) end
+    return self
+end
+function Window:SetFloatingButton(options)
+    if self.FloatingButton then self.FloatingButton:Destroy();self.FloatingButton=nil end
+    if options==false then return self end
+    options=type(options)=="table" and options or {}
+    local size=math.clamp(tonumber(options.Size) or 46,32,90)
+    local ball=textbutton(self.Gui,self,"","SurfaceAlt")
+    ball.Name="AuraFloatingButton";ball.Size=UDim2.fromOffset(size,size)
+    ball.Position=options.Position or UDim2.new(0,18,.45,0)
+    ball.ZIndex=30;ball.ClipsDescendants=true;round(ball,99)
+    if options.Image and tostring(options.Image)~="" then
+        local picture=new("ImageLabel",{Name="ButtonImage",Image=imageAsset(options.Image),BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.fromScale(1,1),ScaleType=Enum.ScaleType.Crop},ball)
+        round(picture,99)
+    else
+        local icon=renderIcon(ball,self,options.Icon or "home",math.floor(size*.45),"Accent")
+        icon.Position=UDim2.fromScale(.275,.275)
+    end
+    self.FloatingButton=ball
+    local links={}
+    local function connect(signal,fn)
+        local c=track(self,signal,fn);table.insert(links,c);return c
+    end
+    ball.Destroying:Connect(function()
+        for _,c in ipairs(links) do c:Disconnect() end
+    end)
+    local held,start,origin,moved
+    connect(ball.InputBegan,function(input)
+        if held or (input.UserInputType~=Enum.UserInputType.MouseButton1 and input.UserInputType~=Enum.UserInputType.Touch) then return end
+        held=input;start=input.Position;origin=ball.AbsolutePosition;moved=false
+    end)
+    connect(UserInputService.InputChanged,function(input)
+        if not held or (input~=held and not (held.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement)) then return end
+        local delta=input.Position-start
+        if math.abs(delta.X)+math.abs(delta.Y)>6 then moved=true end
+        if moved then
+            local view=screenSize()
+            ball.Position=UDim2.fromOffset(math.clamp(origin.X+delta.X,0,math.max(0,view.X-size)),math.clamp(origin.Y+delta.Y,0,math.max(0,view.Y-size)))
+        end
+    end)
+    connect(UserInputService.InputEnded,function(input)
+        if held and (input==held or (held.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then held=nil end
+    end)
+    connect(UserInputService.WindowFocusReleased,function()held=nil end)
+    connect(ball.Activated,function()if not moved then self:Toggle() end end)
+    return self
+end
+Window.SetBubble=Window.SetFloatingButton
+Window.SetBackground=Window.SetBackgroundImage
 function Aura:CreateWindow(options)
     options=options or {}
     if options.AntiDuplicate~=false then
@@ -766,6 +872,13 @@ function Aura:CreateWindow(options)
     titleHeader(w,root,options)
     createMain(w,root)
     createResize(w,root)
+    if options.BackgroundImage then w:SetBackgroundImage(options.BackgroundImage,options.BackgroundTransparency) end
+    if options.FloatingButton~=false then
+        local bubble=options.FloatingButton or {}
+        if type(bubble)~="table" then bubble={} end
+        if options.FloatingImage and not bubble.Image then bubble.Image=options.FloatingImage end
+        w:SetFloatingButton(bubble)
+    end
     track(w,UserInputService.InputBegan,function(input,processed)
         if processed or w._capturingKey or UserInputService:GetFocusedTextBox() then return end
         if input.KeyCode==w.ToggleKey then w:Toggle() end
@@ -844,7 +957,8 @@ local function createRow(tab,opts,height,wide)
     root.Name="Item_"..tostring(opts.Name or "Control")
     root.Size=UDim2.new(1,-4,0,height or 66)
     root.LayoutOrder=tab:_nextOrder();root.ClipsDescendants=true
-    stroke(root,w.Theme.Stroke,.72)
+    local outline=stroke(root,w.Theme.Stroke,.82)
+    if opts._section then root.BackgroundTransparency=1;outline.Transparency=1 end
     local name=textlabel(root,w,opts.Name or "Control",13,true)
     name.TextWrapped=true;name.TextYAlignment=Enum.TextYAlignment.Top
     name.TextTruncate=Enum.TextTruncate.AtEnd
@@ -871,14 +985,18 @@ local function createRow(tab,opts,height,wide)
         local reserve=action and not stacked and (actualActionWidth+14) or 0
         local textWidth=math.max(30,width-32-reserve)
         local titleHeight=measure(name,textWidth,56)
-        name.Position=UDim2.fromOffset(16,12);name.Size=UDim2.fromOffset(textWidth,titleHeight)
+        name.Visible=name.Text~=""
+        name.Position=UDim2.fromOffset(16,name.Text=="" and 0 or 12);name.Size=UDim2.fromOffset(textWidth,titleHeight)
         local bottom=12+titleHeight
         if description then
             local dh=measure(description,textWidth,48)
             description.Position=UDim2.fromOffset(16,bottom+4);description.Size=UDim2.fromOffset(textWidth,dh)
             bottom=bottom+4+dh
         end
-        local base=math.max(50,bottom+10)
+        local base=math.max(44,bottom+8)
+        if opts._section then
+            base=name.Text=="" and not description and 8 or bottom+5
+        elseif name.Text=="" and not description and not action then base=10 end
         if action then
             action.AnchorPoint=Vector2.new(0,0)
             if stacked then
@@ -927,10 +1045,10 @@ local function commit(handle,old,value,fn,silent)
 end
 local function clickAction(tab,root,fn)
     local w=tab.Window
-    local area=textbutton(root,w,"RUN","AccentSoft")
+    local area=textbutton(root,w,"RUN","Surface")
     area.TextTruncate=Enum.TextTruncate.AtEnd
     bind(w,area,"TextColor3","Accent")
-    hover(w,area,"AccentSoft","Hover")
+    hover(w,area,"Surface","Hover")
     track(w,area.Activated,fn)
     return area
 end
@@ -938,7 +1056,7 @@ function Tab:CreateButton(options)
     options=asopts(options)
     local root,handle=createRow(self,options,65)
     local action=clickAction(self,root,function()callback(options.Callback)end)
-    action.Text=options.ButtonText or "EXECUTAR"
+    action.Text=options.ButtonText or "Executar"
     handle:Action(action,128,34)
     handle._skipSave=true
     function handle:Fire()callback(options.Callback)end
@@ -1148,7 +1266,10 @@ function Tab:CreateDropdown(options)
     local selected=multi and {} or nil
     local expanded=false
     local trigger=clickAction(self,root,function()end)
-    handle:Action(trigger,160,35)
+    handle:Action(trigger,160,34)
+    padding(trigger,10,0,28,0)
+    local arrow=renderIcon(trigger,w,"chevron-down",12,"Muted")
+    arrow.Position=UDim2.new(1,-20,.5,-6)
     local body=handle:Mount(0)
     local holder=new("ScrollingFrame",{BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.fromScale(1,1),CanvasSize=UDim2.new(),ScrollBarThickness=3,ScrollingDirection=Enum.ScrollingDirection.Y,ClipsDescendants=true},body)
     bind(w,holder,"ScrollBarImageColor3","Accent")
@@ -1161,7 +1282,7 @@ function Tab:CreateDropdown(options)
         return result
     end
     local function paint()
-        trigger.Text=multi and (tostring(#current()).." selecionados  ▾") or (tostring(selected or options.Placeholder or "Selecionar").."  ▾")
+        trigger.Text=multi and (tostring(#current()).." selecionados") or tostring(selected or options.Placeholder or "Selecionar")
         for i,b in ipairs(items) do
             local active=multi and selected[tostring(choices[i])] or (not multi and selected==choices[i])
             b.BackgroundColor3=w.Theme[active and "AccentSoft" or "Surface"]
@@ -1250,11 +1371,11 @@ Tab.CreateKeyBind=Tab.CreateKeybind
 
 function Tab:CreateSection(options)
     options=asopts(options)
-    local root,handle=createRow(self,options,48,true)
-    root.BackgroundTransparency=1
-    local body=handle:Mount(1)
-    local line=frame(body,self.Window,"Stroke",1)
-    line.Size=UDim2.fromScale(1,1)
+    local root,handle=createRow(self,{Name=options.Name or "",Description=options.Description,Flag=options.Flag,_section=true},30,true)
+    local accent=frame(root,self.Window,options.Name and options.Name~="" and "Accent" or "Stroke",2)
+    if options.Name and options.Name~="" then
+        accent.Position=UDim2.fromOffset(2,13);accent.Size=UDim2.fromOffset(3,14)
+    else accent.Position=UDim2.fromOffset(12,4);accent.Size=UDim2.new(1,-24,0,1) end
     handle._skipSave=true;return handle
 end
 function Tab:CreateDivider()return self:CreateSection({Name=""})end
@@ -1269,7 +1390,7 @@ function Tab:CreateParagraph(options)
         if not body.Parent then return end
         local width=math.max(80,body.AbsoluteSize.X)
         local bounds=TextService:GetTextSize(label.Text,12,label.Font,Vector2.new(width,100000))
-        local h=math.max(20,math.ceil(bounds.Y)+4)
+        local h=label.Text=="" and 0 or math.max(20,math.ceil(bounds.Y)+4)
         label.Size=UDim2.new(1,0,0,h);handle:SetBodyHeight(h)
     end
     track(self.Window,body:GetPropertyChangedSignal("AbsoluteSize"),resize)
@@ -1284,7 +1405,17 @@ function Tab:CreateParagraph(options)
     function handle:Get()return label.Text end
     handle._skipSave=true;task.defer(resize);return handle
 end
-Tab.CreateLabel=Tab.CreateParagraph
+function Tab:CreateLabel(options)
+    options=asopts(options)
+    local root,handle=createRow(self,{Name=options.Text or options.Content or options.Name or "",Flag=options.Flag},44,true)
+    handle._skipSave=true
+    function handle:Set(value)
+        self.TitleLabel.Text=type(value)=="table" and tostring(value.Text or value.Name or value.Content or "") or tostring(value or "")
+        self:Reflow()
+    end
+    function handle:Get()return self.TitleLabel.Text end
+    return handle
+end
 function Tab:CreateBadge(options)
     options=asopts(options)
     local root,handle=createRow(self,options,60)
@@ -1501,7 +1632,8 @@ function Tab:CreatePlayerList(options)
     options=asopts(options);options.Name=options.Name or "Jogadores online"
     local root,handle=createRow(self,options,66,true)
     local w=self.Window
-    local body=handle:Mount(math.clamp(tonumber(options.Height) or 310,200,650))
+    local maxHeight=math.clamp(tonumber(options.Height) or 310,110,650)
+    local body=handle:Mount(110)
     local search=new("TextBox",{Name="PlayerSearch",Text="",PlaceholderText="Buscar nome ou @usuario...",ClearTextOnFocus=false,TextXAlignment=Enum.TextXAlignment.Left,BackgroundColor3=w.Theme.Surface,TextColor3=w.Theme.Text,PlaceholderColor3=w.Theme.Muted,Font=Enum.Font.Gotham,TextSize=12,BorderSizePixel=0,Size=UDim2.new(1,0,0,36)},body)
     round(search,8);padding(search,12,0,12,0)
     bind(w,search,"TextColor3","Text");bind(w,search,"BackgroundColor3","Surface");bind(w,search,"PlaceholderColor3","Muted")
@@ -1540,6 +1672,11 @@ function Tab:CreatePlayerList(options)
         end
         count.Text=tostring(shown).." / "..tostring(total).." jogadores  •  "..tostring(#selectedPlayers()).." selecionados"
         empty.Visible=shown==0
+        if options.AutoSize==false then handle:SetBodyHeight(maxHeight)
+        else
+            local rowsHeight=shown==0 and 38 or shown*62+math.max(0,shown-1)*7+4
+            handle:SetBodyHeight(70+math.min(math.max(38,maxHeight-70),rowsHeight))
+        end
     end
     local function remove(id)
         local entry=entries[id]
@@ -1659,7 +1796,7 @@ function Tab:CreateContextMenu(options)
     local w=self.Window
     local actions=options.Options or {};local expanded=false
     local trigger=clickAction(self,root,function()end)
-    trigger.Text="AÇÕES  ▾";handle:Action(trigger,128,34)
+    trigger.Text="Ações";handle:Action(trigger,128,34)
     local body=handle:Mount(0)
     local holder=new("ScrollingFrame",{BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.fromScale(1,1),CanvasSize=UDim2.new(),ScrollBarThickness=3,ScrollingDirection=Enum.ScrollingDirection.Y},body)
     syncScroll(w,holder,list(holder,5),4)
@@ -1702,7 +1839,7 @@ function Window:EnableRainbow(enabled,speed)
 end
 
 function Window:CreateDashboard(options)
-    local tab=self:CreateTab({Name=options and options.Name or "Dashboard",Icon="◈"})
+    local tab=self:CreateTab({Name=options and options.Name or "Dashboard",Icon="home"})
     tab:CreateSection("OVERVIEW")
     tab:CreateParagraph({Title="Welcome to AURA",Content="Green Edition • modern and customizable Roblox UI."})
     tab:CreateBadge({Name="Status",Value="● ONLINE"})
@@ -1712,16 +1849,16 @@ function Window:CreateDashboard(options)
     return tab
 end
 function Window:CreateConsole(options)
-    local tab=self:CreateTab({Name="Console",Icon="⌘"})
+    local tab=self:CreateTab({Name="Console",Icon="terminal"})
     return tab:CreateConsole(options)
 end
 function Window:CreatePlayerList(options)
-    local tab=self:CreateTab({Name="Players",Icon="♟"})
+    local tab=self:CreateTab({Name="Players",Icon="users"})
     return tab:CreatePlayerList(options)
 end
 
 function Window:CreateThemeEditor()
-    local tab=self:CreateTab({Name="Appearance",Icon="◉"})
+    local tab=self:CreateTab({Name="Appearance",Icon="palette"})
     tab:CreateSection("THEMES")
     tab:CreateDropdown({Name="Preset",Options={"Forest","Mint","Neon","Emerald","Lime"},
         Default=self.ThemeName,Flag="aura_theme_preset",Callback=function(name)
@@ -1747,7 +1884,7 @@ function Window:CreateThemeEditor()
     return tab
 end
 function Window:CreateConfigPanel()
-    local tab=self:CreateTab({Name="Settings",Icon="⚙"})
+    local tab=self:CreateTab({Name="Settings",Icon="settings"})
     tab:CreateSection("CONFIGURATIONS")
     tab:CreateButton({Name="Save settings",Callback=function()
         local ok,err=self:SaveConfig()
@@ -1869,7 +2006,7 @@ function Window:GetProfiles()
     return result
 end
 function Window:CreateProfilePanel()
-    local tab=self:CreateTab({Name="Profiles",Icon="▦"})
+    local tab=self:CreateTab({Name="Profiles",Icon="folder"})
     tab:CreateSection("IN-SESSION PROFILES")
     local name="Default"
     tab:CreateInput({Name="Profile name",Default=name,Placeholder="Type profile...",
