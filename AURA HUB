@@ -1,5 +1,5 @@
 --[[
-    AURA UI 3.2 — LAYOUT REPAIR
+    AURA UI 3.3 — LAYOUT REPAIR
     Client-side Roblox Luau interface library.
     License: MIT. Use in a LocalScript, or with a permitted script loader.
 
@@ -40,7 +40,7 @@
       No claim that this code has been executed in Roblox Studio yet.
 ]]
 
-local Aura = { Version = "3.2.0" }
+local Aura = { Version = "3.3.0" }
 Aura.__index = Aura
 
 local Players = game:GetService("Players")
@@ -87,6 +87,8 @@ local function new(class, props, parent)
     return inst
 end
 local function round(obj, amount)
+    local existing=obj:FindFirstChildOfClass("UICorner")
+    if existing then existing.CornerRadius=UDim.new(0,amount or 12);return existing end
     return new("UICorner",{CornerRadius=UDim.new(0,amount or 12)},obj)
 end
 local function stroke(obj, color, alpha, thickness)
@@ -209,7 +211,7 @@ local function clampSize(w,desired)
         math.clamp(desired.Y,math.min(min.Y,upperY),upperY))
 end
 local function clampPosition(w,pos)
-    local view=screenSize();local size=w:GetSize()
+    local view=screenSize();local size=(w.Minimized and w._unminimizedSize) or w:GetSize()
     return UDim2.fromOffset(math.clamp(pos.X,4,math.max(4,view.X-size.X-4)),
         math.clamp(pos.Y,4,math.max(4,view.Y-size.Y-4)))
 end
@@ -382,7 +384,9 @@ function Window:_register(handle,options)
     task.defer(function()
         if self.Destroyed or self.Flags[flag]~=handle then return end
         if self._pendingConfig and self._pendingConfig[flag]~=nil and handle.Set then
-            handle:Set(decode(self._pendingConfig[flag]),true)
+            local value=self._pendingConfig[flag]
+            self._pendingConfig[flag]=nil
+            handle:Set(decode(value),false)
         end
     end)
     return handle
@@ -415,7 +419,13 @@ function Window:ImportConfig(json)
     self._pendingConfig=data.values or {}
     for flag,value in pairs(data.values or {}) do
         local item=self.Flags[flag]
-        if item and item.Set then pcall(function() item:Set(decode(value),true) end) end
+        if item and item.Set then
+            self._pendingConfig[flag]=nil
+            local previous=self._applyingHistory;self._applyingHistory=true
+            local ok,err=pcall(function()item:Set(decode(value),false)end)
+            self._applyingHistory=previous
+            if not ok then warn("[AURA CONFIG]",flag,err) end
+        end
     end
     return true
 end
@@ -560,7 +570,7 @@ local function createMain(window,root)
     },aside)
     bind(window,tabs,"ScrollBarImageColor3","Accent")
     padding(tabs,3,4,3,7);list(tabs,7)
-    local foot=textlabel(aside,window,"AURA  /  3.2",10,true,"Muted")
+    local foot=textlabel(aside,window,"AURA  /  3.3",10,true,"Muted")
     foot.Position=UDim2.new(0,15,1,-42);foot.Size=UDim2.new(1,-30,0,20)
     window.Sidebar=aside;window.TabButtons=tabs;window.SidebarFooter=foot
     window.TabListLayout=tabs:FindFirstChildOfClass("UIListLayout")
@@ -757,7 +767,7 @@ function Aura:CreateWindow(options)
     createMain(w,root)
     createResize(w,root)
     track(w,UserInputService.InputBegan,function(input,processed)
-        if processed or UserInputService:GetFocusedTextBox() then return end
+        if processed or w._capturingKey or UserInputService:GetFocusedTextBox() then return end
         if input.KeyCode==w.ToggleKey then w:Toggle() end
     end)
     track(w,workspace:GetPropertyChangedSignal("CurrentCamera"),function()
@@ -856,8 +866,9 @@ local function createRow(tab,opts,height,wide)
         if not root.Parent or reflowing then return end
         reflowing=true
         local width=math.max(160,root.AbsoluteSize.X)
-        local stacked=action and width<410
-        local reserve=action and not stacked and (actionWidth+14) or 0
+        local actualActionWidth=math.min(actionWidth,width-32)
+        local stacked=action and width<math.max(260,actualActionWidth+220)
+        local reserve=action and not stacked and (actualActionWidth+14) or 0
         local textWidth=math.max(30,width-32-reserve)
         local titleHeight=measure(name,textWidth,56)
         name.Position=UDim2.fromOffset(16,12);name.Size=UDim2.fromOffset(textWidth,titleHeight)
@@ -871,13 +882,13 @@ local function createRow(tab,opts,height,wide)
         if action then
             action.AnchorPoint=Vector2.new(0,0)
             if stacked then
-                action.Position=UDim2.fromOffset(16,bottom+10)
-                action.Size=UDim2.fromOffset(width-32,actionHeight)
+                action.Position=UDim2.fromOffset(width-actualActionWidth-16,bottom+10)
+                action.Size=UDim2.fromOffset(actualActionWidth,actionHeight)
                 base=bottom+10+actionHeight+12
             else
                 base=math.max(base,actionHeight+24)
-                action.Position=UDim2.fromOffset(width-actionWidth-16,(base-actionHeight)/2)
-                action.Size=UDim2.fromOffset(actionWidth,actionHeight)
+                action.Position=UDim2.fromOffset(width-actualActionWidth-16,(base-actionHeight)/2)
+                action.Size=UDim2.fromOffset(actualActionWidth,actionHeight)
             end
         end
         if body and bodyHeight>0 then
@@ -1221,11 +1232,11 @@ function Tab:CreateKeybind(options)
         commit(self,old,current,options.OnChanged,silent)
     end
     function handle:Get()return current end
-    track(w,box.Activated,function()listening=true;box.Text="Press key..." end)
+    track(w,box.Activated,function()listening=true;w._capturingKey=true;box.Text="Press key..." end)
     track(w,UserInputService.InputBegan,function(input,processed)
         if listening then
-            if input.KeyCode==Enum.KeyCode.Escape then listening=false;box.Text=current.Name;return end
-            if input.KeyCode~=Enum.KeyCode.Unknown then handle:Set(input.KeyCode);listening=false end
+            if input.KeyCode==Enum.KeyCode.Escape then listening=false;w._capturingKey=false;box.Text=current.Name;return end
+            if input.KeyCode~=Enum.KeyCode.Unknown then handle:Set(input.KeyCode);listening=false;w._capturingKey=false end
             return
         end
         if not processed and not UserInputService:GetFocusedTextBox() and input.KeyCode==current and current~=Enum.KeyCode.Unknown then
