@@ -1,5 +1,5 @@
 --[[
-    AURA UI 3.4 — LAYOUT REPAIR
+    AURA UI 3.5 — LAYOUT REPAIR
     Client-side Roblox Luau interface library.
     License: MIT. Use in a LocalScript, or with a permitted script loader.
 
@@ -45,6 +45,16 @@
       Emoji strings, image IDs and lucide- prefixes are also accepted.
       Background and bubble images must be Roblox-accessible image assets.
 
+    SPACING / ACTIONS / NEW ICONS:
+      tab:CreateSpacer(24) -- invisible space, in pixels
+      tab:CreateSpace({Height=12}) -- alias; returned handle supports Set/Get/Destroy
+      tab:SetSpacing(7) -- distance between all controls on this tab
+      tab:CreateButton({Name="Atualizar", Icon="refresh-cw", Callback=function() end})
+      Action cards are clickable across their entire surface; no duplicate Execute pill.
+      New icons: sparkles, rocket, flame, gem, gift, trophy, coffee, headphones,
+        volume, wifi, globe, code, cpu, speedometer, crosshair, flag, layers,
+        sliders, message-circle, smile, ghost, cat, swords, refresh-cw, arrow-up-right.
+
     NOTES:
       File config persistence uses optional readfile/writefile only when available.
       Without those APIs, ExportConfig/ImportConfig and in-session state work.
@@ -52,7 +62,7 @@
       No claim that this code has been executed in Roblox Studio yet.
 ]]
 
-local Aura = { Version = "3.4.0" }
+local Aura = { Version = "3.5.0" }
 Aura.__index = Aura
 
 local Players = game:GetService("Players")
@@ -67,14 +77,14 @@ local player = Players.LocalPlayer
 
 local function C(r,g,b) return Color3.fromRGB(r,g,b) end
 local BASE = {
-    Background=C(23,29,27), Surface=C(31,39,35), SurfaceAlt=C(40,50,44),
-    Hover=C(51,65,56), Accent=C(100,230,155), AccentSoft=C(41,79,56),
-    Text=C(242,250,245), Muted=C(177,199,184), Stroke=C(84,110,94),
+    Background=C(30,42,46), Surface=C(40,55,59), SurfaceAlt=C(49,68,69),
+    Hover=C(60,86,82), Accent=C(92,255,192), AccentSoft=C(38,105,81),
+    Text=C(246,255,252), Muted=C(195,219,211), Stroke=C(98,158,137),
     Success=C(65,220,124), Warning=C(254,193,84), Danger=C(246,102,109),
     Overlay=C(5,13,9),
 }
 local PRESETS = {
-    Forest = {}, Mint={Accent=C(86,243,176), AccentSoft=C(25,89,64)},
+    NeonLight={}, Forest = {}, Mint={Accent=C(86,243,176), AccentSoft=C(25,89,64)},
     Neon={Accent=C(30,255,94),AccentSoft=C(21,98,42)},
     Emerald={Accent=C(25,194,135),AccentSoft=C(17,79,61)},
     Lime={Accent=C(174,242,90),AccentSoft=C(63,83,28)},
@@ -294,6 +304,10 @@ local ICONS={
     search={{circle={10,10,7}},{{15,15},{22,22}}},
     circle={ {circle={12,12,9}} },
 }
+function Aura:GetIcons()
+    local names={};for name in pairs(ICONS) do table.insert(names,name) end
+    table.sort(names);return names
+end
 function Aura:RegisterIcon(name,paths)
     assert(type(name)=="string" and type(paths)=="table","RegisterIcon expects a name and path table")
     ICONS[name:lower()]=paths
@@ -321,7 +335,33 @@ ICONS.trash={{{3,5},{21,5}},{{6,5},{7,22},{17,22},{18,5}},{{9,5},{9,2},{15,2},{1
 ICONS.info={{circle={12,12,10}},{{12,10},{12,18}},{circle={12,6,1}}}
 ICONS.sun={{circle={12,12,5}},{{12,1},{12,4}},{{12,20},{12,23}},{{1,12},{4,12}},{{20,12},{23,12}},{{4,4},{6,6}},{{18,18},{20,20}},{{4,20},{6,18}},{{18,6},{20,4}}}
 ICONS.moon={{{20,16},{15,16},{10,13},{8,8},{9,3},{4,6},{2,12},{5,19},{12,22},{18,20},{20,16}}}
+ICONS["arrow-up-right"]={{{5,19},{19,5}},{{7,5},{19,5},{19,17}}}
+ICONS.sparkles={{{12,2},{15,9},{22,12},{15,15},{12,22},{9,15},{2,12},{9,9},{12,2}},{{21,1},{21,6}},{{18.5,3.5},{23.5,3.5}}}
+ICONS.rocket={{{5,15},{10,7},{16,2},{22,2},{22,8},{17,14},{9,19},{5,15}},{{8,10},{3,10},{1,16},{6,16}},{{15,17},{15,22},{9,24},{9,19}},{circle={16,8,2.5}},{{4,20},{2,22}}}
+ICONS.flame={{{13,1},{15,7},{19,10},{21,15},{19,21},{12,24},{5,21},{3,15},{6,9},{8,13},{10,8},{13,1}},{{12,13},{9,18},{10,22},{14,22},{16,18},{12,13}}}
+ICONS.gem={{{6,3},{18,3},{23,9},{12,23},{1,9},{6,3}},{{1,9},{23,9}},{{6,3},{9,9},{12,23},{15,9},{18,3}}}
+ICONS.gift={{{3,9},{21,9},{21,14},{3,14},{3,9}},{{5,14},{5,23},{19,23},{19,14}},{{12,9},{12,23}},{{12,9},{5,7},{4,4},{6,2},{9,3},{12,9},{15,3},{18,2},{20,4},{19,7},{12,9}}}
+ICONS.trophy={{{7,2},{17,2},{17,12},{15,16},{9,16},{7,12},{7,2}},{{7,5},{2,5},{2,10},{7,12}},{{17,5},{22,5},{22,10},{17,12}},{{12,16},{12,22}},{{7,22},{17,22}}}
+ICONS.coffee={{{3,6},{17,6},{17,18},{14,22},{6,22},{3,18},{3,6}},{{17,8},{22,8},{22,14},{17,16}},{{6,1},{6,3}},{{11,1},{11,3}}}
+ICONS.headphones={{{3,14},{3,9},{6,4},{12,2},{18,4},{21,9},{21,14}},{{3,12},{7,12},{7,22},{3,22},{3,12}},{{17,12},{21,12},{21,22},{17,22},{17,12}}}
+ICONS.volume={{{2,9},{7,9},{13,3},{13,21},{7,15},{2,15},{2,9}},{{17,8},{19,12},{17,16}},{{20,4},{23,12},{20,20}}}
+ICONS.wifi={{{2,8},{7,4},{12,3},{17,4},{22,8}},{{6,12},{9,9},{15,9},{18,12}},{{9,16},{12,14},{15,16}},{circle={12,20,1}}}
+ICONS.globe={{circle={12,12,10}},{{2,12},{22,12}},{{12,2},{8,7},{8,17},{12,22},{16,17},{16,7},{12,2}}}
+ICONS.code={{{8,5},{2,12},{8,19}},{{16,5},{22,12},{16,19}},{{14,2},{10,22}}}
+ICONS.cpu={{{6,6},{18,6},{18,18},{6,18},{6,6}},{{9,9},{15,9},{15,15},{9,15},{9,9}},{{9,1},{9,6}},{{15,1},{15,6}},{{9,18},{9,23}},{{15,18},{15,23}},{{1,9},{6,9}},{{1,15},{6,15}},{{18,9},{23,9}},{{18,15},{23,15}}}
+ICONS.speedometer={{{3,20},{1,13},{4,6},{12,2},{20,6},{23,13},{21,20},{3,20}},{{12,16},{18,8}},{circle={12,16,2}}}
+ICONS.crosshair={{circle={12,12,7}},{{12,1},{12,8}},{{12,16},{12,23}},{{1,12},{8,12}},{{16,12},{23,12}}}
+ICONS.flag={{{4,23},{4,2},{11,2},{14,5},{21,5},{21,16},{14,16},{11,13},{4,13}}}
+ICONS.layers={{{12,2},{23,8},{12,14},{1,8},{12,2}},{{1,13},{12,19},{23,13}},{{1,18},{12,24},{23,18}}}
+ICONS.sliders={{{5,1},{5,8}},{{5,14},{5,23}},{{12,1},{12,15}},{{12,21},{12,23}},{{19,1},{19,4}},{{19,10},{19,23}},{circle={5,11,3}},{circle={12,18,3}},{circle={19,7,3}}}
+ICONS["message-circle"]={{{21,16},{23,11},{21,5},{16,2},{8,2},{3,5},{1,11},{3,17},{1,23},{8,21},{15,21},{21,16}},{{6,10},{18,10}},{{6,14},{14,14}}}
+ICONS.smile={{circle={12,12,10}},{circle={8,9,1}},{circle={16,9,1}},{{7,15},{10,18},{14,18},{17,15}}}
+ICONS.ghost={{{3,23},{3,10},{5,5},{9,2},{15,2},{19,5},{21,10},{21,23},{17,20},{14,23},{10,20},{7,23},{3,23}},{circle={8,10,1}},{circle={16,10,1}}}
+ICONS.cat={{{3,2},{9,6},{15,6},{21,2},{21,15},{18,21},{12,23},{6,21},{3,15},{3,2}},{{7,13},{9,13}},{{15,13},{17,13}},{{10,17},{12,19},{14,17}}}
+ICONS.swords={{{3,2},{11,8},{10,12},{6,11},{3,2}},{{9,11},{20,22}},{{14,20},{20,14}},{{21,2},{13,8},{14,12},{18,11},{21,2}},{{15,11},{4,22}},{{4,14},{10,20}}}
+ICONS["refresh-cw"]={{{21,8},{17,3},{10,2},{4,5},{1,11}},{{21,2},{21,8},{15,8}},{{3,16},{7,21},{14,22},{20,19},{23,13}},{{3,22},{3,16},{9,16}}}
 local ICON_ALIASES={troll="users",audio="music",boombox="music",op="crown",avatar="shirt",tools="wrench",["local"]="user",protection="shield",teleports="map-pin",child="baby",scripts="book",objetos="box",commands="terminal",["book-open"]="book",["book-text"]="book",["shield-check"]="shield",["baby-icon"]="baby",["user-round"]="user",["users-round"]="users",["map-pinned"]="map-pin",["paintbrush"]="palette"}
+for alias,name in pairs({["gamepad-2"]="gamepad",["volume-2"]="volume",["gauge"]="speedometer",["sparkle"]="sparkles",["messages-square"]="message-circle",["smile-plus"]="smile",["sword"]="swords",["settings-2"]="sliders",["layers-2"]="layers",["refresh"]="refresh-cw",["paintbrush-2"]="palette",["headset"]="headphones"}) do ICON_ALIASES[alias]=name end
 local function renderIcon(parent,w,value,size,role)
     local host=new("Frame",{Name="Icon",BackgroundTransparency=1,Size=UDim2.fromOffset(size or 22,size or 22)},parent)
     local raw=tostring(value or "circle")
@@ -332,19 +372,23 @@ local function renderIcon(parent,w,value,size,role)
     local function colored(obj,prop)
         bind(w,obj,prop,role or "Muted");table.insert(parts,{obj,prop});return obj
     end
+    local weight=math.clamp((size or 22)*.078,1.2,2.1)
     local shape=ICONS[key]
     if shape then
         for _,path in ipairs(shape) do
             if path.circle then
                 local c=path.circle
                 local ring=new("Frame",{BackgroundTransparency=1,BorderSizePixel=0,Position=UDim2.fromScale((c[1]-c[3])/24,(c[2]-c[3])/24),Size=UDim2.fromScale(c[3]*2/24,c[3]*2/24)},host)
-                round(ring,99);colored(stroke(ring,w.Theme[role or "Muted"],0,1.7),"Color")
+                round(ring,99);colored(stroke(ring,w.Theme[role or "Muted"],0,weight),"Color")
             else
                 for i=2,#path do
                     local a,b=path[i-1],path[i]
                     local dx,dy=b[1]-a[1],b[2]-a[2]
-                    local seg=new("Frame",{BorderSizePixel=0,AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale((a[1]+b[1])/48,(a[2]+b[2])/48),Size=UDim2.new(math.sqrt(dx*dx+dy*dy)/24,0,0,1.7),Rotation=math.deg(math.atan2(dy,dx))},host)
+                    local seg=new("Frame",{BorderSizePixel=0,AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale((a[1]+b[1])/48,(a[2]+b[2])/48),Size=UDim2.new(math.sqrt(dx*dx+dy*dy)/24,0,0,weight),Rotation=math.deg(math.atan2(dy,dx))},host)
                     colored(seg,"BackgroundColor3");round(seg,3)
+                    -- Round path vertices to avoid visible cracks between segments.
+                    local joint=new("Frame",{BorderSizePixel=0,AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(b[1]/24,b[2]/24),Size=UDim2.fromOffset(weight,weight)},host)
+                    colored(joint,"BackgroundColor3");round(joint,99)
                 end
             end
         end
@@ -607,7 +651,7 @@ local function createMain(window,root)
     },aside)
     bind(window,tabs,"ScrollBarImageColor3","Accent")
     padding(tabs,3,4,3,7);list(tabs,7)
-    local foot=textlabel(aside,window,"AURA  /  3.4",10,true,"Muted")
+    local foot=textlabel(aside,window,"AURA  /  3.5",10,true,"Muted")
     foot.Position=UDim2.new(0,15,1,-42);foot.Size=UDim2.new(1,-30,0,20)
     window.Sidebar=aside;window.TabButtons=tabs;window.SidebarFooter=foot
     window.TabListLayout=tabs:FindFirstChildOfClass("UIListLayout")
@@ -983,14 +1027,15 @@ local function createRow(tab,opts,height,wide)
         local actualActionWidth=math.min(actionWidth,width-32)
         local stacked=action and width<math.max(260,actualActionWidth+220)
         local reserve=action and not stacked and (actualActionWidth+14) or 0
-        local textWidth=math.max(30,width-32-reserve)
+        local textLeft=opts._leading and 54 or 16
+        local textWidth=math.max(30,width-textLeft-16-reserve)
         local titleHeight=measure(name,textWidth,56)
         name.Visible=name.Text~=""
-        name.Position=UDim2.fromOffset(16,name.Text=="" and 0 or 12);name.Size=UDim2.fromOffset(textWidth,titleHeight)
+        name.Position=UDim2.fromOffset(textLeft,name.Text=="" and 0 or 12);name.Size=UDim2.fromOffset(textWidth,titleHeight)
         local bottom=12+titleHeight
         if description then
             local dh=measure(description,textWidth,48)
-            description.Position=UDim2.fromOffset(16,bottom+4);description.Size=UDim2.fromOffset(textWidth,dh)
+            description.Position=UDim2.fromOffset(textLeft,bottom+4);description.Size=UDim2.fromOffset(textWidth,dh)
             bottom=bottom+4+dh
         end
         local base=math.max(44,bottom+8)
@@ -1054,13 +1099,59 @@ local function clickAction(tab,root,fn)
 end
 function Tab:CreateButton(options)
     options=asopts(options)
-    local root,handle=createRow(self,options,65)
-    local action=clickAction(self,root,function()callback(options.Callback)end)
-    action.Text=options.ButtonText or "Executar"
-    handle:Action(action,128,34)
+    local w=self.Window
+    local rowOptions=copy(options);rowOptions._leading=options.Icon~=nil
+    local root,handle=createRow(self,rowOptions,58)
+    root.Name="Action_"..tostring(options.Name or "Button")
+    local border=root:FindFirstChildOfClass("UIStroke")
+    bind(w,border,"Color","Accent");border.Transparency=.73
+    local iconTile
+    if options.Icon then
+        iconTile=frame(root,w,"AccentSoft",9)
+        iconTile.Name="ActionIcon";iconTile.Position=UDim2.fromOffset(12,10);iconTile.Size=UDim2.fromOffset(30,30)
+        local icon=renderIcon(iconTile,w,options.Icon,18,"Accent")
+        icon.Position=UDim2.fromOffset(6,6)
+    end
+    local chip=frame(root,w,"AccentSoft",8)
+    chip.Name="ActionHint"
+    local arrow=renderIcon(chip,w,"arrow-up-right",16,"Accent")
+    arrow.Position=UDim2.new(1,-24,.5,-8)
+    local caption=textlabel(chip,w,options.ButtonText or "",12,true,"Accent")
+    caption.Position=UDim2.fromOffset(10,0);caption.Size=UDim2.new(1,-36,1,0)
+    handle:Action(chip,options.ButtonText and 116 or 34,32)
+    local hit=new("TextButton",{Name="ClickSurface",Text="",BackgroundTransparency=1,BorderSizePixel=0,AutoButtonColor=false,Size=UDim2.fromScale(1,1),ZIndex=5},root)
+    local enabled=options.Disabled~=true
+    local function paint(hovered)
+        tween(w,root,{BackgroundColor3=w.Theme[hovered and enabled and "Hover" or "SurfaceAlt"]},.12)
+        tween(w,border,{Transparency=hovered and enabled and .15 or .73},.12)
+    end
+    local function fire()
+        if not enabled then return end
+        callback(options.Callback)
+    end
+    track(w,hit.Activated,fire)
+    track(w,hit.MouseEnter,function()paint(true)end)
+    track(w,hit.MouseLeave,function()paint(false)end)
+    track(w,hit.InputBegan,function(input)
+        if enabled and (input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch) then
+            tween(w,border,{Transparency=0},.08)
+        end
+    end)
+    track(w,hit.InputEnded,function()paint(false)end)
     handle._skipSave=true
-    function handle:Fire()callback(options.Callback)end
-    function handle:SetText(s) action.Text=tostring(s) end
+    function handle:Fire()fire()end
+    function handle:SetText(value)
+        caption.Text=tostring(value or "")
+        self:Action(chip,caption.Text~="" and 116 or 34,32)
+    end
+    function handle:SetDisabled(value)
+        enabled=not value
+        root.BackgroundTransparency=enabled and 0 or .35
+        self.TitleLabel.TextTransparency=enabled and 0 or .4
+        paint(false)
+    end
+    function handle:RefreshVisual()paint(false)end
+    handle:SetDisabled(not enabled)
     return handle
 end
 function Tab:CreateToggle(options)
@@ -1369,6 +1460,34 @@ function Tab:CreateKeybind(options)
 end
 Tab.CreateKeyBind=Tab.CreateKeybind
 
+function Tab:CreateSpacer(options)
+    if type(options)=="number" then options={Height=options} else options=asopts(options) end
+    local height=math.clamp(tonumber(options.Height or options.Size) or 16,0,400)
+    local root=new("Frame",{Name="Spacer",BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.new(1,-4,0,height),LayoutOrder=self:_nextOrder()},self.Content)
+    local tab=self
+    local handle={Root=root,Name=options.Name or "Spacer",Tab=self,_skipSave=true}
+    function handle:Set(value)
+        height=math.clamp(tonumber(value) or height,0,400)
+        root.Size=UDim2.new(1,-4,0,height)
+    end
+    function handle:Get()return height end
+    function handle:Reflow()end
+    function handle:Destroy()
+        root:Destroy()
+        for i,item in ipairs(tab.Controls) do if item==self then table.remove(tab.Controls,i);break end end
+    end
+    table.insert(self.Controls,handle);self.Window:_register(handle,options)
+    return handle
+end
+Tab.CreateSpace=Tab.CreateSpacer
+Tab.AddSpace=Tab.CreateSpacer
+Tab.AddSpacer=Tab.CreateSpacer
+Tab.Spacer=Tab.CreateSpacer
+function Tab:SetSpacing(pixels)
+    local layout=self.Content:FindFirstChildOfClass("UIListLayout")
+    if layout then layout.Padding=UDim.new(0,math.clamp(tonumber(pixels) or 7,0,40)) end
+    return self
+end
 function Tab:CreateSection(options)
     options=asopts(options)
     local root,handle=createRow(self,{Name=options.Name or "",Description=options.Description,Flag=options.Flag,_section=true},30,true)
