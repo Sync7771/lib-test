@@ -1,5 +1,5 @@
 --[[
-    AURA UI 4.0 — INTERFACE MODULAR
+    AURA UI 4.1 — INTERFACE MODULAR
     Client-side Roblox Luau interface library.
     License: MIT. Use in a LocalScript, or with a permitted script loader.
 
@@ -117,6 +117,12 @@
       As funções de arquivo variam conforme o ambiente; sem promessa de suporte
         a todos os executores ou a todos os assets.
 
+    APARÊNCIA 4.1:
+      Verde claro por padrão: Theme="MintLight". Texto verde escuro para leitura.
+      Theme="Dark" preserva a paleta escura da versão anterior.
+      Um CanvasGroup na raiz recorta todos os elementos nos cantos da janela.
+      Painéis/botões têm raios uniformizados; a faixa do cabeçalho é recuada.
+
     NOTES:
       File config persistence uses optional readfile/writefile only when available.
       Without those APIs, ExportConfig/ImportConfig and in-session state work.
@@ -124,7 +130,7 @@
       No claim that this code has been executed in Roblox Studio yet.
 ]]
 
-local Aura = { Version = "4.0.0" }
+local Aura = { Version = "4.1.0" }
 Aura.__index = Aura
 
 local Players = game:GetService("Players")
@@ -139,21 +145,23 @@ local player = Players.LocalPlayer
 
 local function C(r,g,b) return Color3.fromRGB(r,g,b) end
 local BASE = {
-    Background=C(30,42,46), Surface=C(40,55,59), SurfaceAlt=C(49,68,69),
-    Hover=C(60,86,82), Accent=C(92,255,192), AccentSoft=C(38,105,81),
-    Text=C(246,255,252), Muted=C(195,219,211), Stroke=C(98,158,137),
-    Success=C(65,220,124), Warning=C(254,193,84), Danger=C(246,102,109),
-    Overlay=C(5,13,9),
+    Background=C(216,241,224), Surface=C(231,249,236), SurfaceAlt=C(246,255,249),
+    Hover=C(202,239,214), Accent=C(20,132,70), AccentSoft=C(184,237,199),
+    Text=C(21,60,37), Muted=C(64,107,80), Stroke=C(119,185,142),
+    Success=C(20,132,70), Warning=C(146,94,0), Danger=C(185,43,59),
+    Overlay=C(15,43,24),
 }
 local PRESETS = {
+    MintLight={},
+    Dark={Background=C(30,42,46),Surface=C(40,55,59),SurfaceAlt=C(49,68,69),Hover=C(60,86,82),Accent=C(92,255,192),AccentSoft=C(38,105,81),Text=C(246,255,252),Muted=C(195,219,211),Stroke=C(98,158,137)},
     Light={Background=C(225,239,233),Surface=C(241,250,245),SurfaceAlt=C(255,255,255),Hover=C(213,238,224),Accent=C(0,117,78),AccentSoft=C(194,234,213),Text=C(19,47,37),Muted=C(63,91,78),Stroke=C(133,173,152)},
     Midnight={Background=C(15,18,29),Surface=C(23,28,43),SurfaceAlt=C(32,39,57),Hover=C(43,54,75),Accent=C(104,192,255),AccentSoft=C(32,67,98),Text=C(243,249,255),Muted=C(172,193,213),Stroke=C(75,104,136)},
-    Violet={Accent=C(203,163,255),AccentSoft=C(80,56,107)},
+    Violet={Accent=C(125,62,177),AccentSoft=C(233,215,250)},
     HighContrast={Background=C(0,0,0),Surface=C(10,10,10),SurfaceAlt=C(24,24,24),Hover=C(50,50,50),Accent=C(255,236,86),AccentSoft=C(69,61,0),Text=C(255,255,255),Muted=C(230,230,230),Stroke=C(204,204,204)},
-    NeonLight={}, Forest = {}, Mint={Accent=C(86,243,176), AccentSoft=C(25,89,64)},
-    Neon={Accent=C(30,255,94),AccentSoft=C(21,98,42)},
-    Emerald={Accent=C(25,194,135),AccentSoft=C(17,79,61)},
-    Lime={Accent=C(174,242,90),AccentSoft=C(63,83,28)},
+    NeonLight={}, Forest = {}, Mint={Accent=C(12,128,80), AccentSoft=C(187,242,213)},
+    Neon={Accent=C(18,130,54),AccentSoft=C(172,246,188)},
+    Emerald={Accent=C(8,126,90),AccentSoft=C(178,238,211)},
+    Lime={Accent=C(82,119,22),AccentSoft=C(225,244,187)},
 }
 Aura.Themes = PRESETS
 
@@ -215,7 +223,9 @@ local function bind(w, obj, property, role)
 end
 local function frame(parent, w, role, radius)
     local f=new("Frame",{BackgroundColor3=w.Theme[role or "Surface"],BorderSizePixel=0},parent)
-    round(f,radius or 12); bind(w,f,"BackgroundColor3",role or "Surface")
+    local corner=radius or 12
+    if corner>=7 and corner<=17 then corner=corner+3 end
+    round(f,corner); bind(w,f,"BackgroundColor3",role or "Surface")
     return f
 end
 local function textlabel(parent,w,value,size,bold,role)
@@ -235,7 +245,7 @@ local function textbutton(parent,w,value,role)
         TextColor3=w.Theme.Text,BackgroundColor3=w.Theme[role or "SurfaceAlt"],
         AutoButtonColor=false,BorderSizePixel=0,Size=UDim2.fromOffset(100,34),
     },parent)
-    round(b,7);bind(w,b,"TextColor3","Text");bind(w,b,"BackgroundColor3",role or "SurfaceAlt")
+    round(b,10);bind(w,b,"TextColor3","Text");bind(w,b,"BackgroundColor3",role or "SurfaceAlt")
     bind(w,stroke(b,w.Theme.Stroke,.65,1),"Color","Stroke")
     return b
 end
@@ -564,7 +574,9 @@ function Window:_register(handle,options)
         self._disabled=not not disabled
         if not self._blocker then
             self._blocker=new("TextButton",{Name="DisabledOverlay",Text="",AutoButtonColor=false,BackgroundColor3=self._window.Theme.Background,BackgroundTransparency=.5,BorderSizePixel=0,Size=UDim2.fromScale(1,1),ZIndex=50,Selectable=false},self.Root)
-            round(self._blocker,10)
+            local parentCorner=self.Root:FindFirstChildOfClass("UICorner")
+            local corner=round(self._blocker,14)
+            if parentCorner then corner.CornerRadius=parentCorner.CornerRadius end
         end
         self._blocker.Visible=self._disabled
         return self
@@ -803,7 +815,7 @@ local function createMain(window,root)
     },aside)
     bind(window,tabs,"ScrollBarImageColor3","Accent")
     padding(tabs,3,4,3,7);list(tabs,7)
-    local foot=textlabel(aside,window,"AURA  /  4.0",10,true,"Muted")
+    local foot=textlabel(aside,window,"AURA  /  4.1",10,true,"Muted")
     foot.Position=UDim2.new(0,15,1,-42);foot.Size=UDim2.new(1,-30,0,20)
     window.Sidebar=aside;window.TabButtons=tabs;window.SidebarFooter=foot
     window.TabListLayout=tabs:FindFirstChildOfClass("UIListLayout")
@@ -818,7 +830,7 @@ local function createMain(window,root)
     title.Size=UDim2.new(1,-22,0,27);title.Position=UDim2.fromOffset(13,5)
     local desc=textlabel(banner,window,"Organize seus controles",10,false,"Muted")
     desc.Size=UDim2.new(1,-22,0,15);desc.Position=UDim2.fromOffset(13,30)
-    local bar=new("Frame",{Size=UDim2.new(1,0,0,3),Position=UDim2.new(0,0,1,-3),BorderSizePixel=0},banner)
+    local bar=new("Frame",{Size=UDim2.new(1,-28,0,3),Position=UDim2.new(0,14,1,-7),BorderSizePixel=0},banner)
     round(bar,6);bind(window,bar,"BackgroundColor3","Accent")
     local gradient=new("UIGradient",{Rotation=0,Color=ColorSequence.new(window.Theme.Accent,window.Theme.AccentSoft)},bar)
     window._accentGradient=gradient
@@ -951,7 +963,7 @@ function Window:SetBackgroundImage(value,transparency)
     local enabled=value~=nil and value~=false and tostring(value)~=""
     if not self.BackgroundImage then
         self.BackgroundImage=new("ImageLabel",{Name="BackgroundImage",BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.fromScale(1,1),ScaleType=Enum.ScaleType.Crop,ZIndex=1},self.Root)
-        round(self.BackgroundImage,19)
+        round(self.BackgroundImage,22)
         for _,child in ipairs(self.Root:GetChildren()) do
             if child~=self.BackgroundImage and child:IsA("Frame") then child.ZIndex=2 end
         end
@@ -1019,7 +1031,7 @@ function Aura:CreateWindow(options)
         if previous and not previous.Destroyed then previous:Destroy() end
     end
     local w=setmetatable({
-        Theme=themeFor(options.Theme or "Forest"),ThemeName=options.Theme or "Forest",
+        Theme=themeFor(options.Theme or "MintLight"),ThemeName=options.Theme or "MintLight",
         ConfigFile=options.ConfigFile or "aura_green_config.json",Language="pt",
         _connections={},_themeBindings={},_counter=0,Flags={},Tabs={},
         _events={},_cleanup={},_fontSizes=setmetatable({},{__mode="k"}),TextScale=math.clamp(tonumber(options.TextScale) or 1,.85,1.25),
@@ -1044,8 +1056,10 @@ function Aura:CreateWindow(options)
     },guiParent)
     w.Gui=gui;guiWindows[gui]=w
     track(w,gui.Destroying,function()w:Destroy()end)
-    local root=frame(gui,w,"Background",19)
-    root.Name="Root";root.ClipsDescendants=true
+    -- UICorner on Frame does not clip descendants. One CanvasGroup masks the
+    -- entire window, including the wallpaper; ordinary rows remain lightweight.
+    local root=new("CanvasGroup",{Name="Root",BackgroundColor3=w.Theme.Background,BorderSizePixel=0},gui)
+    bind(w,root,"BackgroundColor3","Background");round(root,22)
     root.Size=UDim2.fromOffset(760,500)
     stroke(root,w.Theme.Stroke,.1,1.2)
     w.Root=root
@@ -1508,7 +1522,7 @@ function Tab:CreateInput(options)
         Position=UDim2.new(1,-14,.5,0),
     },root)
     handle:Action(field,180,36)
-    round(field,10);padding(field,10,0,10,0)
+    round(field,12);padding(field,10,0,10,0)
     bind(w,field,"BackgroundColor3","Surface")
     bind(w,field,"TextColor3","Text")
     bind(w,field,"PlaceholderColor3","Muted")
@@ -1829,7 +1843,7 @@ function Tab:CreateColorPicker(options)
         local tag=textlabel(body,w,ch,11,true,"Muted")
         tag.Position=UDim2.new(x,0,0,154);tag.Size=UDim2.new(1/3,-8,0,16)
         local field=new("TextBox",{Text="0",ClearTextOnFocus=false,BackgroundColor3=w.Theme.Surface,TextColor3=w.Theme.Text,Font=Enum.Font.Gotham,TextSize=12,BorderSizePixel=0,Position=UDim2.new(x,0,0,176),Size=UDim2.new(1/3,-8,0,32)},body)
-        round(field,7);bind(w,field,"BackgroundColor3","Surface");bind(w,field,"TextColor3","Text")
+        round(field,10);bind(w,field,"BackgroundColor3","Surface");bind(w,field,"TextColor3","Text")
         fields[i]=field
     end
     local tag=textlabel(body,w,"HEXADECIMAL",10,true,"Muted")
@@ -1914,7 +1928,7 @@ function Tab:CreateGradientPicker(options)
         local label=textlabel(body,w,name,10,true,"Muted")
         label.Position=UDim2.new(x,i==2 and 5 or 0,0,34);label.Size=UDim2.new(.5,-5,0,16)
         local field=new("TextBox",{Text="",ClearTextOnFocus=false,BackgroundColor3=w.Theme.Surface,TextColor3=w.Theme.Text,Font=Enum.Font.Gotham,TextSize=12,BorderSizePixel=0,Position=UDim2.new(x,i==2 and 5 or 0,0,58),Size=UDim2.new(.5,-5,0,34)},body)
-        round(field,7);bind(w,field,"BackgroundColor3","Surface");bind(w,field,"TextColor3","Text")
+        round(field,10);bind(w,field,"BackgroundColor3","Surface");bind(w,field,"TextColor3","Text")
         if i==1 then left=field else right=field end
     end
     local function paint()gradient.Color=ColorSequence.new(one,two);left.Text=hex(one);right.Text=hex(two)end
@@ -2183,7 +2197,7 @@ end
 function Window:CreateThemeEditor()
     local tab=self:CreateTab({Name="Appearance",Icon="palette"})
     tab:CreateSection("THEMES")
-    tab:CreateDropdown({Name="Preset",Options={"NeonLight","Forest","Mint","Neon","Emerald","Lime","Light","Midnight","Violet","HighContrast"},Searchable=true,
+    tab:CreateDropdown({Name="Preset",Options={"MintLight","NeonLight","Forest","Mint","Neon","Emerald","Lime","Light","Dark","Midnight","Violet","HighContrast"},Searchable=true,
         Default=self.ThemeName,Flag="aura_theme_preset",Callback=function(name)
             if PRESETS[name] then self:SetTheme(name)end
         end})
@@ -2605,7 +2619,7 @@ function Tab:CreateNumberInput(options)
     local minus=textbutton(holder,w,"-","Surface");minus.Size=UDim2.fromOffset(32,34)
     local plus=textbutton(holder,w,"+","Surface");plus.Position=UDim2.new(1,-32,0,0);plus.Size=UDim2.fromOffset(32,34)
     local field=new("TextBox",{Name="Number",Text="",ClearTextOnFocus=false,BackgroundColor3=w.Theme.Surface,TextColor3=w.Theme.Text,Font=Enum.Font.Gotham,TextSize=13,BorderSizePixel=0,Position=UDim2.fromOffset(38,0),Size=UDim2.new(1,-76,1,0)},holder)
-    round(field,7);bind(w,field,"BackgroundColor3","Surface");bind(w,field,"TextColor3","Text")
+    round(field,10);bind(w,field,"BackgroundColor3","Surface");bind(w,field,"TextColor3","Text")
     local value=min
     function handle:Set(n,silent)
         n=tonumber(n)
