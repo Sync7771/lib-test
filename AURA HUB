@@ -1,5 +1,6 @@
 --[[
 AURA UI 5.0 — base PDDEV / RCCDEV fornecida pelo usuário, com extensões AURA.
+Tema padrão: Aura Dark, grafite com destaque menta. Theme="Dark" também é aceito.
 A janela, temas, ícones, Add* e NewTab/NewSection do arquivo anexado foram mantidos.
 Nenhuma janela da biblioteca anterior é criada. Extensões integradas neste arquivo.
 
@@ -3332,28 +3333,31 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	-- ════════════════════════════════════════════════════════════
 
 	local Theme = {
-		Background = Color3.fromRGB(20, 21, 24),
-		TitleBar = Color3.fromRGB(25, 27, 31),
-		TabBackground = Color3.fromRGB(17, 18, 21),
-		TabSelected = Color3.fromRGB(29, 43, 59),
-		Button = Color3.fromRGB(31, 33, 38),
-		ButtonHover = Color3.fromRGB(40, 44, 51),
-		Text = Color3.fromRGB(232, 232, 236),
-		TextDark = Color3.fromRGB(151, 159, 171),
-		Accent = Color3.fromRGB(22, 139, 255),
-		ToggleOn = Color3.fromRGB(22, 139, 255),
-		ToggleOff = Color3.fromRGB(66, 67, 75),
-		Border = Color3.fromRGB(47, 52, 60),
-		Cooldown = Color3.fromRGB(115, 53, 58),
-		Error = Color3.fromRGB(220, 75, 75),
-		Success = Color3.fromRGB(75, 190, 120),
-		Warning = Color3.fromRGB(230, 180, 75),
-		TabBorder = Color3.fromRGB(47, 52, 60),
-		DropdownHover = Color3.fromRGB(51, 52, 59),
+		Background = Color3.fromRGB(16, 18, 22),
+		TitleBar = Color3.fromRGB(22, 25, 30),
+		TabBackground = Color3.fromRGB(19, 22, 26),
+		TabSelected = Color3.fromRGB(29, 48, 41),
+		Button = Color3.fromRGB(29, 33, 39),
+		ButtonHover = Color3.fromRGB(38, 44, 51),
+		Text = Color3.fromRGB(235, 240, 244),
+		TextDark = Color3.fromRGB(154, 166, 177),
+		Accent = Color3.fromRGB(105, 225, 164),
+		ToggleOn = Color3.fromRGB(105, 225, 164),
+		ToggleOff = Color3.fromRGB(61, 70, 80),
+		Border = Color3.fromRGB(49, 58, 67),
+		Cooldown = Color3.fromRGB(89, 43, 52),
+		Error = Color3.fromRGB(245, 113, 124),
+		Success = Color3.fromRGB(105, 225, 164),
+		Warning = Color3.fromRGB(239, 195, 111),
+		TabBorder = Color3.fromRGB(49, 58, 67),
+		DropdownHover = Color3.fromRGB(38, 44, 51),
 	}
 
 	local Themes = {}
 	Themes.Default = CopyTable(Theme)
+    Themes.Dark = CopyTable(Theme)
+    Themes.dark = CopyTable(Theme)
+    Themes.AuraDark = CopyTable(Theme)
 	local AcrylicEnabled = false
 	local AcrylicTransparency = { Background = 0.22, TitleBar = 0.18, TabBackground = 0.24, TabSelected = 0.16, Button = 0.20, ToggleOn = 0.08, ToggleOff = 0.10 }
 
@@ -3726,11 +3730,11 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	local MainStroke = Instance.new("UIStroke")
 	MainStroke.Color = Theme.Border
 	MainStroke.Thickness = 1
-	MainStroke.Transparency = 0.12
+	MainStroke.Transparency = 0.3
 	MainStroke.Parent = Main
 	MainStroke:SetAttribute("ThemeRole", "Border")
 
-	-- Thin electric-blue signature line: visual identity without permanent effects.
+	-- Subtle mint signature line for the AURA dark theme.
 	local TopAccent = Instance.new("Frame")
 	TopAccent.Name = "PDDEVAccentLine"
 	TopAccent.Size = UDim2.new(1, -16, 0, 2)
