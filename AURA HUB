@@ -3136,24 +3136,24 @@ return Aura
 
 end)()
 
--- Outline icons drawn locally; these do not depend on decal permissions.
-local AuraTabVectors={
-    shirt={{{8,3},{3,5},{1,10},{5,12},{5,22},{19,22},{19,12},{23,10},{21,5},{16,3},{15,6},{9,6},{8,3}}},
-    avatar={{circle={12,6,4}},{{5,22},{5,17},{8,13},{16,13},{19,17},{19,22}},{{9,15},{12,18},{15,15}}},
-    accessories={{{3,10},{21,10},{21,14},{3,14},{3,10}},{{7,10},{8,4},{16,4},{17,10}},{{5,18},{19,18}}},
-    glasses={{{2,9},{10,9},{10,16},{3,16},{2,9}},{{14,9},{22,9},{21,16},{14,16},{14,9}},{{10,11},{14,11}},{{2,9},{1,5}},{{22,9},{23,5}}},
-    face={{circle={12,12,10}},{circle={8,9,1}},{circle={16,9,1}},{{7,15},{10,18},{14,18},{17,15}}},
-    hair={{{3,14},{2,9},{5,3},{10,2},{13,4},{17,2},{22,7},{21,14}},{{4,12},{8,7},{11,10},{15,6},{20,12}},{{5,13},{6,19},{12,23},{18,19},{19,13}}},
-    body={{circle={12,4,3}},{{8,9},{16,9},{20,15},{17,17},{15,13},{15,22},{12,22},{12,16},{12,22},{9,22},{9,13},{7,17},{4,15},{8,9}}},
-    animation={{circle={14,4,2}},{{12,8},{10,14},{16,17},{19,22}},{{10,14},{6,20},{2,20}},{{12,8},{17,11},{22,9}},{{12,8},{7,8},{4,12}}},
-    emotes={{circle={12,5,3}},{{12,9},{12,16}},{{3,5},{7,11},{12,12},{17,11},{21,5}},{{12,16},{7,22}},{{12,16},{17,22}}},
-    wardrobe={{{3,3},{21,3},{21,23},{3,23},{3,3}},{{12,3},{12,23}},{{9,11},{9,15}},{{15,11},{15,15}},{{6,1},{18,1}}},
-    mask={{{2,6},{8,8},{12,7},{16,8},{22,6},{21,16},{17,21},{12,23},{7,21},{3,16},{2,6}},{{6,12},{10,13}},{{14,13},{18,12}},{{8,17},{12,19},{16,17}}},
-    wings={{{12,21},{10,13},{5,4},{1,2},{2,10},{5,17},{12,21},{19,17},{22,10},{23,2},{19,4},{14,13},{12,21}},{{4,9},{10,16}},{{20,9},{14,16}}},
-    outfit={{{8,2},{3,5},{1,9},{5,11},{7,8},{7,15},{17,15},{17,8},{19,11},{23,9},{21,5},{16,2},{14,5},{10,5},{8,2}},{{7,15},{6,23},{11,23},{12,18},{13,23},{18,23},{17,15}}},
-    shoes={{{3,4},{9,4},{10,11},{15,14},{22,16},{22,21},{2,21},{2,11},{3,4}},{{2,17},{22,17}},{{12,12},{10,15}},{{16,14},{14,17}}},
-    backpack={{{5,22},{5,8},{8,5},{16,5},{19,8},{19,22},{5,22}},{{9,5},{9,2},{15,2},{15,5}},{{8,14},{16,14},{16,20},{8,20},{8,14}},{{8,10},{16,10}}},
-    sparkles={{{12,2},{15,9},{22,12},{15,15},{12,22},{9,15},{2,12},{9,9},{12,2}},{{21,1},{21,6}},{{18,4},{24,4}}},
+-- Lucide outline assets, matching the native tab icon family.
+local AuraTabAssets={
+    avatar="rbxassetid://10747373176",
+    shirt="rbxassetid://106579555405966",
+    accessories="rbxassetid://10709818626",
+    glasses="rbxassetid://87936407455373",
+    face="rbxassetid://10734964441",
+    hair="rbxassetid://10734942778",
+    body="rbxassetid://10709751939",
+    animation="rbxassetid://125020872044147",
+    emotes="rbxassetid://110297795801577",
+    wardrobe="rbxassetid://136249099949073",
+    mask="rbxassetid://102636443033920",
+    wings="rbxassetid://10723354671",
+    outfit="rbxassetid://106579555405966",
+    shoes="rbxassetid://139192589041315",
+    backpack="rbxassetid://10709769841",
+    sparkles="rbxassetid://138635884129147",
 }
 local AuraTabAliases={
     personagem="avatar",character="avatar",profile="avatar",perfil="avatar",
@@ -3173,34 +3173,6 @@ local AuraTabAliases={
 }
 local function AuraNormalizeIcon(value)
     return tostring(value):lower():gsub("^lucide[:%-]",""):gsub("[%s_%-]","")
-end
-local function AuraDrawTabIcon(parent,paths,color)
-    local host=Instance.new("Frame")
-    host.Name="TabIcon";host.BackgroundTransparency=1;host.Size=UDim2.fromOffset(18,18)
-    host.Position=UDim2.new(0,6,.5,-9);host.Parent=parent
-    local function tint(obj,prop)
-        obj[prop]=color;obj:SetAttribute("ThemeRole","Accent")
-    end
-    for _,path in ipairs(paths) do
-        if path.circle then
-            local c=path.circle;local ring=Instance.new("Frame")
-            ring.BackgroundTransparency=1;ring.BorderSizePixel=0
-            ring.Position=UDim2.fromScale((c[1]-c[3])/24,(c[2]-c[3])/24)
-            ring.Size=UDim2.fromScale(c[3]*2/24,c[3]*2/24);ring.Parent=host
-            local corner=Instance.new("UICorner");corner.CornerRadius=UDim.new(1,0);corner.Parent=ring
-            local border=Instance.new("UIStroke");border.Thickness=1.4;tint(border,"Color");border.Parent=ring
-        else
-            for i=2,#path do
-                local a,b=path[i-1],path[i];local dx,dy=b[1]-a[1],b[2]-a[2]
-                local line=Instance.new("Frame");line.BorderSizePixel=0;line.AnchorPoint=Vector2.new(.5,.5)
-                line.Position=UDim2.fromScale((a[1]+b[1])/48,(a[2]+b[2])/48)
-                line.Size=UDim2.new(math.sqrt(dx*dx+dy*dy)/24,0,0,1.4)
-                line.Rotation=math.deg(math.atan2(dy,dx));tint(line,"BackgroundColor3");line.Parent=host
-                local corner=Instance.new("UICorner");corner.CornerRadius=UDim.new(1,0);corner.Parent=line
-            end
-        end
-    end
-    return host
 end
 
 --[[
@@ -5674,7 +5646,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		if typeof(icon) ~= "string" or icon == "" then return nil, nil end
 		local lower = AuraNormalizeIcon(icon)
         lower=AuraTabAliases[lower] or lower
-        if AuraTabVectors[lower] then return "vector", AuraTabVectors[lower] end
+        if AuraTabAssets[lower] then return "image", AuraTabAssets[lower] end
 		if BuiltInTabImages[lower] then return "image", BuiltInTabImages[lower] end
 		if BuiltInTabAssetIcons[lower] then return "image", "rbxassetid://" .. tostring(BuiltInTabAssetIcons[lower]) end
 		if tonumber(icon) then return "image", "rbxassetid://" .. tostring(math.floor(tonumber(icon))) end
@@ -5747,9 +5719,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		ActiveMarkerCorner.Parent = ActiveMarker
 
 		local iconWidget
-		if iconType == "vector" then
-                iconWidget=AuraDrawTabIcon(TabBtn,iconValue,Theme.Accent)
-            elseif iconType == "image" then
+		if iconType == "image" then
 			iconWidget = Instance.new("ImageLabel")
 			iconWidget.Name = "TabIcon"
 			iconWidget.Image = iconValue
@@ -5885,9 +5855,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 			if iconWidget then iconWidget:Destroy(); iconWidget = nil end
 			iconType, iconValue = ResolveTabIcon(newIcon)
 			Tab.Icon = nil
-			if iconType == "vector" then
-                iconWidget=AuraDrawTabIcon(TabBtn,iconValue,Theme.Accent)
-            elseif iconType == "image" then
+			if iconType == "image" then
 				iconWidget = Instance.new("ImageLabel")
 				iconWidget.Name = "TabIcon"
 				iconWidget.Image = iconValue
@@ -7159,7 +7127,7 @@ end
 
 function UI.GetIcons()
     local names=AuraSupport:GetIcons();local used={};for _,name in ipairs(names)do used[name]=true end
-    for _,icons in ipairs({AuraTabVectors,AuraTabAliases})do
+    for _,icons in ipairs({AuraTabAssets,AuraTabAliases})do
         for name in pairs(icons)do if not used[name]then used[name]=true;table.insert(names,name)end end
     end
     if UI._lastWindow then
