@@ -120,7 +120,8 @@
     APARÊNCIA 4.1:
       Verde claro por padrão: Theme="MintLight". Texto verde escuro para leitura.
       Theme="Dark" preserva a paleta escura da versão anterior.
-      Um CanvasGroup na raiz recorta todos os elementos nos cantos da janela.
+      CanvasGroup na raiz e nos painéis laterais/principal recorta os cantos.
+      CornerRadius=28 no CreateWindow ou Window:SetCornerRadius(28).
       Painéis/botões têm raios uniformizados; a faixa do cabeçalho é recuada.
 
     NOTES:
@@ -130,7 +131,7 @@
       No claim that this code has been executed in Roblox Studio yet.
 ]]
 
-local Aura = { Version = "4.1.0" }
+local Aura = { Version = "4.1.1" }
 Aura.__index = Aura
 
 local Players = game:GetService("Players")
@@ -221,8 +222,8 @@ local function bind(w, obj, property, role)
     table.insert(w._themeBindings,{object=obj,property=property,role=role})
     return obj
 end
-local function frame(parent, w, role, radius)
-    local f=new("Frame",{BackgroundColor3=w.Theme[role or "Surface"],BorderSizePixel=0},parent)
+local function frame(parent, w, role, radius, clip)
+    local f=new(clip and "CanvasGroup" or "Frame",{BackgroundColor3=w.Theme[role or "Surface"],BorderSizePixel=0},parent)
     local corner=radius or 12
     if corner>=7 and corner<=17 then corner=corner+3 end
     round(f,corner); bind(w,f,"BackgroundColor3",role or "Surface")
@@ -793,7 +794,7 @@ local function titleHeader(window,root,options)
 end
 
 local function createMain(window,root)
-    local aside=frame(root,window,"Surface",15)
+    local aside=frame(root,window,"Surface",17,true)
     aside.Name="Sidebar";aside.Position=UDim2.fromOffset(11,68)
     aside.Size=UDim2.new(0,201,1,-80)
     local search=new("TextBox",{
@@ -821,7 +822,7 @@ local function createMain(window,root)
     window.TabListLayout=tabs:FindFirstChildOfClass("UIListLayout")
     window._updateTabCanvas=syncScroll(window,tabs,window.TabListLayout,14)
 
-    local main=frame(root,window,"Surface",15)
+    local main=frame(root,window,"Surface",17,true)
     main.Name="MainPanel";main.Position=UDim2.fromOffset(221,68)
     main.Size=UDim2.new(1,-233,1,-80)
     local banner=frame(main,window,"SurfaceAlt",13)
@@ -963,9 +964,11 @@ function Window:SetBackgroundImage(value,transparency)
     local enabled=value~=nil and value~=false and tostring(value)~=""
     if not self.BackgroundImage then
         self.BackgroundImage=new("ImageLabel",{Name="BackgroundImage",BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.fromScale(1,1),ScaleType=Enum.ScaleType.Crop,ZIndex=1},self.Root)
-        round(self.BackgroundImage,22)
+        round(self.BackgroundImage,28)
+        local parentCorner=self.Root:FindFirstChildOfClass("UICorner")
+        if parentCorner then self.BackgroundImage:FindFirstChildOfClass("UICorner").CornerRadius=parentCorner.CornerRadius end
         for _,child in ipairs(self.Root:GetChildren()) do
-            if child~=self.BackgroundImage and child:IsA("Frame") then child.ZIndex=2 end
+            if child~=self.BackgroundImage and (child:IsA("Frame") or child:IsA("CanvasGroup")) then child.ZIndex=2 end
         end
     end
     self.BackgroundImage.Image=enabled and imageAsset(value) or ""
@@ -1056,10 +1059,10 @@ function Aura:CreateWindow(options)
     },guiParent)
     w.Gui=gui;guiWindows[gui]=w
     track(w,gui.Destroying,function()w:Destroy()end)
-    -- UICorner on Frame does not clip descendants. One CanvasGroup masks the
-    -- entire window, including the wallpaper; ordinary rows remain lightweight.
+    -- UICorner on Frame does not clip descendants. The root CanvasGroup masks the
+    -- entire window, including the wallpaper; panels also clip their descendants.
     local root=new("CanvasGroup",{Name="Root",BackgroundColor3=w.Theme.Background,BorderSizePixel=0},gui)
-    bind(w,root,"BackgroundColor3","Background");round(root,22)
+    bind(w,root,"BackgroundColor3","Background");round(root,math.clamp(tonumber(options.CornerRadius) or 28,16,40))
     root.Size=UDim2.fromOffset(760,500)
     stroke(root,w.Theme.Stroke,.1,1.2)
     w.Root=root
@@ -2422,6 +2425,12 @@ function Window:ResetConfig()
         end
     end
     self._applyingHistory=previous;table.clear(self._undo);table.clear(self._redo)
+    return self
+end
+function Window:SetCornerRadius(value)
+    local radius=math.clamp(tonumber(value) or 28,16,40)
+    round(self.Root,radius)
+    if self.BackgroundImage then round(self.BackgroundImage,radius) end
     return self
 end
 function Window:SetTitle(title)
