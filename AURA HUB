@@ -1,5 +1,5 @@
 --[[
-    AURA UI 3.5 — LAYOUT REPAIR
+    AURA UI 4.0 — INTERFACE MODULAR
     Client-side Roblox Luau interface library.
     License: MIT. Use in a LocalScript, or with a permitted script loader.
 
@@ -55,6 +55,68 @@
         volume, wifi, globe, code, cpu, speedometer, crosshair, flag, layers,
         sliders, message-circle, smile, ghost, cat, swords, refresh-cw, arrow-up-right.
 
+
+    AURA 4.0 / RECURSOS E INTEGRAÇÃO
+      Compatível com a API 3.x. Nenhuma aba é adicionada automaticamente.
+      Window:CreateShowcase() cria uma demonstração opcional dos controles novos.
+
+    ORGANIZAÇÃO:
+      local grupo=tab:CreateGroup({Name="Opções",Collapsed=false,Spacing=7})
+      grupo:CreateButton({Name="Exemplo",Icon="sparkles",Callback=function()end})
+      grupo:Close();grupo:Open();grupo:SetCollapsed(true)
+      tab:CreateSpacer(24);tab:SetSpacing(8)
+      Window:SetSearch("texto"); busca também em grupos e Tags={"palavra"}.
+      tab:SetName("Nome");tab:SetVisible(true);tab:Destroy()
+      Window:GetTab("Nome");Window:NextTab(1);Window:RemoveTab("Nome")
+
+    CONTROLES NOVOS (Default, Flag, Callback e Description quando aplicáveis):
+      tab:CreateCheckbox({Name="Ativo",Default=true})
+      tab:CreateNumberInput({Name="Quantidade",Min=0,Max=100,Increment=1,Default=5})
+      tab:CreateTextArea({Name="Notas",Height=100,MaxLength=500,ReadOnly=false})
+      tab:CreateSegmented({Name="Qualidade",Options={"Baixa","Média","Alta"}})
+      tab:CreateRadioGroup({Name="Modo",Options={"A","B"},Default="A"})
+      tab:CreateSearchDropdown({Name="Lista",Options={"A","B"},Multi=true})
+      tab:CreateDataTable({Name="Dados",Columns={"Nome","Valor"},Rows={{"A",10}}})
+      Tabelas: handle:Refresh(rows), handle:Sort(columnIndex,descending).
+      Campos: Validate=function(value)return true end e MaxLength no CreateInput.
+
+    MÍDIA (assets acessíveis do Roblox; nenhum download externo):
+      tab:CreateImage({Name="Foto",Image="rbxassetid://ID",Height=180})
+      tab:CreateGallery({Name="Fotos",Images={"rbxassetid://ID"},Height=180})
+      tab:CreateVideo({Name="Vídeo",Video="rbxassetid://ID",Looped=true})
+      tab:CreateAudioPlayer({Name="Música",Sound="rbxassetid://ID",Volume=.5})
+      Vídeo/áudio: Play(), Pause(), Stop(), Set(assetId), SetVolume(0..1).
+      Não há reprodução automática. Vídeos pausam ao esconder o painel.
+      Fundo e bolinha continuam disponíveis com SetBackgroundImage e SetFloatingButton.
+      Window:SetBackgroundFit("Crop" ou "Fit" ou "Stretch" ou "Tile")
+
+    APARÊNCIA E ACESSIBILIDADE:
+      Temas: NeonLight, Forest, Mint, Neon, Emerald, Lime, Light, Midnight,
+        Violet e HighContrast; também aceita tabela personalizada de Color3.
+      Window:SetTextScale(1.1) -- 0.85 a 1.25
+      Window:SetReducedMotion(true);Window:SetPanelTransparency(.2)
+      Window:SetTitle("AURA HUB");Window:SetGamepadNavigation(true)
+      PC: mouse/teclado. Celular: toque. Gamepad: L1/R1 alternam abas.
+
+    ESTADO E EVENTOS:
+      controle:SetVisible(false), Show(), Hide(), SetDisabled(true),
+        SetName("Nome"), SetDescription("Texto"), SetOrder(2) em linhas de controle.
+      Window:GetControl(flag), GetValue(flag), SetValue(flag,value,silent), ResetConfig()
+      Window:On("TabChanged",function(tab)end) devolve conexão com Disconnect().
+      Eventos: TabChanged, VisibilityChanged, MinimizedChanged, ThemeChanged,
+        ConfigLoaded e Destroyed. Window:OnDestroy(function()end) limpa integrações.
+      Window:Dialog({Title="Confirmar?",Content="Mensagem",OnConfirm=function()end})
+      Window:Notify({Title="Aviso",Content="Mensagem",Duration=3})
+      SaveConfig/LoadConfig usam readfile/writefile opcionais; export/import JSON
+        e perfis da sessão continuam disponíveis sem essas funções.
+      Ícones: Aura:GetIcons(); ícones customizados: Aura:RegisterIcon(nome,paths).
+
+    LIMITES:
+      Biblioteca de interface local, sem alterar remotes ou regras do servidor.
+      Assets precisam de acesso permitido pela experiência e pelo Roblox.
+      As funções de arquivo variam conforme o ambiente; sem promessa de suporte
+        a todos os executores ou a todos os assets.
+
     NOTES:
       File config persistence uses optional readfile/writefile only when available.
       Without those APIs, ExportConfig/ImportConfig and in-session state work.
@@ -62,7 +124,7 @@
       No claim that this code has been executed in Roblox Studio yet.
 ]]
 
-local Aura = { Version = "3.5.0" }
+local Aura = { Version = "4.0.0" }
 Aura.__index = Aura
 
 local Players = game:GetService("Players")
@@ -84,6 +146,10 @@ local BASE = {
     Overlay=C(5,13,9),
 }
 local PRESETS = {
+    Light={Background=C(225,239,233),Surface=C(241,250,245),SurfaceAlt=C(255,255,255),Hover=C(213,238,224),Accent=C(0,117,78),AccentSoft=C(194,234,213),Text=C(19,47,37),Muted=C(63,91,78),Stroke=C(133,173,152)},
+    Midnight={Background=C(15,18,29),Surface=C(23,28,43),SurfaceAlt=C(32,39,57),Hover=C(43,54,75),Accent=C(104,192,255),AccentSoft=C(32,67,98),Text=C(243,249,255),Muted=C(172,193,213),Stroke=C(75,104,136)},
+    Violet={Accent=C(203,163,255),AccentSoft=C(80,56,107)},
+    HighContrast={Background=C(0,0,0),Surface=C(10,10,10),SurfaceAlt=C(24,24,24),Hover=C(50,50,50),Accent=C(255,236,86),AccentSoft=C(69,61,0),Text=C(255,255,255),Muted=C(230,230,230),Stroke=C(204,204,204)},
     NeonLight={}, Forest = {}, Mint={Accent=C(86,243,176), AccentSoft=C(25,89,64)},
     Neon={Accent=C(30,255,94),AccentSoft=C(21,98,42)},
     Emerald={Accent=C(25,194,135),AccentSoft=C(17,79,61)},
@@ -102,10 +168,23 @@ local function themeFor(value)
     end
     return t
 end
+local guiWindows=setmetatable({},{__mode="k"})
 local function new(class, props, parent)
     local inst=Instance.new(class)
     for key,val in pairs(props or {}) do inst[key]=val end
     if parent then inst.Parent=parent end
+    if class=="TextLabel" or class=="TextButton" or class=="TextBox" then
+        local ancestor=parent
+        while ancestor do
+            local w=guiWindows[ancestor]
+            if w then
+                w._fontSizes[inst]=inst.TextSize
+                inst.TextSize=math.floor(inst.TextSize*(w.TextScale or 1)+.5)
+                break
+            end
+            ancestor=ancestor.Parent
+        end
+    end
     return inst
 end
 local function round(obj, amount)
@@ -193,9 +272,16 @@ end
 local function asopts(arg)
     return type(arg)=="table" and arg or {Name=tostring(arg or "")}
 end
+local function limitedText(value,limit)
+    local text=tostring(value or "")
+    if not limit or limit<=0 then return text end
+    local ok,index=pcall(utf8.offset,text,math.floor(limit)+1)
+    if ok and index then return text:sub(1,index-1) end
+    return text
+end
 local function normalizedKey(value)
     if typeof(value)=="EnumItem" then return value end
-    if type(value)=="string" then return Enum.KeyCode[value] end
+    if type(value)=="string" then local ok,key=pcall(function()return Enum.KeyCode[value]end);if ok then return key end end
     return nil
 end
 local function hex(color)
@@ -288,7 +374,7 @@ local ICONS={
     users={{{4,21},{4,18},{6,15},{11,15},{13,18},{13,21}},{{16,15},{19,15},{21,18},{21,21}}, {circle={8.5,8,4}},{{16,4},{18,5},{19,8},{18,11},{16,12}}},
     user={{circle={12,7,4}},{{4,22},{4,18},{7,14},{17,14},{20,18},{20,22}}},
     baby={{circle={12,12,9}},{{8,3},{10,6},{13,6},{14,4}},{{8,10},{8.1,10}},{{16,10},{16.1,10}},{{8,15},{10,17},{14,17},{16,15}}},
-    music={{{9,18},{9,5},{21,3},{21,16}},{{9,9},{21,7}},{circle={5.5,18,3.5}},{circle={17.5,16,3.5}}},
+    music={{{9,18},{9,5},{21,3},{21,16}},{{9,9},{21,7}},{circle={5.5,18,4.0}},{circle={17.5,16,4.0}}},
     crown={{{3,6},{7,11},{12,3},{17,11},{21,6},{19,19},{5,19},{3,6}},{{5,22},{19,22}}},
     shirt={{{8,3},{3,5},{1,10},{5,12},{5,22},{19,22},{19,12},{23,10},{21,5},{16,3},{15,6},{9,6},{8,3}}},
     shield={{{12,2},{21,6},{20,15},{17,20},{12,23},{7,20},{4,15},{3,6},{12,2}}},
@@ -336,7 +422,7 @@ ICONS.info={{circle={12,12,10}},{{12,10},{12,18}},{circle={12,6,1}}}
 ICONS.sun={{circle={12,12,5}},{{12,1},{12,4}},{{12,20},{12,23}},{{1,12},{4,12}},{{20,12},{23,12}},{{4,4},{6,6}},{{18,18},{20,20}},{{4,20},{6,18}},{{18,6},{20,4}}}
 ICONS.moon={{{20,16},{15,16},{10,13},{8,8},{9,3},{4,6},{2,12},{5,19},{12,22},{18,20},{20,16}}}
 ICONS["arrow-up-right"]={{{5,19},{19,5}},{{7,5},{19,5},{19,17}}}
-ICONS.sparkles={{{12,2},{15,9},{22,12},{15,15},{12,22},{9,15},{2,12},{9,9},{12,2}},{{21,1},{21,6}},{{18.5,3.5},{23.5,3.5}}}
+ICONS.sparkles={{{12,2},{15,9},{22,12},{15,15},{12,22},{9,15},{2,12},{9,9},{12,2}},{{21,1},{21,6}},{{18.5,4.0},{24.0,4.0}}}
 ICONS.rocket={{{5,15},{10,7},{16,2},{22,2},{22,8},{17,14},{9,19},{5,15}},{{8,10},{3,10},{1,16},{6,16}},{{15,17},{15,22},{9,24},{9,19}},{circle={16,8,2.5}},{{4,20},{2,22}}}
 ICONS.flame={{{13,1},{15,7},{19,10},{21,15},{19,21},{12,24},{5,21},{3,15},{6,9},{8,13},{10,8},{13,1}},{{12,13},{9,18},{10,22},{14,22},{16,18},{12,13}}}
 ICONS.gem={{{6,3},{18,3},{23,9},{12,23},{1,9},{6,3}},{{1,9},{23,9}},{{6,3},{9,9},{12,23},{15,9},{18,3}}}
@@ -422,9 +508,15 @@ local function decode(value)
     local out={};for k,v in pairs(value) do out[k]=decode(v) end;return out
 end
 
+local function sameValue(a,b)
+    if type(a)~="table" or type(b)~="table" then return a==b end
+    for key,value in pairs(a) do if not sameValue(value,b[key]) then return false end end
+    for key in pairs(b) do if a[key]==nil then return false end end
+    return true
+end
 function Window:_history(flag,old,newValue)
     if self._applyingHistory then return end
-    if old==newValue then return end
+    if sameValue(old,newValue) then return end
     table.insert(self._undo,{flag=flag,old=encode(old),new=encode(newValue)})
     if #self._undo>80 then table.remove(self._undo,1) end
     table.clear(self._redo)
@@ -456,14 +548,56 @@ function Window:_register(handle,options)
     self.Flags[flag]=handle
     handle.Flag=flag
     handle._window=self
-    handle._search=(tostring(options.Name or "").." "..tostring(options.Description or "")):lower()
+    handle._visible=options.Visible~=false
+    handle._disabled=options.Disabled==true
+    local keywords=type(options.Tags)=="table" and table.concat(options.Tags," ") or tostring(options.Tags or "")
+    handle._keywords=keywords
+    function handle:SetVisible(visible)
+        self._visible=not not visible
+        self.Root.Visible=self._visible
+        if self._window._applySearch then self._window:_applySearch() end
+        return self
+    end
+    function handle:Show()return self:SetVisible(true)end
+    function handle:Hide()return self:SetVisible(false)end
+    function handle:SetDisabled(disabled)
+        self._disabled=not not disabled
+        if not self._blocker then
+            self._blocker=new("TextButton",{Name="DisabledOverlay",Text="",AutoButtonColor=false,BackgroundColor3=self._window.Theme.Background,BackgroundTransparency=.5,BorderSizePixel=0,Size=UDim2.fromScale(1,1),ZIndex=50,Selectable=false},self.Root)
+            round(self._blocker,10)
+        end
+        self._blocker.Visible=self._disabled
+        return self
+    end
+    function handle:SetName(value)
+        self.Name=tostring(value or "")
+        if self.TitleLabel then self.TitleLabel.Text=self.Name end
+        self._search=(self.Name.." "..tostring(options.Description or "").." "..self._keywords):lower()
+        if self.Reflow then self:Reflow() end
+        if self._window._applySearch then self._window:_applySearch() end
+        return self
+    end
+    function handle:SetOrder(value)
+        self.Root.LayoutOrder=tonumber(value) or self.Root.LayoutOrder;return self
+    end
+    handle._search=(tostring(options.Name or "").." "..tostring(options.Description or "").." "..keywords):lower()
     local originalDestroy=handle.Destroy
     function handle:Destroy()
+        if self._destroyed then return end
+        self._destroyed=true
         if self._window.Flags[self.Flag]==self then self._window.Flags[self.Flag]=nil end
         if originalDestroy then originalDestroy(self) end
     end
     task.defer(function()
         if self.Destroyed or self.Flags[flag]~=handle then return end
+        if handle.Get and not handle._skipSave then
+            local ok,value=pcall(handle.Get,handle)
+            if ok then handle._default=encode(value) end
+        end
+        handle.Root.Visible=handle._visible
+        if self.PanelTransparency and handle.Root.BackgroundTransparency<1 then handle.Root.BackgroundTransparency=self.PanelTransparency end
+        if handle._disabled then handle:SetDisabled(true) end
+        if self._applySearch then self:_applySearch() end
         if self._pendingConfig and self._pendingConfig[flag]~=nil and handle.Set then
             local value=self._pendingConfig[flag]
             self._pendingConfig[flag]=nil
@@ -473,7 +607,7 @@ function Window:_register(handle,options)
     return handle
 end
 function Window:ExportConfig()
-    local data={version=Aura.Version,theme=self.ThemeName,size=encode(self:GetSize()),values={}}
+    local data={version=Aura.Version,theme=self.ThemeName,size=encode(self._unminimizedSize and self.Minimized and self._unminimizedSize or self:GetSize()),values={},layout={textScale=self.TextScale or 1,reducedMotion=not self.Animations,panelTransparency=self.PanelTransparency or 0}}
     for flag,item in pairs(self.Flags) do
         if item.Get and not item._skipSave then
             local ok,value=pcall(function()return item:Get()end)
@@ -492,12 +626,18 @@ function Window:ImportConfig(json)
         data=res
     elseif type(json)=="table" then data=json end
     if type(data)~="table" then return false,"Invalid configuration" end
+    if data.values~=nil and type(data.values)~="table" then return false,"values deve ser uma tabela" end
     if data.theme and PRESETS[data.theme] then self:SetTheme(data.theme) end
     if data.size then
-        local size=decode(data.size)
-        if typeof(size)=="Vector2" then self:SetSize(size.X,size.Y) end
+        local ok,size=pcall(decode,data.size)
+        if ok and typeof(size)=="Vector2" then self:SetSize(size.X,size.Y) end
     end
-    self._pendingConfig=data.values or {}
+    if type(data.layout)=="table" then
+        if data.layout.textScale then self:SetTextScale(data.layout.textScale) end
+        if data.layout.reducedMotion~=nil then self:SetReducedMotion(data.layout.reducedMotion) end
+        if data.layout.panelTransparency~=nil then self:SetPanelTransparency(data.layout.panelTransparency) end
+    end
+    self._pendingConfig=copy(data.values or {})
     for flag,value in pairs(data.values or {}) do
         local item=self.Flags[flag]
         if item and item.Set then
@@ -508,6 +648,7 @@ function Window:ImportConfig(json)
             if not ok then warn("[AURA CONFIG]",flag,err) end
         end
     end
+    self:_emit("ConfigLoaded",data)
     return true
 end
 function Window:SaveConfig()
@@ -540,6 +681,7 @@ function Window:SetTheme(nameOrTable)
     if self._accentGradient then
         self._accentGradient.Color=ColorSequence.new(self.Theme.Accent,self.Theme.AccentSoft)
     end
+    self:_emit("ThemeChanged",self.ThemeName)
     return self
 end
 function Window:SetAccent(color)
@@ -578,6 +720,7 @@ end
 function Window:Toggle(visible)
     if type(visible)=="boolean" then self.Root.Visible=visible else self.Root.Visible=not self.Root.Visible end
     if self.FloatingButton then self.FloatingButton.Visible=true end
+    self:_emit("VisibilityChanged",self.Root.Visible)
     return self.Root.Visible
 end
 function Window:Minimize(state)
@@ -595,10 +738,18 @@ function Window:Minimize(state)
         self.Root.Size=UDim2.fromOffset(size.X,size.Y)
         self.Main.Visible=true;self.Sidebar.Visible=true;self.ResizeHandle.Visible=true
     end
+    self:_emit("MinimizedChanged",self.Minimized)
 end
 function Window:Destroy()
     if self.Destroyed then return end
     self.Destroyed=true
+    if self._modal then self._modal.Closed=true;self._modal=nil end
+    self:_emit("Destroyed")
+    for _,fn in ipairs(self._cleanup or {}) do local ok,err=pcall(fn);if not ok then warn("[AURA CLEANUP]",err) end end
+    for _,listeners in pairs(self._events or {}) do
+        for _,listener in ipairs(listeners) do listener.Connected=false;listener.Callback=nil end
+    end
+    table.clear(self._events)
     for _,connection in ipairs(self._connections) do connection:Disconnect() end
     table.clear(self._connections)
     if self.Gui and self.Gui.Parent then self.Gui:Destroy() end
@@ -614,6 +765,7 @@ local function titleHeader(window,root,options)
     local symbol=renderIcon(logo,window,"box",22,"Accent")
     symbol.Position=UDim2.fromOffset(7,7)
     local title=textlabel(top,window,options.Title or "AURA",17,true)
+    title.Name="WindowTitle"
     title.Position=UDim2.fromOffset(60,19);title.Size=UDim2.new(1,-165,0,26)
     local minus=textbutton(top,window,"−")
     minus.Size=UDim2.fromOffset(34,32);minus.AnchorPoint=Vector2.new(1,0)
@@ -651,7 +803,7 @@ local function createMain(window,root)
     },aside)
     bind(window,tabs,"ScrollBarImageColor3","Accent")
     padding(tabs,3,4,3,7);list(tabs,7)
-    local foot=textlabel(aside,window,"AURA  /  3.5",10,true,"Muted")
+    local foot=textlabel(aside,window,"AURA  /  4.0",10,true,"Muted")
     foot.Position=UDim2.new(0,15,1,-42);foot.Size=UDim2.new(1,-30,0,20)
     window.Sidebar=aside;window.TabButtons=tabs;window.SidebarFooter=foot
     window.TabListLayout=tabs:FindFirstChildOfClass("UIListLayout")
@@ -718,20 +870,7 @@ local function createMain(window,root)
     window._relayout=relayout
     track(window,root:GetPropertyChangedSignal("AbsoluteSize"),relayout)
     task.defer(relayout)
-    track(window,search:GetPropertyChangedSignal("Text"),function()
-        local query=search.Text:lower()
-        for _,tab in ipairs(window.Tabs) do
-            local matches=0
-            for _,h in ipairs(tab.Controls) do
-                if h.Root and h.Root.Parent then
-                    local show=query=="" or h._search:find(query,1,true)~=nil
-                    h.Root.Visible=show
-                    if show then matches=matches+1 end
-                end
-            end
-            tab.Button.Visible=query=="" or tab.Name:lower():find(query,1,true)~=nil or matches>0
-        end
-    end)
+    track(window,search:GetPropertyChangedSignal("Text"),function()window:_applySearch()end)
 end
 
 local function createResize(window,root)
@@ -883,6 +1022,8 @@ function Aura:CreateWindow(options)
         Theme=themeFor(options.Theme or "Forest"),ThemeName=options.Theme or "Forest",
         ConfigFile=options.ConfigFile or "aura_green_config.json",Language="pt",
         _connections={},_themeBindings={},_counter=0,Flags={},Tabs={},
+        _events={},_cleanup={},_fontSizes=setmetatable({},{__mode="k"}),TextScale=math.clamp(tonumber(options.TextScale) or 1,.85,1.25),
+        GamepadNavigation=options.GamepadNavigation==true,
         _undo={},_redo={},Animations=options.Animations~=false,
         Minimized=false,MinSize=options.MinSize or Vector2.new(460,320),
         MaxSize=options.MaxSize or Vector2.new(1400,950),
@@ -901,7 +1042,7 @@ function Aura:CreateWindow(options)
         IgnoreGuiInset=true,ResetOnSpawn=false,ZIndexBehavior=Enum.ZIndexBehavior.Sibling,
         DisplayOrder=options.DisplayOrder or 50,
     },guiParent)
-    w.Gui=gui
+    w.Gui=gui;guiWindows[gui]=w
     track(w,gui.Destroying,function()w:Destroy()end)
     local root=frame(gui,w,"Background",19)
     root.Name="Root";root.ClipsDescendants=true
@@ -924,11 +1065,16 @@ function Aura:CreateWindow(options)
         w:SetFloatingButton(bubble)
     end
     track(w,UserInputService.InputBegan,function(input,processed)
+        if w._modal then return end
+        if w.GamepadNavigation and input.UserInputType==Enum.UserInputType.Gamepad1 and (input.KeyCode==Enum.KeyCode.ButtonL1 or input.KeyCode==Enum.KeyCode.ButtonR1) then
+            local direction=input.KeyCode==Enum.KeyCode.ButtonR1 and 1 or -1
+            w:NextTab(direction);return
+        end
         if processed or w._capturingKey or UserInputService:GetFocusedTextBox() then return end
         if input.KeyCode==w.ToggleKey then w:Toggle() end
     end)
     track(w,workspace:GetPropertyChangedSignal("CurrentCamera"),function()
-        w:SetSize(w._unminimizedSize or w:GetSize())
+        w:SetSize(w.Minimized and w._unminimizedSize or w:GetSize())
     end)
     createKeyOverlay(w,options.KeySystem)
     local cameraConnection
@@ -943,6 +1089,8 @@ function Aura:CreateWindow(options)
         end
     end
     watchCamera();track(w,workspace:GetPropertyChangedSignal("CurrentCamera"),watchCamera)
+    if options.ReducedMotion~=nil then w:SetReducedMotion(options.ReducedMotion) end
+    if options.PanelTransparency then w:SetPanelTransparency(options.PanelTransparency) end
     if options.AutoLoadConfig then w:LoadConfig() end
     Aura._lastWindow=w
     return w
@@ -988,6 +1136,7 @@ function Window:SelectTab(tab)
     end
     self.PageTitle.Text=string.upper(tab.Name)
     self.PageDescription.Text=tostring(tab.Description or "Sua área de controles")
+    self:_emit("TabChanged",tab)
     return true
 end
 function Tab:_nextOrder()
@@ -997,6 +1146,7 @@ end
 
 local function createRow(tab,opts,height,wide)
     local w=tab.Window
+    opts=copy(opts);opts.Name=opts.Name or opts.Title or "Control"
     local root=frame(tab.Content,w,"SurfaceAlt",11)
     root.Name="Item_"..tostring(opts.Name or "Control")
     root.Size=UDim2.new(1,-4,0,height or 66)
@@ -1033,11 +1183,12 @@ local function createRow(tab,opts,height,wide)
         name.Visible=name.Text~=""
         name.Position=UDim2.fromOffset(textLeft,name.Text=="" and 0 or 12);name.Size=UDim2.fromOffset(textWidth,titleHeight)
         local bottom=12+titleHeight
-        if description then
-            local dh=measure(description,textWidth,48)
+        if description and description.Text~="" then
+            description.Visible=true
+            local dh=measure(description,textWidth,72)
             description.Position=UDim2.fromOffset(textLeft,bottom+4);description.Size=UDim2.fromOffset(textWidth,dh)
             bottom=bottom+4+dh
-        end
+        elseif description then description.Visible=false end
         local base=math.max(44,bottom+8)
         if opts._section then
             base=name.Text=="" and not description and 8 or bottom+5
@@ -1062,6 +1213,18 @@ local function createRow(tab,opts,height,wide)
         if body then body.Visible=bodyHeight>0 end
         reflowing=false
     end
+    function handle:SetDescription(value)
+        opts.Description=tostring(value or "")
+        if not description then
+            description=textlabel(root,w,"",12,false,"Muted")
+            description.TextWrapped=true;description.TextYAlignment=Enum.TextYAlignment.Top
+            self.DescriptionLabel=description
+        end
+        description.Text=opts.Description
+        self._search=(tostring(self.Name or "").." "..opts.Description.." "..tostring(self._keywords or "")):lower()
+        reflow();if w._applySearch then w:_applySearch() end
+        return self
+    end
     function handle:Action(widget,width,h)
         action=widget;actionWidth=width or 140;actionHeight=h or 34
         widget.Parent=root;reflow();return widget
@@ -1084,7 +1247,7 @@ local function createRow(tab,opts,height,wide)
 end
 local function commit(handle,old,value,fn,silent)
     if not silent then
-        handle.Tab.Window:_history(handle.Flag,old,value)
+        if not handle._dragging then handle.Tab.Window:_history(handle.Flag,old,value) end
         callback(fn,value)
     end
 end
@@ -1145,7 +1308,7 @@ function Tab:CreateButton(options)
         self:Action(chip,caption.Text~="" and 116 or 34,32)
     end
     function handle:SetDisabled(value)
-        enabled=not value
+        enabled=not value;self._disabled=not enabled
         root.BackgroundTransparency=enabled and 0 or .35
         self.TitleLabel.TextTransparency=enabled and 0 or .4
         paint(false)
@@ -1199,29 +1362,35 @@ local function sliderTrack(tab,parent,y)
         Size=UDim2.new(1,0,0,30),Position=UDim2.fromOffset(0,-11)},bar)
     return bar,fill,knob,hit
 end
-local function bindSliderPointer(tab,hit,bar,change)
+local function bindSliderPointer(tab,hit,bar,change,handle)
     local w=tab.Window
-    local held=false;local pointer=nil
+    local scroll=tab.ScrollHost or tab.Content
+    local pointer,oldValue,previousScroll
     local function update(input)
-        local x=input.Position.X
-        local denom=math.max(1,bar.AbsoluteSize.X)
-        change(math.clamp((x-bar.AbsolutePosition.X)/denom,0,1))
+        change(math.clamp((input.Position.X-bar.AbsolutePosition.X)/math.max(1,bar.AbsoluteSize.X),0,1))
+    end
+    local function release()
+        if not pointer then return end
+        pointer=nil
+        if scroll.Parent then scroll.ScrollingEnabled=previousScroll end
+        if handle then handle._dragging=false;w:_history(handle.Flag,oldValue,handle:Get()) end
     end
     track(w,hit.InputBegan,function(input)
+        if pointer or (handle and handle._disabled) then return end
         if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-            held=true;pointer=input;update(input)
-        end
-    end)
-    track(w,UserInputService.InputChanged,function(input)
-        if held and pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement)) then
+            pointer=input;previousScroll=scroll.ScrollingEnabled;scroll.ScrollingEnabled=false
+            if handle then oldValue=handle:Get();handle._dragging=true end
             update(input)
         end
     end)
-    track(w,UserInputService.InputEnded,function(input)
-        if pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then
-            held=false;pointer=nil
-        end
+    track(w,UserInputService.InputChanged,function(input)
+        if pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement)) then update(input) end
     end)
+    track(w,UserInputService.InputEnded,function(input)
+        if pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then release() end
+    end)
+    track(w,UserInputService.WindowFocusReleased,release)
+    track(w,hit.Destroying,release)
 end
 function Tab:CreateSlider(options)
     options=asopts(options)
@@ -1251,7 +1420,7 @@ function Tab:CreateSlider(options)
         commit(self,old,current,options.Callback,silent)
     end
     function handle:Get()return current end
-    bindSliderPointer(self,hit,bar,function(f)handle:Set(min+(max-min)*f)end)
+    bindSliderPointer(self,hit,bar,function(f)handle:Set(min+(max-min)*f)end,handle)
     handle:Set(options.Default or min,true)
     return handle
 end
@@ -1292,13 +1461,23 @@ function Tab:CreateRangeSlider(options)
     end
     function handle:Get()return {low,high}end
     local which=1;local held=false;local pointer
+    local scroll=self.ScrollHost or self.Content
+    local beforeDrag,previousScroll
+    local function release()
+        if not pointer then return end
+        pointer=nil;held=false;handle._dragging=false
+        if scroll.Parent then scroll.ScrollingEnabled=previousScroll end
+        w:_history(handle.Flag,beforeDrag,handle:Get())
+    end
     local function fromInput(input)
         local f=math.clamp((input.Position.X-base.AbsolutePosition.X)/math.max(1,base.AbsoluteSize.X),0,1)
-        if which==1 then handle:Set({min+f*(max-min),high}) else handle:Set({low,min+f*(max-min)}) end
+        if which==1 then handle:Set({math.min(min+f*(max-min),high),high}) else handle:Set({low,math.max(low,min+f*(max-min))}) end
     end
     track(w,hit.InputBegan,function(input)
         if input.UserInputType~=Enum.UserInputType.MouseButton1 and input.UserInputType~=Enum.UserInputType.Touch then return end
-        pointer=input;held=true
+        if pointer or handle._disabled then return end
+        pointer=input;held=true;beforeDrag=handle:Get();handle._dragging=true
+        previousScroll=scroll.ScrollingEnabled;scroll.ScrollingEnabled=false
         local f=math.clamp((input.Position.X-base.AbsolutePosition.X)/math.max(1,base.AbsoluteSize.X),0,1)
         local val=min+f*(max-min)
         which=math.abs(val-low)<math.abs(val-high) and 1 or 2
@@ -1308,8 +1487,10 @@ function Tab:CreateRangeSlider(options)
         if held and pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement)) then fromInput(input)end
     end)
     track(w,UserInputService.InputEnded,function(input)
-        if pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then pointer=nil;held=false end
+        if pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then release() end
     end)
+    track(w,UserInputService.WindowFocusReleased,release)
+    track(w,hit.Destroying,release)
     handle:Set(options.Default or {min,max},true)
     return handle
 end
@@ -1333,7 +1514,11 @@ function Tab:CreateInput(options)
     bind(w,field,"PlaceholderColor3","Muted")
     local previous=options.Numeric and tonumber(options.Default) or tostring(options.Default or "")
     function handle:Set(v,silent)
-        if options.Numeric then v=tonumber(v) or previous or 0 else v=tostring(v or "") end
+        if options.Numeric then v=tonumber(v) or previous or 0 else v=limitedText(v,tonumber(options.MaxLength)) end
+        if type(options.Validate)=="function" then
+            local ok,valid=pcall(options.Validate,v)
+            if not ok or valid==false then field.Text=tostring(previous);return false end
+        end
         local old=previous;previous=v;field.Text=tostring(v)
         commit(self,old,v,options.Callback,silent)
     end
@@ -1362,7 +1547,13 @@ function Tab:CreateDropdown(options)
     local arrow=renderIcon(trigger,w,"chevron-down",12,"Muted")
     arrow.Position=UDim2.new(1,-20,.5,-6)
     local body=handle:Mount(0)
-    local holder=new("ScrollingFrame",{BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.fromScale(1,1),CanvasSize=UDim2.new(),ScrollBarThickness=3,ScrollingDirection=Enum.ScrollingDirection.Y,ClipsDescendants=true},body)
+    local searchable=options.Searchable==true
+    local query
+    if searchable then
+        query=new("TextBox",{Name="OptionSearch",Text="",PlaceholderText="Filtrar opções...",ClearTextOnFocus=false,BackgroundColor3=w.Theme.Surface,TextColor3=w.Theme.Text,PlaceholderColor3=w.Theme.Muted,Font=Enum.Font.Gotham,TextSize=12,BorderSizePixel=0,Size=UDim2.new(1,0,0,32),TextXAlignment=Enum.TextXAlignment.Left},body)
+        round(query,7);padding(query,10,0,8,0);bind(w,query,"BackgroundColor3","Surface");bind(w,query,"TextColor3","Text");bind(w,query,"PlaceholderColor3","Muted")
+    end
+    local holder=new("ScrollingFrame",{BackgroundTransparency=1,BorderSizePixel=0,Position=UDim2.fromOffset(0,searchable and 40 or 0),Size=UDim2.new(1,0,1,searchable and -40 or 0),CanvasSize=UDim2.new(),ScrollBarThickness=3,ScrollingDirection=Enum.ScrollingDirection.Y,ClipsDescendants=true},body)
     bind(w,holder,"ScrollBarImageColor3","Accent")
     syncScroll(w,holder,list(holder,5),4)
     local items,links={},{}
@@ -1380,10 +1571,19 @@ function Tab:CreateDropdown(options)
             b.TextColor3=w.Theme[active and "Accent" or "Text"]
         end
     end
-    local function expand(v)
-        expanded=not not v
-        handle:SetBodyHeight(expanded and math.max(38,math.min(#choices,6)*37+4) or 0)
+    local function filter()
+        local text=query and query.Text:lower() or ""
+        local shown=0
+        for i,button in ipairs(items) do
+            button.Visible=text=="" or tostring(choices[i]):lower():find(text,1,true)~=nil
+            if button.Visible then shown=shown+1 end
+        end
+        handle:SetBodyHeight(expanded and (math.max(38,math.min(shown,6)*37+4)+(searchable and 40 or 0)) or 0)
     end
+    local function expand(v)
+        expanded=not not v;filter()
+    end
+    if query then track(w,query:GetPropertyChangedSignal("Text"),function()holder.CanvasPosition=Vector2.new();filter()end) end
     local function rebuild()
         for _,c in ipairs(links) do c:Disconnect() end;table.clear(links)
         for _,b in ipairs(items) do b:Destroy() end;table.clear(items)
@@ -1451,10 +1651,12 @@ function Tab:CreateKeybind(options)
             if input.KeyCode~=Enum.KeyCode.Unknown then handle:Set(input.KeyCode);listening=false;w._capturingKey=false end
             return
         end
-        if not processed and not UserInputService:GetFocusedTextBox() and input.KeyCode==current and current~=Enum.KeyCode.Unknown then
+        if not self.Window._modal and not handle._disabled and root.Visible and not processed and not UserInputService:GetFocusedTextBox() and input.KeyCode==current and current~=Enum.KeyCode.Unknown then
             callback(options.Callback,current)
         end
     end)
+    local destroy=handle.Destroy
+    function handle:Destroy()if listening then listening=false;w._capturingKey=false end;destroy(self)end
     handle:Set(options.Default or Enum.KeyCode.F,true)
     return handle
 end
@@ -1508,11 +1710,12 @@ function Tab:CreateParagraph(options)
     local function resize()
         if not body.Parent then return end
         local width=math.max(80,body.AbsoluteSize.X)
-        local bounds=TextService:GetTextSize(label.Text,12,label.Font,Vector2.new(width,100000))
+        local bounds=TextService:GetTextSize(label.Text,label.TextSize,label.Font,Vector2.new(width,100000))
         local h=label.Text=="" and 0 or math.max(20,math.ceil(bounds.Y)+4)
         label.Size=UDim2.new(1,0,0,h);handle:SetBodyHeight(h)
     end
     track(self.Window,body:GetPropertyChangedSignal("AbsoluteSize"),resize)
+    function handle:RefreshLayout()resize();self:Reflow()end
     function handle:Set(value,content)
         if type(value)=="table" then
             if value.Title then self.TitleLabel.Text=tostring(value.Title) end
@@ -1570,17 +1773,18 @@ end
 -- Each drag owns one pointer; touching elsewhere cannot move the selector.
 local function bindPlane(tab,hit,update,finish)
     local w=tab.Window
+    local scroll=tab.ScrollHost or tab.Content
     local pointer,previousScroll
     local function release()
         if not pointer then return end
         pointer=nil
-        if tab.Content.Parent then tab.Content.ScrollingEnabled=previousScroll end
+        if scroll.Parent then scroll.ScrollingEnabled=previousScroll end
         if finish then finish() end
     end
     track(w,hit.InputBegan,function(input)
         if pointer or (input.UserInputType~=Enum.UserInputType.MouseButton1 and input.UserInputType~=Enum.UserInputType.Touch) then return end
         if update(input,true)==false then return end
-        pointer=input;previousScroll=tab.Content.ScrollingEnabled;tab.Content.ScrollingEnabled=false
+        pointer=input;previousScroll=scroll.ScrollingEnabled;scroll.ScrollingEnabled=false
     end)
     track(w,UserInputService.InputChanged,function(input)
         if pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement)) then update(input,false) end
@@ -1979,7 +2183,7 @@ end
 function Window:CreateThemeEditor()
     local tab=self:CreateTab({Name="Appearance",Icon="palette"})
     tab:CreateSection("THEMES")
-    tab:CreateDropdown({Name="Preset",Options={"Forest","Mint","Neon","Emerald","Lime"},
+    tab:CreateDropdown({Name="Preset",Options={"NeonLight","Forest","Mint","Neon","Emerald","Lime","Light","Midnight","Violet","HighContrast"},Searchable=true,
         Default=self.ThemeName,Flag="aura_theme_preset",Callback=function(name)
             if PRESETS[name] then self:SetTheme(name)end
         end})
@@ -2158,6 +2362,557 @@ function Window:CreateAllBuiltins()
     self:CreatePlayerList()
     return self
 end
+
+-- AURA 4: optional components. Nothing creates tabs until explicitly requested.
+function Window:_emit(event,...)
+    local listeners={};for _,listener in ipairs((self._events or {})[event] or {}) do table.insert(listeners,listener) end
+    for _,listener in ipairs(listeners) do
+        if listener.Connected then callback(listener.Callback,...) end
+    end
+end
+function Window:On(event,fn)
+    assert(type(fn)=="function","On expects a callback")
+    self._events=self._events or {};self._events[event]=self._events[event] or {}
+    local listener={Connected=true,Callback=fn}
+    local listeners=self._events[event]
+    function listener:Disconnect()
+        self.Connected=false;self.Callback=nil
+        for i,item in ipairs(listeners) do if item==self then table.remove(listeners,i);break end end
+    end
+    table.insert(self._events[event],listener);return listener
+end
+function Window:OnDestroy(fn)
+    assert(type(fn)=="function","OnDestroy expects a callback")
+    table.insert(self._cleanup,fn);return self
+end
+function Window:Notify(options)
+    options=copy(options or {});options.Window=self;return Aura:Notify(options)
+end
+function Window:GetControl(flag)return self.Flags[flag]end
+function Window:GetValue(flag)
+    local control=self.Flags[flag]
+    if control and control.Get then return control:Get() end
+end
+function Window:SetValue(flag,value,silent)
+    local control=self.Flags[flag]
+    if not control or not control.Set then return false,"Controle inexistente ou sem Set" end
+    local ok,result=pcall(control.Set,control,value,silent)
+    return ok,result
+end
+function Window:ResetConfig()
+    local previous=self._applyingHistory;self._applyingHistory=true
+    for _,control in pairs(self.Flags) do
+        if control.Set and not control._skipSave and control._default~=nil then
+            local ok,err=pcall(control.Set,control,decode(control._default),false)
+            if not ok then warn("[AURA RESET]",err) end
+        end
+    end
+    self._applyingHistory=previous;table.clear(self._undo);table.clear(self._redo)
+    return self
+end
+function Window:SetTitle(title)
+    local bar=self.Root:FindFirstChild("Titlebar")
+    if bar then
+        local label=bar:FindFirstChild("WindowTitle")
+        if label then label.Text=tostring(title or "AURA") end
+    end
+    return self
+end
+function Window:SetReducedMotion(enabled)
+    self.Animations=not enabled;return self
+end
+function Window:SetTextScale(value)
+    self.TextScale=math.clamp(tonumber(value) or 1,.85,1.25)
+    for object,base in pairs(self._fontSizes) do
+        if object.Parent then
+            local size=math.floor(base*self.TextScale+.5)
+            if not object.TextWrapped and object.Size.Y.Scale==0 and object.Size.Y.Offset>0 then
+                size=math.min(size,math.max(10,object.Size.Y.Offset-2))
+            end
+            object.TextSize=size
+        end
+    end
+    for _,control in pairs(self.Flags) do
+        if control.RefreshLayout then control:RefreshLayout()
+        elseif control.Reflow then control:Reflow() end
+    end
+    return self
+end
+function Window:SetPanelTransparency(value)
+    self.PanelTransparency=math.clamp(tonumber(value) or 0,0,.7)
+    if self.Main then self.Main.BackgroundTransparency=self.PanelTransparency end
+    if self.Sidebar then self.Sidebar.BackgroundTransparency=self.PanelTransparency end
+    for _,control in pairs(self.Flags) do
+        if control.Root.Parent and control.Root.BackgroundTransparency<1 then control.Root.BackgroundTransparency=self.PanelTransparency end
+    end
+    return self
+end
+function Window:SetBackgroundFit(value)
+    local fits={Crop=Enum.ScaleType.Crop,Fit=Enum.ScaleType.Fit,Stretch=Enum.ScaleType.Stretch,Tile=Enum.ScaleType.Tile}
+    if self.BackgroundImage and fits[value] then self.BackgroundImage.ScaleType=fits[value] end
+    return self
+end
+function Window:SetGamepadNavigation(enabled)
+    self.GamepadNavigation=not not enabled
+    if enabled and self.ActiveTab then GuiService.SelectedObject=self.ActiveTab.Button end
+    return self
+end
+function Window:GetTab(value)
+    for _,tab in ipairs(self.Tabs) do if value==tab or value==tab.Name then return tab end end
+end
+function Window:NextTab(direction)
+    local visible={};local current=0
+    for _,tab in ipairs(self.Tabs) do
+        if tab.Button.Visible then table.insert(visible,tab);if tab==self.ActiveTab then current=#visible end end
+    end
+    if #visible==0 then return false end
+    local nextIndex=((current-1+(direction or 1))%#visible)+1
+    local target=visible[nextIndex];self:SelectTab(target)
+    if self.GamepadNavigation then GuiService.SelectedObject=target.Button end
+    return target
+end
+function Window:RemoveTab(value)
+    local tab=self:GetTab(value);if not tab then return false end
+    tab:Destroy();return true
+end
+function Tab:Select()return self.Window:SelectTab(self)end
+function Tab:SetVisible(value)
+    self._visible=not not value;self.Window:_applySearch();return self
+end
+function Tab:SetName(value)
+    self.Name=tostring(value or "Tab");self.Label.Text=self.Name
+    if self.Window.ActiveTab==self then self:Select() end
+    self.Window:_applySearch();return self
+end
+function Tab:Destroy()
+    if self._destroyed then return end;self._destroyed=true
+    local controls={};for _,control in ipairs(self.Controls) do table.insert(controls,control) end
+    for _,control in ipairs(controls) do control:Destroy() end
+    self.Content:Destroy();self.Button:Destroy()
+    local window=self.Window
+    for i,tab in ipairs(window.Tabs) do if tab==self then table.remove(window.Tabs,i);break end end
+    if window.ActiveTab==self then window.ActiveTab=nil;if window.Tabs[1] then window:SelectTab(window.Tabs[1]) end end
+end
+function Window:SetSearch(value)
+    self.SearchBox.Text=tostring(value or "");self:_applySearch();return self
+end
+function Window:_applySearch()
+    if self.Destroyed then return end
+    local query=(self.SearchBox and self.SearchBox.Text or ""):lower():gsub("^%s+",""):gsub("%s+$","")
+    local function filterControls(controls,inherited)
+        local count=0
+        for _,control in ipairs(controls) do
+            if control.Root and control.Root.Parent then
+                local match=query=="" or inherited or (control._search or ""):find(query,1,true)~=nil
+                if control._isGroup then
+                    local children=filterControls(control.Controls,match)
+                    local show=control._visible~=false and (match or children>0)
+                    control.Root.Visible=show
+                    control._searchExpanded=query~="" and children>0
+                    control:_renderGroup()
+                    if show then count=count+1 end
+                else
+                    local show=control._visible~=false and match
+                    control.Root.Visible=show
+                    if show then count=count+1 end
+                end
+            end
+        end
+        return count
+    end
+    local first
+    for _,tab in ipairs(self.Tabs) do
+        local tabMatch=query~="" and tab.Name:lower():find(query,1,true)~=nil
+        local count=filterControls(tab.Controls,tabMatch)
+        tab.Button.Visible=tab._visible~=false and (query=="" or tabMatch or count>0)
+        if tab.Button.Visible and not first then first=tab end
+    end
+    if self.ActiveTab and not self.ActiveTab.Button.Visible then
+        self.ActiveTab.Content.Visible=false
+        if first then self:SelectTab(first) end
+    elseif first and not self.ActiveTab then self:SelectTab(first)
+    elseif self.ActiveTab and self.ActiveTab.Button.Visible then self.ActiveTab.Content.Visible=true end
+end
+
+function Tab:CreateGroup(options)
+    options=asopts(options)
+    local root,group=createRow(self,options,56,true)
+    local w=self.Window
+    local body=group:Mount(1)
+    group.Window=w;group.Content=body;group.ScrollHost=self.ScrollHost or self.Content
+    group.Controls={};group.Order=0;group._isGroup=true;group._skipSave=true
+    group.Expanded=options.Collapsed~=true
+    setmetatable(group,Tab)
+    local layout=list(body,tonumber(options.Spacing) or 7)
+    local button=clickAction(self,root,function()end)
+    group:Action(button,106,30)
+    function group:_renderGroup()
+        local expanded=self.Expanded or self._searchExpanded
+        button.Text=expanded and "Recolher" or "Expandir"
+        self:SetBodyHeight(expanded and math.max(4,layout.AbsoluteContentSize.Y+4) or 0)
+    end
+    function group:SetCollapsed(value)
+        self.Expanded=not value;self:_renderGroup();return self
+    end
+    function group:Open()return self:SetCollapsed(false)end
+    function group:Close()return self:SetCollapsed(true)end
+    function group:Get()return self.Expanded end
+    function group:Set(value)self.Expanded=not not value;self:_renderGroup()end
+    track(w,button.Activated,function()group:SetCollapsed(group.Expanded)end)
+    track(w,layout:GetPropertyChangedSignal("AbsoluteContentSize"),function()group:_renderGroup()end)
+    local destroy=group.Destroy
+    function group:Destroy()
+        local controls={};for _,control in ipairs(self.Controls) do table.insert(controls,control) end
+        for _,control in ipairs(controls) do control:Destroy() end
+        destroy(self)
+    end
+    group:_renderGroup();return group
+end
+Tab.CreateAccordion=Tab.CreateGroup
+
+function Tab:CreateCheckbox(options)
+    options=asopts(options)
+    local root,handle=createRow(self,options,52)
+    local w=self.Window
+    local box=textbutton(root,w,"","Surface")
+    handle:Action(box,26,26);round(box,6)
+    local icon,setColor=renderIcon(box,w,"check",17,"Accent")
+    icon.Position=UDim2.fromOffset(4,4)
+    local state=false
+    function handle:RefreshVisual()
+        box.BackgroundColor3=w.Theme[state and "AccentSoft" or "Surface"]
+        icon.Visible=state;setColor(w.Theme.Accent)
+    end
+    function handle:Set(value,silent)
+        local old=state;state=not not value;self:RefreshVisual()
+        commit(self,old,state,options.Callback,silent)
+    end
+    function handle:Get()return state end
+    track(w,box.Activated,function()handle:Set(not state)end)
+    handle:Set(options.Default==true,true);return handle
+end
+Tab.CreateCheckBox=Tab.CreateCheckbox
+
+function Tab:CreateNumberInput(options)
+    options=asopts(options)
+    local root,handle=createRow(self,options,56)
+    local w=self.Window
+    local min,max=tonumber(options.Min) or -1e9,tonumber(options.Max) or 1e9
+    if min>max then min,max=max,min end
+    local step=math.max(.00001,tonumber(options.Increment or options.Step) or 1)
+    local holder=new("Frame",{BackgroundTransparency=1,BorderSizePixel=0},root)
+    handle:Action(holder,172,34)
+    local minus=textbutton(holder,w,"-","Surface");minus.Size=UDim2.fromOffset(32,34)
+    local plus=textbutton(holder,w,"+","Surface");plus.Position=UDim2.new(1,-32,0,0);plus.Size=UDim2.fromOffset(32,34)
+    local field=new("TextBox",{Name="Number",Text="",ClearTextOnFocus=false,BackgroundColor3=w.Theme.Surface,TextColor3=w.Theme.Text,Font=Enum.Font.Gotham,TextSize=13,BorderSizePixel=0,Position=UDim2.fromOffset(38,0),Size=UDim2.new(1,-76,1,0)},holder)
+    round(field,7);bind(w,field,"BackgroundColor3","Surface");bind(w,field,"TextColor3","Text")
+    local value=min
+    function handle:Set(n,silent)
+        n=tonumber(n)
+        if not n or n~=n or n==math.huge or n==-math.huge then field.Text=string.format("%g",value);return false end
+        local old=value;value=math.clamp(n,min,max);field.Text=string.format("%g",value)
+        commit(self,old,value,options.Callback,silent);return true
+    end
+    function handle:Get()return value end
+    track(w,minus.Activated,function()handle:Set(value-step)end)
+    track(w,plus.Activated,function()handle:Set(value+step)end)
+    track(w,field.FocusLost,function()handle:Set(field.Text)end)
+    handle:Set(options.Default or 0,true);return handle
+end
+Tab.CreateNumber=Tab.CreateNumberInput
+
+function Tab:CreateTextArea(options)
+    options=asopts(options)
+    local root,handle=createRow(self,options,56,true)
+    local w=self.Window;local body=handle:Mount(math.clamp(tonumber(options.Height) or 100,60,350))
+    local field=new("TextBox",{Name="TextArea",Text="",ClearTextOnFocus=false,MultiLine=true,TextEditable=options.ReadOnly~=true,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,PlaceholderText=options.Placeholder or "Digite seu texto...",BackgroundColor3=w.Theme.Surface,TextColor3=w.Theme.Text,PlaceholderColor3=w.Theme.Muted,Font=Enum.Font.Gotham,TextSize=13,BorderSizePixel=0,Size=UDim2.fromScale(1,1)},body)
+    round(field,8);padding(field,10,8,10,8)
+    bind(w,field,"BackgroundColor3","Surface");bind(w,field,"TextColor3","Text");bind(w,field,"PlaceholderColor3","Muted")
+    local value=""
+    function handle:Set(text,silent)
+        local old=value;value=limitedText(text,tonumber(options.MaxLength));field.Text=value
+        commit(self,old,value,options.Callback,silent)
+    end
+    function handle:Get()return value end
+    function handle:SetReadOnly(enabled)field.TextEditable=not enabled end
+    track(w,field.FocusLost,function()handle:Set(field.Text)end)
+    handle:Set(options.Default or "",true);return handle
+end
+
+-- Selection as a responsive strip (2-5 choices) or a vertical radio list.
+function Tab:CreateSegmented(options)
+    options=asopts(options)
+    local root,handle=createRow(self,options,56,true)
+    local w=self.Window;local body=handle:Mount(36)
+    local values=options.Options or options.Values or {};local buttons,links={},{}
+    local current=options.Default or values[1]
+    local vertical=options.Vertical==true
+    local function paint()
+        for i,button in ipairs(buttons) do
+            local active=values[i]==current
+            button.BackgroundColor3=w.Theme[active and "AccentSoft" or "Surface"]
+            button.TextColor3=w.Theme[active and "Accent" or "Text"]
+        end
+    end
+    local function layout()
+        local width=math.max(100,body.AbsoluteSize.X)
+        local columns=vertical and 1 or math.max(1,math.min(#values,math.floor(width/95)))
+        local rows=math.ceil(#values/columns)
+        for i,button in ipairs(buttons) do
+            local col=(i-1)%columns;local row=math.floor((i-1)/columns)
+            button.Position=UDim2.new(col/columns,col*6/columns,0,row*40)
+            button.Size=UDim2.new(1/columns,-6,0,34)
+        end
+        handle:SetBodyHeight(#values==0 and 0 or rows*40-6)
+    end
+    local function rebuild()
+        for _,link in ipairs(links) do link:Disconnect() end;table.clear(links)
+        for _,button in ipairs(buttons) do button:Destroy() end;table.clear(buttons)
+        for i,v in ipairs(values) do
+            local button=textbutton(body,w,tostring(v),"Surface")
+            button.TextTruncate=Enum.TextTruncate.AtEnd;table.insert(buttons,button)
+            table.insert(links,track(w,button.Activated,function()handle:Set(v)end))
+        end
+        layout();paint()
+    end
+    function handle:Get()return current end
+    function handle:Set(value,silent)
+        local found=false;for _,v in ipairs(values) do if v==value then found=true;break end end
+        if not found and value~=nil then return false end
+        local old=current;current=value;paint();commit(self,old,value,options.Callback,silent);return true
+    end
+    function handle:Refresh(newValues)
+        values=newValues or {};local found=false
+        for _,v in ipairs(values) do if v==current then found=true end end
+        if not found then current=values[1] end;rebuild()
+    end
+    function handle:RefreshVisual()paint()end
+    track(w,body:GetPropertyChangedSignal("AbsoluteSize"),layout)
+    local destroy=handle.Destroy
+    function handle:Destroy()for _,link in ipairs(links) do link:Disconnect() end;destroy(self)end
+    rebuild();return handle
+end
+function Tab:CreateRadioGroup(options)
+    options=copy(asopts(options));options.Vertical=true;return self:CreateSegmented(options)
+end
+Tab.CreateTabsControl=Tab.CreateSegmented
+function Tab:CreateSearchDropdown(options)
+    options=copy(asopts(options));options.Searchable=true;return self:CreateDropdown(options)
+end
+function Tab:CreateMultiSelect(options)
+    options=copy(asopts(options));options.Multi=true;options.Searchable=true;return self:CreateDropdown(options)
+end
+
+function Tab:CreateGallery(options)
+    options=asopts(options)
+    local root,handle=createRow(self,options,56,true)
+    local w=self.Window;local height=math.clamp(tonumber(options.Height) or 180,80,400)
+    local body=handle:Mount(height+44)
+    local pictures=options.Images or {};local index=1
+    local image=new("ImageLabel",{Name="GalleryImage",Image="",BackgroundColor3=w.Theme.Surface,BorderSizePixel=0,Size=UDim2.new(1,0,0,height),ScaleType=Enum.ScaleType.Fit},body)
+    round(image,10);bind(w,image,"BackgroundColor3","Surface")
+    local caption=textlabel(body,w,"",12,false,"Muted")
+    caption.Position=UDim2.fromOffset(42,height+10);caption.Size=UDim2.new(1,-84,0,26);caption.TextXAlignment=Enum.TextXAlignment.Center
+    local prev=textbutton(body,w,"<","Surface");prev.Position=UDim2.fromOffset(0,height+8);prev.Size=UDim2.fromOffset(32,30)
+    local nextButton=textbutton(body,w,">","Surface");nextButton.Position=UDim2.new(1,-32,0,height+8);nextButton.Size=UDim2.fromOffset(32,30)
+    local function paint()
+        if #pictures==0 then image.Image="";caption.Text="Sem imagens";return end
+        index=math.clamp(index,1,#pictures)
+        local entry=pictures[index]
+        image.Image=imageAsset(type(entry)=="table" and (entry.Image or entry.Id) or entry)
+        caption.Text=tostring(index).." / "..tostring(#pictures)..(type(entry)=="table" and entry.Caption and ("  "..entry.Caption) or "")
+    end
+    function handle:Set(value,silent)
+        local old=index;index=math.floor(tonumber(value) or 1);paint()
+        commit(self,old,index,options.Callback,silent)
+    end
+    function handle:Get()return index end
+    function handle:Refresh(images)pictures=images or {};index=1;paint()end
+    track(w,prev.Activated,function()if #pictures>0 then handle:Set((index-2)%#pictures+1) end end)
+    track(w,nextButton.Activated,function()if #pictures>0 then handle:Set(index%#pictures+1) end end)
+    handle:Set(options.Default or 1,true);return handle
+end
+
+function Tab:CreateVideo(options)
+    options=asopts(options)
+    local root,handle=createRow(self,options,56,true)
+    local w=self.Window;local height=math.clamp(tonumber(options.Height) or 180,80,400)
+    local body=handle:Mount(height+44)
+    local video=new("VideoFrame",{Name="Video",Video=imageAsset(options.Video),BackgroundColor3=w.Theme.Background,BorderSizePixel=0,Size=UDim2.new(1,0,0,height),Playing=false,Looped=options.Looped==true,Volume=math.clamp(tonumber(options.Volume) or .5,0,1)},body)
+    round(video,10);bind(w,video,"BackgroundColor3","Background")
+    local toggle=textbutton(body,w,"Reproduzir","Surface")
+    toggle.Position=UDim2.fromOffset(0,height+8);toggle.Size=UDim2.fromOffset(130,32)
+    local function paint()toggle.Text=video.Playing and "Pausar" or "Reproduzir" end
+    function handle:Play()video.Playing=true;paint();return self end
+    function handle:Pause()video.Playing=false;paint();return self end
+    function handle:Stop()video.Playing=false;video.TimePosition=0;paint();return self end
+    function handle:Set(value)video.Playing=false;video.Video=imageAsset(value);paint()end
+    function handle:Get()return video.Video end
+    function handle:SetVolume(value)video.Volume=math.clamp(tonumber(value) or .5,0,1)end
+    track(w,toggle.Activated,function()if video.Playing then handle:Pause() else handle:Play() end end)
+    track(w,video:GetPropertyChangedSignal("Playing"),paint)
+    local function pauseIfHidden()
+        if w.Minimized or not root.Visible or not self.Content.Visible or not w.Root.Visible then handle:Pause() end
+    end
+    track(w,root:GetPropertyChangedSignal("Visible"),pauseIfHidden)
+    track(w,w.Root:GetPropertyChangedSignal("Visible"),pauseIfHidden)
+    track(w,self.Content:GetPropertyChangedSignal("Visible"),pauseIfHidden)
+    local minimized=w:On("MinimizedChanged",pauseIfHidden)
+    track(w,root.Destroying,function()video.Playing=false end)
+    local destroy=handle.Destroy
+    function handle:Destroy()minimized:Disconnect();destroy(self)end
+    handle._skipSave=true;return handle
+end
+Tab.CreateVideoPlayer=Tab.CreateVideo
+
+function Tab:CreateAudioPlayer(options)
+    options=asopts(options)
+    local root,handle=createRow(self,options,56,true)
+    local w=self.Window;local body=handle:Mount(38)
+    local sound=new("Sound",{Name="AuraAudio",SoundId=imageAsset(options.Sound or options.Audio),Volume=math.clamp(tonumber(options.Volume) or .5,0,1),Looped=options.Looped==true},root)
+    local play=textbutton(body,w,"Reproduzir","Surface");play.Size=UDim2.new(.5,-4,0,34)
+    local stop=textbutton(body,w,"Parar","Surface");stop.Position=UDim2.new(.5,4,0,0);stop.Size=UDim2.new(.5,-4,0,34)
+    function handle:Play()sound:Play();play.Text="Pausar";return self end
+    function handle:Pause()sound:Pause();play.Text="Continuar";return self end
+    function handle:Stop()sound:Stop();play.Text="Reproduzir";return self end
+    function handle:Set(value)self:Stop();sound.SoundId=imageAsset(value)end
+    function handle:Get()return sound.SoundId end
+    function handle:SetVolume(value)sound.Volume=math.clamp(tonumber(value) or .5,0,1)end
+    track(w,play.Activated,function()if sound.IsPlaying then handle:Pause() else handle:Play() end end)
+    track(w,stop.Activated,function()handle:Stop()end)
+    track(w,sound.Ended,function()play.Text="Reproduzir"end)
+    track(w,root.Destroying,function()sound:Stop()end)
+    handle._skipSave=true;return handle
+end
+Tab.CreateAudio=Tab.CreateAudioPlayer
+
+function Tab:CreateDataTable(options)
+    options=asopts(options)
+    local root,handle=createRow(self,options,56,true)
+    local w=self.Window
+    local columns=options.Columns or {"Valor"};if #columns==0 then columns={"Valor"} end
+    local body=handle:Mount(100)
+    local header=new("Frame",{BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.new(1,0,0,30)},body)
+    local scroll=new("ScrollingFrame",{Name="TableRows",BackgroundTransparency=1,BorderSizePixel=0,Position=UDim2.fromOffset(0,36),Size=UDim2.new(1,0,1,-36),CanvasSize=UDim2.new(),ScrollBarThickness=3,ScrollingDirection=Enum.ScrollingDirection.Y},body)
+    bind(w,scroll,"ScrollBarImageColor3","Accent");syncScroll(w,scroll,list(scroll,4),4)
+    local entries,links,data={},{},{}
+    local orderColumn,descending=nil,false
+    local function cell(row,column,index)
+        if type(row)~="table" then return row end
+        local key=type(column)=="table" and (column.Key or index) or index
+        return row[key]
+    end
+    local function render()
+        for _,c in ipairs(links) do c:Disconnect() end;table.clear(links)
+        for _,entry in ipairs(entries) do entry:Destroy() end;table.clear(entries)
+        local visible={};for _,row in ipairs(data) do table.insert(visible,row) end
+        if orderColumn then
+            table.sort(visible,function(a,b)
+                local x,y=cell(a,columns[orderColumn],orderColumn),cell(b,columns[orderColumn],orderColumn)
+                if type(x)~="number" or type(y)~="number" then x,y=tostring(x or ""):lower(),tostring(y or ""):lower() end
+                if descending then return x>y else return x<y end
+            end)
+        end
+        local maxRows=math.clamp(tonumber(options.MaxRows) or 100,1,500)
+        for rowIndex=1,math.min(#visible,maxRows) do
+            local row=visible[rowIndex]
+            local entry=textbutton(scroll,w,"","Surface");entry.Size=UDim2.new(1,-6,0,32);entry.LayoutOrder=rowIndex
+            table.insert(entries,entry)
+            for i,column in ipairs(columns) do
+                local label=textlabel(entry,w,tostring(cell(row,column,i) or ""),12,false)
+                label.Position=UDim2.new((i-1)/#columns,8,0,0);label.Size=UDim2.new(1/#columns,-14,1,0)
+            end
+            table.insert(links,track(w,entry.Activated,function()callback(options.Callback,row,rowIndex)end))
+        end
+        handle:SetBodyHeight(36+math.min(tonumber(options.Height) or 230,math.max(36,#entries*36)))
+    end
+    function handle:Sort(column,reverse)
+        local index=tonumber(column)
+        if not index or not columns[index] then return false end
+        orderColumn=index;descending=reverse==true;render();return true
+    end
+    function handle:Refresh(rows)data={};for _,row in ipairs(rows or {}) do table.insert(data,row) end;render()end
+    function handle:Get()local result={};for _,row in ipairs(data) do table.insert(result,row) end;return result end
+    handle.Set=handle.Refresh
+    for i,column in ipairs(columns) do
+        local name=type(column)=="table" and (column.Name or column.Key or i) or column
+        local button=textbutton(header,w,tostring(name),"AccentSoft")
+        button.Position=UDim2.new((i-1)/#columns,0,0,0);button.Size=UDim2.new(1/#columns,-6,0,28)
+        track(w,button.Activated,function()handle:Sort(i,orderColumn==i and not descending or false)end)
+    end
+    local destroy=handle.Destroy
+    function handle:Destroy()for _,link in ipairs(links) do link:Disconnect() end;destroy(self)end
+    handle._skipSave=true;handle:Refresh(options.Rows or options.Data or {});return handle
+end
+
+function Window:Dialog(options)
+    options=options or {}
+    if self._modal then self._modal:Close(false) end
+    local shade=new("TextButton",{Name="DialogOverlay",Text="",AutoButtonColor=false,BackgroundColor3=C(0,0,0),BackgroundTransparency=.3,Size=UDim2.fromScale(1,1),BorderSizePixel=0,ZIndex=100},self.Gui)
+    local pane=frame(shade,self,"SurfaceAlt",16)
+    pane.AnchorPoint=Vector2.new(.5,.5);pane.Position=UDim2.fromScale(.5,.5);pane.ZIndex=2
+    local width=math.min(420,screenSize().X-24)
+    local title=textlabel(pane,self,options.Title or "Confirmar",17,true)
+    title.Position=UDim2.fromOffset(20,16);title.Size=UDim2.new(1,-40,0,26)
+    local content=new("ScrollingFrame",{BackgroundTransparency=1,BorderSizePixel=0,Position=UDim2.fromOffset(20,52),Size=UDim2.new(1,-40,0,100),CanvasSize=UDim2.new(),ScrollBarThickness=3,ScrollingDirection=Enum.ScrollingDirection.Y},pane)
+    local message=textlabel(content,self,options.Content or options.Message or "",13,false,"Muted")
+    message.TextWrapped=true;message.TextYAlignment=Enum.TextYAlignment.Top;message.TextTruncate=Enum.TextTruncate.None
+    local bounds=TextService:GetTextSize(message.Text,message.TextSize,message.Font,Vector2.new(width-40,100000))
+    local messageHeight=math.max(24,math.ceil(bounds.Y)+6)
+    local contentHeight=math.min(messageHeight,math.max(50,screenSize().Y-200))
+    content.Size=UDim2.new(1,-40,0,contentHeight);content.CanvasSize=UDim2.fromOffset(0,messageHeight)
+    message.Size=UDim2.new(1,-6,0,messageHeight)
+    local height=contentHeight+116;pane.Size=UDim2.fromOffset(width,height)
+    local cancel=textbutton(pane,self,options.CancelText or "Cancelar","Surface")
+    cancel.Position=UDim2.new(0,20,1,-48);cancel.Size=UDim2.new(.5,-26,0,32)
+    local accept=textbutton(pane,self,options.ConfirmText or "Confirmar","AccentSoft")
+    accept.Position=UDim2.new(.5,6,1,-48);accept.Size=UDim2.new(.5,-26,0,32)
+    local handle={Root=shade,Closed=false}
+    local links={};local window=self
+    function handle:Close(accepted)
+        if self.Closed then return end;self.Closed=true
+        for _,link in ipairs(links) do link:Disconnect() end
+        shade:Destroy();if window._modal==self then window._modal=nil end
+        callback(accepted and options.OnConfirm or options.OnCancel)
+        callback(options.Callback,not not accepted)
+    end
+    table.insert(links,track(self,cancel.Activated,function()handle:Close(false)end))
+    table.insert(links,track(self,accept.Activated,function()handle:Close(true)end))
+    table.insert(links,track(self,UserInputService.InputBegan,function(input,processed)
+        if not processed and input.KeyCode==Enum.KeyCode.Escape then handle:Close(false) end
+    end))
+    if options.CloseOnOutside then table.insert(links,track(self,shade.Activated,function()handle:Close(false)end)) end
+    self._modal=handle;return handle
+end
+Window.Confirm=Window.Dialog
+
+function Window:CreateShowcase()
+    local tab=self:CreateTab({Name="Recursos AURA 4",Icon="sparkles"})
+    tab:CreateParagraph({Title="Componentes opcionais",Content="Este painel demonstra os controles novos. A biblioteca continua aceitando as chamadas anteriores."})
+    local group=tab:CreateGroup({Name="Organização",Description="Grupo recolhível com controles internos."})
+    group:CreateCheckbox({Name="Mostrar avisos",Default=true,Flag="showcase_checkbox"})
+    group:CreateNumberInput({Name="Quantidade",Min=0,Max=100,Default=5,Flag="showcase_number"})
+    group:CreateSegmented({Name="Qualidade",Options={"Baixa","Média","Alta"},Default="Média",Flag="showcase_quality"})
+    tab:CreateSpacer(16)
+    tab:CreateTextArea({Name="Anotações",Default="Escreva aqui...",MaxLength=500,Flag="showcase_notes"})
+    tab:CreateRadioGroup({Name="Tema",Options={"NeonLight","Light","Midnight","HighContrast"},Default="NeonLight",Flag="showcase_theme",Callback=function(name)self:SetTheme(name)end})
+    tab:CreateButton({Name="Abrir confirmação",Icon="message-circle",Callback=function()
+        self:Dialog({Title="Exemplo de confirmação",Content="O diálogo devolve sua escolha ao callback.",OnConfirm=function()self:Notify({Title="Confirmado",Content="A escolha foi recebida."})end})
+    end})
+    tab:CreateDataTable({Name="Tabela demonstrativa",Columns={"Item","Valor"},Rows={{"Exemplo A",10},{"Exemplo B",20}}})
+    return tab
+end
+
+Tab.AddCheckbox=Tab.CreateCheckbox
+Tab.AddNumber=Tab.CreateNumberInput
+Tab.AddGroup=Tab.CreateGroup
+Tab.AddParagraph=Tab.CreateParagraph
+Tab.AddLabel=Tab.CreateLabel
+Tab.AddImage=Tab.CreateImage
+Tab.AddTextArea=Tab.CreateTextArea
+Tab.AddSegmented=Tab.CreateSegmented
+Tab.AddPlayerList=Tab.CreatePlayerList
+
 
 -- Compatibility aliases for integrations used by other Roblox UI libraries.
 Tab.AddButton=Tab.CreateButton
