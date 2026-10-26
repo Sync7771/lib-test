@@ -1,43 +1,122 @@
 --[[
-AURA UI 5.0 — base PDDEV / RCCDEV fornecida pelo usuário, com extensões AURA.
-Tema padrão: Aura Dark, grafite com destaque menta. Theme="Dark" também é aceito.
-Ícones extras: avatar, shirt, accessories, glasses, face, hair, body, animation,
-emotes, wardrobe, mask, wings, outfit, shoes, backpack e sparkles.
-Aceita aliases em português e prefixos lucide- / lucide:. Sem Icon explícito,
-CreateTab("Avatar") e CreateTab("Roupas") escolhem seus ícones automaticamente.
-A janela, temas, ícones, Add* e NewTab/NewSection do arquivo anexado foram mantidos.
-Nenhuma janela da biblioteca anterior é criada. Extensões integradas neste arquivo.
+AURA UI 5.2 — interface Roblox / Luau
+Base nativa PDDEV / RCCDEV fornecida pelo usuário, com extensões AURA.
+Arquivo autossuficiente; retorna a tabela da biblioteca. Nenhuma janela é aberta ao carregar.
 
-USO NOVO (também aceita chamada com ponto):
- local win=Aura:CreateWindow({Title="AURA UI",Size=Vector2.new(650,450),
-   BackgroundImage="rbxassetid://ID",BackgroundTransparency=.35,
-   FloatingButton={Image="rbxassetid://ID",Size=46}})
- local tab=win:CreateTab({Name="Principal",Icon="home"})
- tab:CreateButton({Name="Teste",Callback=function()print("ok")end})
- tab:CreatePlayerList({Name="Jogadores",Multi=true,Height=260,Callback=function(player)end})
+CONFIG OPCIONAL E TEMAS NEON
+ win:CreateConfigTab() -- cria Config com engrenagem; não aparece sozinha
+ -- Também pode usar CreateWindow({Title="AURA UI",ConfigTab=true})
+ win:SetTheme("Roxo neon") -- ou Verde neon, Azul neon, Rosa neon etc.
+ win:SetColorTheme(Color3.fromRGB(170,90,255)) -- cor exata dos destaques e bordas
+ Os temas colorem o fundo dark, painéis, abas, controles e bordas neon.
+ O seletor da Config acompanha mudanças de tema feitas pelo script.
 
-LEGADO PRESERVADO:
- local win=Aura.CreateWindow("AURA UI","","5.0")
+DESTAQUES DESTA VERSÃO
+• Tema Dark padrão: grafite, texto claro, detalhe menta e cantos de 12 px.
+• Janela padrão 640 × 460, limites da tela, arraste e resize por mouse ou toque.
+• A mesma geometria é usada por SetSize, minimizar/restaurar e mudança de viewport.
+• Abas de 12 px, nomes longos com quebra, sidebar ajustável e espaçamentos consistentes.
+• 1.750 nomes de ícones Lucide incorporados como IDs. Não baixa código de outro catálogo.
+• Ícones de abas e controles usam a mesma família; aceita lucide-shirt, lucide:shirt e shirt.
+• Busca sem acentos, grupos recolhíveis, estado vazio e botão de limpar a pesquisa.
+• Catálogo de ícones com busca e paginação: instancia somente a página visível.
+• Configurações opcionais, tamanho de texto, densidade e animações reduzidas.
+• Título com degradê e parágrafo com RichText são opções explícitas.
+• Importação/exportação inclui cores do tema e preferências de layout.
+• Chamadas nativas Add* / NewTab / NewSection continuam aceitas.
+
+INÍCIO (Aura é o retorno deste módulo)
+ local win=Aura:CreateWindow({
+     Title="AURA UI",Subtitle="Meu painel",Theme="Dark",Size=Vector2.new(640,460),
+     Density="Comfortable",SidebarWidth=148,CornerRadius=12,AntiDuplicate=true,
+     SettingsTab=true, -- opcional; nada extra é criado sem essa opção
+ })
+ local tab=win:CreateTab({Name="Principal",Icon="house"})
+ local avatar=win:CreateTab({Name="Avatar",Icon="avatar"})
+ local group=tab:CreateGroup({Name="Preferências",Description="Organização por assunto."})
+ group:CreateToggle({Name="Ativar avisos",Default=true,Flag="avisos",Callback=function(value)print(value)end})
+ group:CreateSlider({Name="Quantidade",Min=0,Max=100,Default=50,Flag="quantidade"})
+ tab:CreateSpacer(12)
+ tab:CreateButton({Name="Executar ação",Icon="play",Callback=function()print("clicou")end})
+ tab:CreatePlayerList({Name="Jogadores",Height=260,Multi=false,Callback=function(player)print(player.Name)end})
+ win:CreateIconBrowser() -- aba opcional para escolher nomes de ícones
+
+ORGANIZAÇÃO
+ tab:CreateGroup({Name="Seção",Collapsed=true}) / CreateAccordion
+ tab:CreateSection({Name="Título"}) / CreateDivider() / CreateSpacer(16) / SetSpacing(8)
+ tab:SetName("Novo nome") / SetIcon("shirt") / SetVisible(false) / Select() / Destroy()
+ win:SelectTab("Avatar") / NextTab(1) / RemoveTab("Avatar") / SetSearch("roupas")
+ Controles retornam handles com SetName, SetVisible, SetDisabled, SetOrder e Destroy.
+ Get/Set, SetDescription e métodos específicos dependem do tipo do controle.
+
+CONTROLES (Create* recebe uma tabela com Name, Description, Default, Flag e Callback)
+ CreateButton, CreateToggle, CreateCheckbox, CreateSlider, CreateRangeSlider,
+ CreateInput (Numeric, ReadOnly, MaxLength e Validate), CreateNumberInput,
+ CreateTextArea, CreateKeybind, CreateDropdown, CreateSearchDropdown, CreateMultiSelect,
+ CreateSegmented, CreateRadioGroup, CreateColorPicker (RGB/HEX/HSV), CreateGradientPicker,
+ CreateLabel, CreateParagraph ({RichText=true} opcional), CreateBadge, CreateProgress,
+ CreateImage, CreateGallery, CreateAudioPlayer, CreateVideo, CreatePlayerList,
+ CreateDataTable, CreateConsole, CreateTooltip, CreateContextMenu, CreateStat,
+ CreateEmptyState, CreateIconPicker.
+ As listas de jogadores ajustam a altura à quantidade de resultados por padrão.
+ CreateIconPicker({Name="Ícones",PageSize=12,Default="avatar",Callback=function(name)end})
+ tem SetSearch, NextPage, GetPage, Get e Set.
+
+APARÊNCIA E IMAGENS
+ win:SetTheme("Dark") / SetTheme("Graphite") / SetAccent(Color3.fromRGB(105,225,164))
+ win:SetTextScale(1.1) / SetDensity("Compact" | "Comfortable" | "Spacious")
+ win:SetCornerRadius(12) / SetSidebarWidth(148) / SetSearchVisible(true)
+ win:SetReducedMotion(true) / SetAnimations(false) / SetPanelTransparency(0.2)
+ win:SetTitle("Título") / SetSubtitle("Subtítulo")
+ win:SetTitleGradient({Color3.fromRGB(105,225,164),Color3.fromRGB(100,170,255)})
+ win:SetTitleGradient(false) -- remove o efeito
+ win:SetBackgroundImage("rbxassetid://ID",0.35) / SetBackgroundImage(false)
+ win:SetBackgroundFit("Crop" | "Fit" | "Stretch" | "Tile")
+ win:SetFloatingButton({Text="A",TextColor=Color3.fromRGB(100,170,255),Size=46})
+ win:SetFloatingButton({Image="rbxassetid://ID",Size=46}) / SetFloatingButton(false)
+ win:AddMinimizeButton(...) continua aceitando o formato nativo.
+
+ÍCONES
+ Avatar: avatar, shirt, accessories, glasses, face, hair, body, animation,
+ emotes, wardrobe, mask, wings, outfit, shoes, backpack, sparkles.
+ Outros: house, users, music, car, bus, wrench, settings, shield, palette,
+ gamepad, crown, map-pin, terminal, folder, heart, star e muitos outros.
+ Nomes/aliases em português incluem roupas, cabelo, rosto, acessórios e jogadores.
+ Aura:GetIcons() / Aura:GetIcon("shirt")
+ Aura:RegisterIcon("meu-icone","rbxassetid://ID") -- também disponível na janela
+ ID numérico, rbxassetid://, rbxthumb:// e imagem customizada continuam aceitos.
+ A disponibilidade de cada imagem depende das permissões e do carregamento no Roblox.
+
+CONFIGURAÇÕES E UTILITÁRIOS
+ win:CreateSettingsTab() -- reutiliza a mesma aba enquanto ela existir
+ win:GetCapabilities() -- informa versão, entradas e recursos opcionais disponíveis
+ win:ExportConfig() / ImportConfig(jsonOuTabela) / SaveConfig() / LoadConfig()
+ win:SaveProfile("nome") / LoadProfile("nome") / DeleteProfile("nome") / GetProfiles()
+ win:ResetConfig() / Undo() / Redo() / GetValue("flag") / SetValue("flag",valor,true)
+ win:Notify({Title="Aviso",Content="Mensagem",Duration=3})
+ win:Dialog({Title="Confirmar",Content="Mensagem",OnConfirm=function()end})
+ win:SetSize(640,460) / SetPosition(Vector2.new(20,40)) / Center()
+ win:Toggle() / Minimize(true) / SetGamepadNavigation(true) / Destroy()
+ RightControl alterna visibilidade; Ctrl+K foca busca; Ctrl+Tab troca aba.
+ SaveConfig/LoadConfig/perfis em disco usam readfile/writefile quando disponíveis;
+ exportação/importação JSON e controles comuns não exigem essas funções.
+ Áudio, vídeo e imagens usam os serviços do Roblox e seus assets autorizados.
+ Os recursos extras são opcionais: nenhum dashboard ou demonstração é aberto sozinho.
+
+LEGADO
+ local win=Aura.CreateWindow("Meu painel","","5.1")
  local tab=win.CreateTab("Principal","home")
  tab.AddButton("Botão",function()end)
  tab.AddToggle("Ativo",false,function(value)end)
  tab.AddSlider("Valor",0,100,50,function(value)end)
- win.NewTab / tab.NewSection / NewButton / NewToggle / NewLabel / NewSlider /
- NewDropdown / NewSearchDropdown / NewFocusTextBox continuam disponíveis.
+ NewTab / NewSection / NewButton / NewToggle / NewLabel / NewSlider /
+ NewDropdown / NewSearchDropdown / NewFocusTextBox também continuam disponíveis.
 
-RECURSOS REINCORPORADOS (Create* usa Name, Default, Flag, Callback e Description):
- Botão, toggle, checkbox, slider, intervalo, input, número +/-, textarea, keybind,
- dropdown, dropdown com busca/múltiplo, segmented, radio, color picker RGB/HEX/HSV,
- gradiente, imagem, galeria, áudio, vídeo, jogadores com foto, tabela, console,
- tooltip, badge, progresso, section, divider, spacer e grupos recolhíveis.
- tab:CreateSpacer(24), tab:SetSpacing(8), tab:CreateGroup({Name="Grupo"}).
- Configurações: SaveConfig/LoadConfig (readfile/writefile opcionais), JSON, perfis,
- ResetConfig, Undo/Redo, Flags, GetValue/SetValue. Eventos e Dialog/Confirm.
- Fundo/bolinha: SetBackgroundImage, SetBackgroundFit, SetFloatingButton ou AddMinimizeButton.
- Janela: SetSize, Center, Toggle, SetCornerRadius, SetTextScale, SetReducedMotion.
- win:CreateShowcase() demonstra as extensões. O manual completo das APIs de
- extensão segue dentro do módulo de suporte. Assets dependem de acesso no Roblox.
+VALIDAÇÃO
+ Sintaxe e lógica de layout, estado, busca, APIs e limpeza verificadas localmente com mocks.
+ O render, o áudio/vídeo e a disponibilidade de cada asset precisam de validação no Roblox.
 ]]
+
 local AuraSupport=(function()
 --[[
     AURA UI 4.1 — INTERFACE MODULAR
@@ -172,7 +251,7 @@ local AuraSupport=(function()
       No claim that this code has been executed in Roblox Studio yet.
 ]]
 
-local Aura = { Version = "4.1.2" }
+local Aura = { Version = "5.2.0" }
 Aura.__index = Aura
 
 local Players = game:GetService("Players")
@@ -268,7 +347,7 @@ end
 local function frame(parent, w, role, radius, clip)
     local f=new(clip and "CanvasGroup" or "Frame",{BackgroundColor3=w.Theme[role or "Surface"],BorderSizePixel=0},parent)
     local corner=radius or 12
-    if corner>=7 and corner<=17 then corner=corner+3 end
+    -- Component radii are explicit and consistent with the native controls.
     round(f,corner); bind(w,f,"BackgroundColor3",role or "Surface")
     return f
 end
@@ -424,6 +503,8 @@ end
 
 -- Native outline icons: no HTTP request or third-party icon pack required.
 -- Icon="users", "lucide-map-pin", an emoji, an asset ID or an image URI.
+local ICON_ASSETS={}
+local ICON_ASSET_ALIASES={}
 local ICONS={
     users={{{4,21},{4,18},{6,15},{11,15},{13,18},{13,21}},{{16,15},{19,15},{21,18},{21,21}}, {circle={8.5,8,4}},{{16,4},{18,5},{19,8},{18,11},{16,12}}},
     user={{circle={12,7,4}},{{4,22},{4,18},{7,14},{17,14},{20,18},{20,22}}},
@@ -445,12 +526,12 @@ local ICONS={
     circle={ {circle={12,12,9}} },
 }
 function Aura:GetIcons()
-    local names={};for name in pairs(ICONS) do table.insert(names,name) end
+    local names={};local used={};for name in pairs(ICONS) do used[name]=true;table.insert(names,name) end;for name in pairs(ICON_ASSETS) do if not used[name] then table.insert(names,name) end end
     table.sort(names);return names
 end
 function Aura:RegisterIcon(name,paths)
     assert(type(name)=="string" and type(paths)=="table","RegisterIcon expects a name and path table")
-    ICONS[name:lower()]=paths
+    ICONS[name:lower()]=paths;ICON_ASSETS[name:lower():gsub("[%s_%-]","")]=nil
 end
 ICONS["chevron-down"]={{{4,8},{12,16},{20,8}}}
 ICONS["chevron-right"]={{{8,4},{16,12},{8,20}}}
@@ -513,7 +594,10 @@ local function renderIcon(parent,w,value,size,role)
         bind(w,obj,prop,role or "Muted");table.insert(parts,{obj,prop});return obj
     end
     local weight=math.clamp((size or 22)*.078,1.2,2.1)
-    local shape=ICONS[key]
+    local normalized=key:gsub("[%s_%-]","")
+    local assetKey=ICON_ASSET_ALIASES[normalized] or normalized
+    if ICON_ASSETS[assetKey] then raw=ICON_ASSETS[assetKey] end
+    local shape=not ICON_ASSETS[assetKey] and ICONS[key] or nil
     if shape then
         for _,path in ipairs(shape) do
             if path.circle then
@@ -663,7 +747,7 @@ function Window:_register(handle,options)
     return handle
 end
 function Window:ExportConfig()
-    local data={version=Aura.Version,theme=self.ThemeName,size=encode(self._unminimizedSize and self.Minimized and self._unminimizedSize or self:GetSize()),values={},layout={textScale=self.TextScale or 1,reducedMotion=not self.Animations,panelTransparency=self.PanelTransparency or 0}}
+    local data={version=Aura.Version,colors=encode(self.Theme),theme=self.ThemeName,size=encode(self._unminimizedSize and self.Minimized and self._unminimizedSize or self:GetSize()),values={},layout={textScale=self.TextScale or 1,reducedMotion=not self.Animations,panelTransparency=self.PanelTransparency or 0,density=self.Density,sidebarWidth=self.SidebarWidth,cornerRadius=self.CornerRadius}}
     for flag,item in pairs(self.Flags) do
         if item.Get and not item._skipSave then
             local ok,value=pcall(function()return item:Get()end)
@@ -683,12 +767,15 @@ function Window:ImportConfig(json)
     elseif type(json)=="table" then data=json end
     if type(data)~="table" then return false,"Invalid configuration" end
     if data.values~=nil and type(data.values)~="table" then return false,"values deve ser uma tabela" end
-    if data.theme and PRESETS[data.theme] then self:SetTheme(data.theme) end
+    if type(data.colors)=="table"then self:SetTheme(decode(data.colors))elseif data.theme then self:SetTheme(data.theme) end
     if data.size then
         local ok,size=pcall(decode,data.size)
         if ok and typeof(size)=="Vector2" then self:SetSize(size.X,size.Y) end
     end
     if type(data.layout)=="table" then
+        if self.SetDensity and data.layout.density then self:SetDensity(data.layout.density)end
+        if self.SetSidebarWidth and data.layout.sidebarWidth then self:SetSidebarWidth(data.layout.sidebarWidth)end
+        if data.layout.cornerRadius then self:SetCornerRadius(data.layout.cornerRadius)end
         if data.layout.textScale then self:SetTextScale(data.layout.textScale) end
         if data.layout.reducedMotion~=nil then self:SetReducedMotion(data.layout.reducedMotion) end
         if data.layout.panelTransparency~=nil then self:SetPanelTransparency(data.layout.panelTransparency) end
@@ -1032,7 +1119,11 @@ function Window:SetFloatingButton(options)
     ball.Name="AuraFloatingButton";ball.Size=UDim2.fromOffset(size,size)
     ball.Position=options.Position or UDim2.new(0,18,.45,0)
     ball.ZIndex=30;ball.ClipsDescendants=true;round(ball,99)
-    if options.Image and tostring(options.Image)~="" then
+    if options.Text~=nil then
+        local label=textlabel(ball,self,tostring(options.Text),tonumber(options.TextSize)or math.floor(size*.4),true,"Accent")
+        label.Size=UDim2.fromScale(1,1);label.TextXAlignment=Enum.TextXAlignment.Center
+        if typeof(options.TextColor)=="Color3"then label.TextColor3=options.TextColor end
+    elseif options.Image and tostring(options.Image)~="" then
         local picture=new("ImageLabel",{Name="ButtonImage",Image=imageAsset(options.Image),BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.fromScale(1,1),ScaleType=Enum.ScaleType.Crop},ball)
         round(picture,99)
     else
@@ -1212,6 +1303,7 @@ local function createRow(tab,opts,height,wide)
     root.Size=UDim2.new(1,-4,0,height or 66)
     root.LayoutOrder=tab:_nextOrder();root.ClipsDescendants=true
     local outline=stroke(root,w.Theme.Stroke,.82)
+    outline:SetAttribute("ThemeRole","Border")
     if opts._section then root.BackgroundTransparency=1;outline.Transparency=1 end
     local name=textlabel(root,w,opts.Name or "Control",13,true)
     name.TextWrapped=true;name.TextYAlignment=Enum.TextYAlignment.Top
@@ -1572,6 +1664,7 @@ function Tab:CreateInput(options)
     bind(w,field,"BackgroundColor3","Surface")
     bind(w,field,"TextColor3","Text")
     bind(w,field,"PlaceholderColor3","Muted")
+    field.TextEditable=options.ReadOnly~=true
     local previous=options.Numeric and tonumber(options.Default) or tostring(options.Default or "")
     function handle:Set(v,silent)
         if options.Numeric then v=tonumber(v) or previous or 0 else v=limitedText(v,tonumber(options.MaxLength)) end
@@ -1767,10 +1860,13 @@ function Tab:CreateParagraph(options)
     local label=textlabel(body,self.Window,options.Content or options.Description or "",12,false,"Muted")
     label.TextWrapped=true;label.TextYAlignment=Enum.TextYAlignment.Top
     label.TextTruncate=Enum.TextTruncate.None
+    label:SetAttribute("AURA_AllowRichText",options.RichText==true);label.RichText=options.RichText==true
+    handle.ContentLabel=label
     local function resize()
         if not body.Parent then return end
         local width=math.max(80,body.AbsoluteSize.X)
-        local bounds=TextService:GetTextSize(label.Text,label.TextSize,label.Font,Vector2.new(width,100000))
+        local measured=label.RichText and label.Text:gsub("<[^>]->","")or label.Text
+        local bounds=TextService:GetTextSize(measured,label.TextSize,label.Font,Vector2.new(width,100000))
         local h=label.Text=="" and 0 or math.max(20,math.ceil(bounds.Y)+4)
         label.Size=UDim2.new(1,0,0,h);handle:SetBodyHeight(h)
     end
@@ -1785,7 +1881,12 @@ function Tab:CreateParagraph(options)
         resize();self:Reflow()
     end
     function handle:Get()return label.Text end
-    handle._skipSave=true;task.defer(resize);return handle
+    local function updateSearch()
+        handle._search=(tostring(handle.Name or "").." "..label.Text.." "..tostring(options.Tags or "")):lower()
+        self.Window:_applySearch()
+    end
+    track(self.Window,label:GetPropertyChangedSignal("Text"),updateSearch)
+    handle._skipSave=true;task.defer(function()resize();updateSearch()end);return handle
 end
 function Tab:CreateLabel(options)
     options=asopts(options)
@@ -2562,14 +2663,19 @@ end
 function Window:SetSearch(value)
     self.SearchBox.Text=tostring(value or "");self:_applySearch();return self
 end
+local function searchText(value)
+    local text=tostring(value or ""):lower()
+    for _,pair in ipairs({{"á","a"},{"à","a"},{"â","a"},{"ã","a"},{"Á","a"},{"À","a"},{"Â","a"},{"Ã","a"},{"é","e"},{"ê","e"},{"É","e"},{"Ê","e"},{"í","i"},{"Í","i"},{"ó","o"},{"ô","o"},{"õ","o"},{"Ó","o"},{"Ô","o"},{"Õ","o"},{"ú","u"},{"Ú","u"},{"ç","c"},{"Ç","c"}})do text=text:gsub(pair[1],pair[2])end
+    return text
+end
 function Window:_applySearch()
     if self.Destroyed then return end
-    local query=(self.SearchBox and self.SearchBox.Text or ""):lower():gsub("^%s+",""):gsub("%s+$","")
+    local query=searchText(self.SearchBox and self.SearchBox.Text or ""):gsub("^%s+",""):gsub("%s+$","")
     local function filterControls(controls,inherited)
         local count=0
         for _,control in ipairs(controls) do
             if control.Root and control.Root.Parent then
-                local match=query=="" or inherited or (control._search or ""):find(query,1,true)~=nil
+                local match=query=="" or inherited or searchText(control._search):find(query,1,true)~=nil
                 if control._isGroup then
                     local children=filterControls(control.Controls,match)
                     local show=control._visible~=false and (match or children>0)
@@ -2588,7 +2694,7 @@ function Window:_applySearch()
     end
     local first
     for _,tab in ipairs(self.Tabs) do
-        local tabMatch=query~="" and tab.Name:lower():find(query,1,true)~=nil
+        local tabMatch=query~="" and searchText(tab.Name):find(query,1,true)~=nil
         local count=filterControls(tab.Controls,tabMatch)
         tab.Button.Visible=tab._visible~=false and (query=="" or tabMatch or count>0)
         if tab.Button.Visible and not first then first=tab end
@@ -2722,7 +2828,7 @@ function Tab:CreateSegmented(options)
     end
     local function layout()
         local width=math.max(100,body.AbsoluteSize.X)
-        local columns=vertical and 1 or math.max(1,math.min(#values,math.floor(width/95)))
+        local columns=vertical and 1 or math.max(1,math.min(math.max(1,#values),math.floor(width/95)))
         local rows=math.ceil(#values/columns)
         for i,button in ipairs(buttons) do
             local col=(i-1)%columns;local row=math.floor((i-1)/columns)
@@ -3001,7 +3107,7 @@ function Aura._AttachNative(gui,root,hooks,options)
         SearchBox=hooks.Search,Pages=hooks.Content,ResizeHandle=hooks.Resize,
         Tabs=hooks.Tabs,Flags={},_counter=0,_connections={},_themeBindings={},
         _fontSizes=setmetatable({},{__mode="k"}),_events={},_cleanup={},_undo={},_redo={},
-        Theme=hooks.MapTheme(),ThemeName="Default",Animations=true,Minimized=false,
+        Theme=hooks.MapTheme(),ThemeName="Dark",Animations=true,Minimized=false,
         TextScale=1,MinSize=Vector2.new(380,250),MaxSize=Vector2.new(900,700),
         ConfigFile=options.ConfigFile or "aura_ui_config.json",Language="pt",Destroyed=false,
         ToggleKey=options.ToggleKey or Enum.KeyCode.RightControl},Window)
@@ -3018,7 +3124,7 @@ function Aura._AttachNative(gui,root,hooks,options)
     end
     function w:SetTheme(value)
         local ok=hooks.SetTheme(value)
-        if ok then self.ThemeName=type(value)=="string" and value or "Custom" end
+        -- The native theme callback retains the canonical preset name.
         return ok and self or false
     end
     function w:CreateTab(value)
@@ -3082,7 +3188,7 @@ function Aura._AttachNative(gui,root,hooks,options)
                         local getter=api.GetState or api.GetValue or api.GetText or api.GetColor
                         local setter=api.SetState or api.SetValue or api.SetText or api.SetColor
                         if getter then function handle:Get()return getter()end end
-                        if setter then function handle:Set(value,silent)return setter(value,silent~=true)end end
+                        if setter then function handle:Set(value,silent)return setter(value,silent==true)end end
                         if not getter then handle._skipSave=true end
                         function handle:Destroy()
                             widget:Destroy()
@@ -3090,6 +3196,7 @@ function Aura._AttachNative(gui,root,hooks,options)
                         end
                         self:_register(handle,{Name=handle.Name});table.insert(tab.Controls,handle)
                         widget.LayoutOrder=tab:_nextOrder()
+                        if self.DecorateNative then self:DecorateNative(widget,name,api,handle) end
                         track(self,widget.Destroying,function()
                             if self.Flags[handle.Flag]==handle then self.Flags[handle.Flag]=nil end
                             for i,v in ipairs(tab.Controls) do if v==handle then table.remove(tab.Controls,i);break end end
@@ -3132,28 +3239,1928 @@ function Aura._AttachNative(gui,root,hooks,options)
 end
 function Aura._Presets()local values={};for name in pairs(PRESETS)do values[name]=themeFor(name)end;return values end
 
+-- AURA 5.1 additions: opt-in utilities, kept separate from the default empty window.
+function Aura._SetIconAssets(assets,aliases)
+    ICON_ASSETS=assets or {};ICON_ASSET_ALIASES=aliases or {}
+end
+
+function Tab:CreateStat(options)
+    options=asopts(options)
+    local root,handle=createRow(self,options,70,true)
+    local w=self.Window
+    local body=handle:Mount(40)
+    local value=textlabel(body,w,tostring(options.Value or options.Default or "—"),24,true,"Accent")
+    value.Size=UDim2.new(1,0,1,0);value.TextTruncate=Enum.TextTruncate.AtEnd
+    handle._skipSave=true
+    function handle:Get()return value.Text end
+    function handle:Set(v)value.Text=tostring(v or "");return self end
+    return handle
+end
+Tab.CreateStatistic=Tab.CreateStat
+
+function Tab:CreateEmptyState(options)
+    options=asopts(options)
+    local handle=self:CreateParagraph({Name=options.Name or "Nada por aqui",Content=options.Content or options.Description or "Adicione controles a esta seção.",Tags=options.Tags})
+    handle._skipSave=true
+    return handle
+end
+
+-- Paginated icon catalog: only the current page is instantiated.
+function Tab:CreateIconPicker(options)
+    options=asopts(options)
+    local root,handle=createRow(self,options,50,true)
+    local w=self.Window;local body=handle:Mount(230)
+    local field=new("TextBox",{Name="IconSearch",Text="",PlaceholderText="Buscar ícone: user, shirt, music...",ClearTextOnFocus=false,Font=Enum.Font.Gotham,TextSize=12,TextColor3=w.Theme.Text,PlaceholderColor3=w.Theme.Muted,BackgroundColor3=w.Theme.Surface,BorderSizePixel=0,Size=UDim2.new(1,0,0,32),TextXAlignment=Enum.TextXAlignment.Left},body)
+    round(field,8);padding(field,10,0,10,0)
+    bind(w,field,"TextColor3","Text");bind(w,field,"PlaceholderColor3","Muted");bind(w,field,"BackgroundColor3","Surface")
+    local grid=new("Frame",{Name="IconGrid",BackgroundTransparency=1,Position=UDim2.fromOffset(0,42),Size=UDim2.new(1,0,0,150)},body)
+    local info=textlabel(body,w,"",11,false,"Muted")
+    info.Size=UDim2.new(1,-100,0,28);info.Position=UDim2.new(0,0,1,-28)
+    local previous=textbutton(body,w,"‹","Surface");previous.Size=UDim2.fromOffset(32,28);previous.Position=UDim2.new(1,-72,1,-28)
+    local following=textbutton(body,w,"›","Surface");following.Size=UDim2.fromOffset(32,28);following.Position=UDim2.new(1,-32,1,-28)
+    local names={};for name in pairs(ICON_ASSETS)do table.insert(names,name)end;table.sort(names)
+    local filtered,page,selection={},1,options.Default
+    local pageSize=math.clamp(tonumber(options.PageSize) or 12,4,24)
+    local links,tiles={},{}
+    local function paint()
+        for _,entry in ipairs(tiles)do entry.Button.BackgroundColor3=w.Theme[entry.Name==selection and "AccentSoft" or "Surface"]end
+    end
+    local function clear()
+        for _,link in ipairs(links)do link:Disconnect()end;table.clear(links)
+        for _,entry in ipairs(tiles)do entry.Button:Destroy()end;table.clear(tiles)
+    end
+    local function rebuild()
+        clear()
+        local totalPages=math.max(1,math.ceil(#filtered/pageSize));page=math.clamp(page,1,totalPages)
+        local width=math.max(120,grid.AbsoluteSize.X)
+        local columns=math.max(1,math.min(4,math.floor(width/92)))
+        local start=(page-1)*pageSize+1;local last=math.min(#filtered,start+pageSize-1)
+        local rows=math.max(1,math.ceil(math.max(0,last-start+1)/columns));local gridHeight=rows*58
+        grid.Size=UDim2.new(1,0,0,gridHeight);handle:SetBodyHeight(42+gridHeight+38)
+        for i=start,last do
+            local name=filtered[i];local index=i-start;local col=index%columns;local row=math.floor(index/columns)
+            local button=textbutton(grid,w,"","Surface")
+            button.Position=UDim2.new(col/columns,0,0,row*58)
+            button.Size=UDim2.new(1/columns,-6,0,52);button.ClipsDescendants=true
+            local icon=renderIcon(button,w,name,19,"Text");icon.Position=UDim2.new(.5,-9.5,0,5)
+            local label=textlabel(button,w,name,10,false,"Muted")
+            label.Position=UDim2.fromOffset(3,29);label.Size=UDim2.new(1,-6,0,17)
+            label.TextTruncate=Enum.TextTruncate.AtEnd;label.TextXAlignment=Enum.TextXAlignment.Center
+            table.insert(tiles,{Name=name,Button=button})
+            table.insert(links,track(w,button.Activated,function()handle:Set(name)end))
+        end
+        info.Text=tostring(#filtered).." ícones  ·  "..page.."/"..totalPages
+        previous.TextTransparency=page==1 and .6 or 0;following.TextTransparency=page==totalPages and .6 or 0
+        paint()
+    end
+    local function filter()
+        filtered={};local query=searchText(field.Text):gsub("[%s_%-]","")
+        local canonical=ICON_ASSET_ALIASES[query] or query
+        for _,name in ipairs(names)do if query=="" or name:find(canonical,1,true)then table.insert(filtered,name)end end
+        page=1;rebuild()
+    end
+    function handle:Set(value,silent)
+        local key=tostring(value or ""):lower():gsub("^lucide[:%-]",""):gsub("[%s_%-]","")
+        key=ICON_ASSET_ALIASES[key] or key
+        if not ICON_ASSETS[key]then return false end
+        local old=selection;selection=key;paint();commit(self,old,key,options.Callback,silent);return true
+    end
+    function handle:Get()return selection end
+    function handle:SetSearch(value)field.Text=tostring(value or "");filter();return self end
+    function handle:GetPage()return page,math.max(1,math.ceil(#filtered/pageSize))end
+    function handle:NextPage(direction)page=page+(direction or 1);rebuild();return self end
+    function handle:RefreshVisual()paint()end
+    local busy=false
+    track(w,grid:GetPropertyChangedSignal("AbsoluteSize"),function()
+        if busy then return end;busy=true;task.defer(function()if root.Parent then rebuild()end;busy=false end)
+    end)
+    track(w,field:GetPropertyChangedSignal("Text"),filter)
+    track(w,previous.Activated,function()handle:NextPage(-1)end)
+    track(w,following.Activated,function()handle:NextPage(1)end)
+    local destroy=handle.Destroy
+    function handle:Destroy()clear();destroy(self)end
+    handle._skipSave=options.Save~=true;filter()
+    if selection then handle:Set(selection,true)end
+    return handle
+end
+
+function Window:CreateSettingsTab(options)
+    options=options or {}
+    if self._settingsTab and not self._settingsTab._destroyed then self:SelectTab(self._settingsTab);return self._settingsTab end
+    local tab=self:CreateTab({Name=options.Name or "Config",Icon="settings"});self._settingsTab=tab
+    local appearance=tab:CreateGroup({Name="Aparência",Description="Tema, legibilidade e espaçamento."})
+    local themes=self.GetColorThemeNames and self:GetColorThemeNames()or {"Dark"}
+    local updating=false
+    local selected=self.ThemeName
+    local present=false;for _,name in ipairs(themes)do if name==selected then present=true end end
+    if not present then selected="Personalizado"end
+    local themePicker=appearance:CreateDropdown({Name="Tema da GUI",Options=themes,Default=selected,Callback=function(value)
+        if updating then return end
+        if value=="Personalizado"then self:SetColorTheme(self.Theme.Accent)else self:SetTheme(value)end
+    end})
+    local colorPicker=appearance:CreateColorPicker({Name="Cor personalizada",Description="Muda painéis, destaques e bordas neon juntos.",Default=self.Theme.Accent,Callback=function(value)
+        if not updating then self:SetColorTheme(value)end
+    end})
+    -- Theme colors are serialized once by the window, not again as widget flags.
+    themePicker._skipSave=true;colorPicker._skipSave=true
+    local link=self:On("ThemeChanged",function()
+        if tab._destroyed then return end
+        updating=true
+        colorPicker:Set(self.Theme.Accent,true)
+        local name=self.ThemeName
+        local found=false;for _,option in ipairs(themes)do if option==name then found=true end end
+        themePicker:Set(found and name or "Personalizado",true)
+        updating=false
+    end)
+    local destroy=tab.Destroy
+    tab.Destroy=function(...)link:Disconnect();return destroy(...)end
+    self._settingsControls={Theme=themePicker,Color=colorPicker}
+    appearance:CreateSlider({Name="Tamanho do texto",Min=.85,Max=1.25,Increment=.05,Default=self.TextScale or 1,Callback=function(value)self:SetTextScale(value)end})
+    appearance:CreateDropdown({Name="Espaçamento",Options={"Compact","Comfortable","Spacious"},Default=self.Density or "Comfortable",Callback=function(value)if self.SetDensity then self:SetDensity(value)end end})
+    appearance:CreateToggle({Name="Reduzir animações",Default=not self.Animations,Callback=function(value)self:SetReducedMotion(value)end})
+    local navigation=tab:CreateGroup({Name="Janela e navegação",Collapsed=true})
+    navigation:CreateButton({Name="Centralizar janela",Icon="scan",Callback=function()self:Center()end})
+    navigation:CreateKeybind({Name="Mostrar ou esconder",Default=self.ToggleKey,Callback=function(key)self:SetToggleKey(key)end})
+    navigation:CreateToggle({Name="Navegação por controle",Default=self.GamepadNavigation==true,Callback=function(value)self:SetGamepadNavigation(value)end})
+    navigation:CreateToggle({Name="Botão flutuante",Default=self.FloatingButton~=nil,Callback=function(value)self:SetFloatingButton(value and {Text="A"}or false)end})
+    local config=tab:CreateGroup({Name="Configurações salvas",Collapsed=true})
+    local data=config:CreateTextArea({Name="Configuração JSON",Height=100,MaxLength=100000,Default=""})
+    config:CreateButton({Name="Exportar configuração",Icon="download",Callback=function()data:Set(self:ExportConfig()or "",true)end})
+    config:CreateButton({Name="Importar configuração",Icon="upload",Callback=function()
+        local ok,err=self:ImportConfig(data:Get())
+        self:Notify({Title=ok and "Configuração aplicada"or "Não foi possível importar",Content=ok and "Valores atualizados."or tostring(err)})
+    end})
+    config:CreateButton({Name="Restaurar valores iniciais",Icon="rotateccw",Callback=function()
+        self:Confirm({Title="Restaurar valores?",Content="Os controles voltarão aos valores iniciais.",OnConfirm=function()self:ResetConfig()end})
+    end})
+    return tab
+end
+
+function Window:CreateIconBrowser(options)
+    options=options or {}
+    local tab=self:CreateTab({Name=options.Name or "Ícones",Icon="shapes"})
+    tab:CreateParagraph({Name="Ícones da biblioteca",Content="Pesquise por nome e clique para selecionar. Use o nome no campo Icon de uma aba ou botão."})
+    local chosen=tab:CreateInput({Name="Ícone selecionado",Default="",ReadOnly=true})
+    tab:CreateIconPicker({Name="Catálogo Lucide",PageSize=16,Callback=function(value)chosen:Set(value,true);callback(options.Callback,value)end})
+    return tab
+end
+
 return Aura
 
 end)()
 
--- Lucide outline assets, matching the native tab icon family.
+-- Lucide asset catalog. Source: Footagesus/Icons; existing native IDs take precedence.
 local AuraTabAssets={
-    avatar="rbxassetid://10747373176",
-    shirt="rbxassetid://106579555405966",
-    accessories="rbxassetid://10709818626",
-    glasses="rbxassetid://87936407455373",
-    face="rbxassetid://10734964441",
-    hair="rbxassetid://10734942778",
-    body="rbxassetid://10709751939",
-    animation="rbxassetid://125020872044147",
-    emotes="rbxassetid://110297795801577",
-    wardrobe="rbxassetid://136249099949073",
-    mask="rbxassetid://102636443033920",
-    wings="rbxassetid://10723354671",
-    outfit="rbxassetid://106579555405966",
-    shoes="rbxassetid://139192589041315",
-    backpack="rbxassetid://10709769841",
-    sparkles="rbxassetid://138635884129147",
+    ["aarrowdown"]="rbxassetid://92867583610071",
+    ["aarrowup"]="rbxassetid://132318504999733",
+    ["accessibility"]="rbxassetid://10709751939",
+    ["accessories"]="rbxassetid://10709818626",
+    ["activity"]="rbxassetid://10709752035",
+    ["airplay"]="rbxassetid://10709752254",
+    ["airvent"]="rbxassetid://10709752131",
+    ["alargesmall"]="rbxassetid://111491496660216",
+    ["alarmcheck"]="rbxassetid://10709752405",
+    ["alarmclock"]="rbxassetid://10709752630",
+    ["alarmclockcheck"]="rbxassetid://76437352099157",
+    ["alarmclockminus"]="rbxassetid://77364179863205",
+    ["alarmclockoff"]="rbxassetid://10709752508",
+    ["alarmclockplus"]="rbxassetid://80468822979214",
+    ["alarmsmoke"]="rbxassetid://96965448419685",
+    ["album"]="rbxassetid://127358331163602",
+    ["alertcircle"]="rbxassetid://10709752996",
+    ["alertoctagon"]="rbxassetid://10709753064",
+    ["alerttriangle"]="rbxassetid://10709753149",
+    ["aligncenter"]="rbxassetid://10709753570",
+    ["aligncenterhorizontal"]="rbxassetid://81570549209434",
+    ["aligncentervertical"]="rbxassetid://118470463752466",
+    ["alignendhorizontal"]="rbxassetid://139502909745427",
+    ["alignendvertical"]="rbxassetid://96528869059554",
+    ["alignhorizontaldistributecenter"]="rbxassetid://97220086126656",
+    ["alignhorizontaldistributeend"]="rbxassetid://106128590702022",
+    ["alignhorizontaldistributestart"]="rbxassetid://76074660002997",
+    ["alignhorizontaljustifycenter"]="rbxassetid://75732302772427",
+    ["alignhorizontaljustifyend"]="rbxassetid://129167626402283",
+    ["alignhorizontaljustifystart"]="rbxassetid://130161830325281",
+    ["alignhorizontalspacearound"]="rbxassetid://91646106782950",
+    ["alignhorizontalspacebetween"]="rbxassetid://103886093046990",
+    ["alignstarthorizontal"]="rbxassetid://125674804697729",
+    ["alignstartvertical"]="rbxassetid://105020230154823",
+    ["alignverticaldistributecenter"]="rbxassetid://93791183635525",
+    ["alignverticaldistributeend"]="rbxassetid://139354223511433",
+    ["alignverticaldistributestart"]="rbxassetid://74961997822126",
+    ["alignverticaljustifycenter"]="rbxassetid://134754696166569",
+    ["alignverticaljustifyend"]="rbxassetid://92569381441969",
+    ["alignverticaljustifystart"]="rbxassetid://99692844572718",
+    ["alignverticalspacearound"]="rbxassetid://96206012459190",
+    ["alignverticalspacebetween"]="rbxassetid://124998077349706",
+    ["ambulance"]="rbxassetid://78599995190651",
+    ["ampersand"]="rbxassetid://75272915739209",
+    ["ampersands"]="rbxassetid://126947193455996",
+    ["amphora"]="rbxassetid://137370389604364",
+    ["anchor"]="rbxassetid://10709761530",
+    ["angry"]="rbxassetid://10709761629",
+    ["animation"]="rbxassetid://125020872044147",
+    ["annoyed"]="rbxassetid://80064369052011",
+    ["antenna"]="rbxassetid://99628923540956",
+    ["anvil"]="rbxassetid://100203029845919",
+    ["aperture"]="rbxassetid://10709761813",
+    ["apple"]="rbxassetid://10709761889",
+    ["appwindow"]="rbxassetid://93142176757189",
+    ["appwindowmac"]="rbxassetid://79587216113811",
+    ["archive"]="rbxassetid://10709762233",
+    ["archiverestore"]="rbxassetid://78956681942188",
+    ["archivex"]="rbxassetid://75830115088395",
+    ["armchair"]="rbxassetid://10709762327",
+    ["arrowbigdown"]="rbxassetid://81081164158885",
+    ["arrowbigdowndash"]="rbxassetid://137987229582002",
+    ["arrowbigleft"]="rbxassetid://85973092492641",
+    ["arrowbigleftdash"]="rbxassetid://97827621354677",
+    ["arrowbigright"]="rbxassetid://82960676755590",
+    ["arrowbigrightdash"]="rbxassetid://117825834972403",
+    ["arrowbigup"]="rbxassetid://93136954756149",
+    ["arrowbigupdash"]="rbxassetid://99260194327483",
+    ["arrowdown"]="rbxassetid://10709767827",
+    ["arrowdown01"]="rbxassetid://120961896217875",
+    ["arrowdown10"]="rbxassetid://93474255891850",
+    ["arrowdownaz"]="rbxassetid://99554596207900",
+    ["arrowdownfromline"]="rbxassetid://132045845807798",
+    ["arrowdownleft"]="rbxassetid://102899325237364",
+    ["arrowdownnarrowwide"]="rbxassetid://129105261655061",
+    ["arrowdownright"]="rbxassetid://123109928624974",
+    ["arrowdowntodot"]="rbxassetid://101675355931221",
+    ["arrowdowntoline"]="rbxassetid://87050478931254",
+    ["arrowdownup"]="rbxassetid://85780258549577",
+    ["arrowdownwidenarrow"]="rbxassetid://88461733425991",
+    ["arrowdownza"]="rbxassetid://76115279362232",
+    ["arrowleft"]="rbxassetid://10709768114",
+    ["arrowleftfromline"]="rbxassetid://87857914437603",
+    ["arrowleftright"]="rbxassetid://131324733048447",
+    ["arrowlefttoline"]="rbxassetid://118645136026970",
+    ["arrowright"]="rbxassetid://10709768347",
+    ["arrowrightfromline"]="rbxassetid://74073639809355",
+    ["arrowrightleft"]="rbxassetid://77015754304300",
+    ["arrowrighttoline"]="rbxassetid://78632510329852",
+    ["arrowsupfromline"]="rbxassetid://133710016938621",
+    ["arrowup"]="rbxassetid://10709768939",
+    ["arrowup01"]="rbxassetid://105257823943016",
+    ["arrowup10"]="rbxassetid://134175521693798",
+    ["arrowupaz"]="rbxassetid://77763416595160",
+    ["arrowupdown"]="rbxassetid://81019887641527",
+    ["arrowupfromdot"]="rbxassetid://124408496673275",
+    ["arrowupfromline"]="rbxassetid://95777664626453",
+    ["arrowupleft"]="rbxassetid://123490598231261",
+    ["arrowupnarrowwide"]="rbxassetid://73006024672636",
+    ["arrowupright"]="rbxassetid://129280608535523",
+    ["arrowuptoline"]="rbxassetid://108818207813537",
+    ["arrowupwidenarrow"]="rbxassetid://87437426951568",
+    ["arrowupza"]="rbxassetid://107546173611884",
+    ["asterisk"]="rbxassetid://10709769095",
+    ["atom"]="rbxassetid://73167696981648",
+    ["atsign"]="rbxassetid://10709769286",
+    ["audiolines"]="rbxassetid://70930641819242",
+    ["audiowaveform"]="rbxassetid://86462036665209",
+    ["avatar"]="rbxassetid://10747373176",
+    ["award"]="rbxassetid://10709769406",
+    ["axe"]="rbxassetid://10709769508",
+    ["axis3d"]="rbxassetid://122438676546804",
+    ["baby"]="rbxassetid://10709769732",
+    ["backpack"]="rbxassetid://10709769841",
+    ["badge"]="rbxassetid://116620312917084",
+    ["badgealert"]="rbxassetid://101829200081951",
+    ["badgecent"]="rbxassetid://133345018873154",
+    ["badgecheck"]="rbxassetid://76078495178149",
+    ["badgedollarsign"]="rbxassetid://127139803581141",
+    ["badgeeuro"]="rbxassetid://120016477674659",
+    ["badgeindianrupee"]="rbxassetid://75659682309981",
+    ["badgeinfo"]="rbxassetid://131995373201472",
+    ["badgejapaneseyen"]="rbxassetid://99081574588615",
+    ["badgeminus"]="rbxassetid://140321561183881",
+    ["badgepercent"]="rbxassetid://121359224294885",
+    ["badgeplus"]="rbxassetid://100325578561866",
+    ["badgepoundsterling"]="rbxassetid://119688217279444",
+    ["badgequestionmark"]="rbxassetid://121464963737502",
+    ["badgerussianruble"]="rbxassetid://108839463659864",
+    ["badgeswissfranc"]="rbxassetid://91447608372740",
+    ["badgeturkishlira"]="rbxassetid://137839965873529",
+    ["badgex"]="rbxassetid://122931434733842",
+    ["baggageclaim"]="rbxassetid://86922213051957",
+    ["balloon"]="rbxassetid://97489111621526",
+    ["ban"]="rbxassetid://90767043015246",
+    ["banana"]="rbxassetid://10709770005",
+    ["bandage"]="rbxassetid://129660129590770",
+    ["banknote"]="rbxassetid://10709770178",
+    ["banknotearrowdown"]="rbxassetid://139366449345199",
+    ["banknotearrowup"]="rbxassetid://133758343082529",
+    ["banknotex"]="rbxassetid://95348701438065",
+    ["barchart"]="rbxassetid://10709773755",
+    ["barcode"]="rbxassetid://10747360675",
+    ["barrel"]="rbxassetid://130647115622774",
+    ["baseline"]="rbxassetid://124677132511270",
+    ["bath"]="rbxassetid://10709773963",
+    ["battery"]="rbxassetid://10709774640",
+    ["batterycharging"]="rbxassetid://80139357470047",
+    ["batteryfull"]="rbxassetid://70906718268972",
+    ["batterylow"]="rbxassetid://139659256984314",
+    ["batterymedium"]="rbxassetid://105934079398915",
+    ["batteryplus"]="rbxassetid://91931341486966",
+    ["batterywarning"]="rbxassetid://115230083817257",
+    ["beaker"]="rbxassetid://10709774756",
+    ["bean"]="rbxassetid://89491967076869",
+    ["beanoff"]="rbxassetid://98164436608714",
+    ["bed"]="rbxassetid://10709775036",
+    ["beddouble"]="rbxassetid://73820193212911",
+    ["bedsingle"]="rbxassetid://113423940880634",
+    ["beef"]="rbxassetid://105850162318915",
+    ["beefoff"]="rbxassetid://99869959725200",
+    ["beer"]="rbxassetid://116404978807744",
+    ["beeroff"]="rbxassetid://120333134736361",
+    ["bell"]="rbxassetid://10709775704",
+    ["belldot"]="rbxassetid://93161277118810",
+    ["bellelectric"]="rbxassetid://100277767266983",
+    ["bellminus"]="rbxassetid://126334890449727",
+    ["belloff"]="rbxassetid://78560046118930",
+    ["bellplus"]="rbxassetid://77014333795836",
+    ["bellring"]="rbxassetid://94612128913941",
+    ["betweenhorizontalend"]="rbxassetid://81602774794322",
+    ["betweenhorizontalstart"]="rbxassetid://76112384929846",
+    ["betweenverticalend"]="rbxassetid://72817612571631",
+    ["betweenverticalstart"]="rbxassetid://85278312190301",
+    ["bicepsflexed"]="rbxassetid://82004462003936",
+    ["bike"]="rbxassetid://10709775894",
+    ["binary"]="rbxassetid://10709776050",
+    ["binoculars"]="rbxassetid://101460003267896",
+    ["biohazard"]="rbxassetid://95956532900432",
+    ["bird"]="rbxassetid://132284145117371",
+    ["birdhouse"]="rbxassetid://83999157401433",
+    ["bitcoin"]="rbxassetid://95459240442938",
+    ["blend"]="rbxassetid://111679612185257",
+    ["blinds"]="rbxassetid://71164165283925",
+    ["blocks"]="rbxassetid://72212693357737",
+    ["bluetooth"]="rbxassetid://10709776655",
+    ["bluetoothconnected"]="rbxassetid://96315134002985",
+    ["bluetoothoff"]="rbxassetid://80600044218117",
+    ["bluetoothsearching"]="rbxassetid://100673019606426",
+    ["body"]="rbxassetid://10709751939",
+    ["bold"]="rbxassetid://10747813908",
+    ["bolt"]="rbxassetid://102881251417484",
+    ["bomb"]="rbxassetid://10709781460",
+    ["bone"]="rbxassetid://10709781605",
+    ["book"]="rbxassetid://10709781824",
+    ["booka"]="rbxassetid://104067275658465",
+    ["bookalert"]="rbxassetid://124159928044853",
+    ["bookaudio"]="rbxassetid://109208148317037",
+    ["bookcheck"]="rbxassetid://115999656081696",
+    ["bookcopy"]="rbxassetid://108543407492005",
+    ["bookdashed"]="rbxassetid://127430784795958",
+    ["bookdown"]="rbxassetid://101011730128222",
+    ["bookheadphones"]="rbxassetid://108670200799574",
+    ["bookheart"]="rbxassetid://112788845135284",
+    ["bookimage"]="rbxassetid://80808285757226",
+    ["bookkey"]="rbxassetid://116024426170705",
+    ["booklock"]="rbxassetid://118765061220571",
+    ["bookmark"]="rbxassetid://10709782154",
+    ["bookmarkcheck"]="rbxassetid://93940443347986",
+    ["bookmarked"]="rbxassetid://73211024251780",
+    ["bookmarkminus"]="rbxassetid://96807096039910",
+    ["bookmarkplus"]="rbxassetid://121469724491615",
+    ["bookmarkx"]="rbxassetid://112272342584706",
+    ["bookminus"]="rbxassetid://112724962046282",
+    ["bookopen"]="rbxassetid://10709781717",
+    ["bookopencheck"]="rbxassetid://130848362492667",
+    ["bookopentext"]="rbxassetid://100629528672195",
+    ["bookplus"]="rbxassetid://140267785051233",
+    ["booksearch"]="rbxassetid://132585409504950",
+    ["booktext"]="rbxassetid://94011772484232",
+    ["booktype"]="rbxassetid://97817304725443",
+    ["bookup"]="rbxassetid://98640174079190",
+    ["bookup2"]="rbxassetid://130161620853665",
+    ["bookuser"]="rbxassetid://128489189240523",
+    ["bookx"]="rbxassetid://118754548186537",
+    ["boombox"]="rbxassetid://99901322535868",
+    ["bot"]="rbxassetid://10709782230",
+    ["botmessagesquare"]="rbxassetid://96145330292478",
+    ["botoff"]="rbxassetid://140417690560013",
+    ["bottlewine"]="rbxassetid://131675403196921",
+    ["bowarrow"]="rbxassetid://124089655150375",
+    ["box"]="rbxassetid://10709782497",
+    ["boxes"]="rbxassetid://136372617578355",
+    ["braces"]="rbxassetid://117761094704041",
+    ["brackets"]="rbxassetid://74368995728099",
+    ["brain"]="rbxassetid://92424107303177",
+    ["braincircuit"]="rbxassetid://70547962410202",
+    ["braincog"]="rbxassetid://132039205501538",
+    ["brickwall"]="rbxassetid://112878522258821",
+    ["brickwallfire"]="rbxassetid://92980588705520",
+    ["brickwallshield"]="rbxassetid://75954432775071",
+    ["briefcase"]="rbxassetid://10709782662",
+    ["briefcasebusiness"]="rbxassetid://129135125207283",
+    ["briefcaseconveyorbelt"]="rbxassetid://108665725653714",
+    ["briefcasemedical"]="rbxassetid://119917756334087",
+    ["bringtofront"]="rbxassetid://132975903553748",
+    ["brush"]="rbxassetid://10709782758",
+    ["brushcleaning"]="rbxassetid://71728977448805",
+    ["bubbles"]="rbxassetid://106183424168227",
+    ["bug"]="rbxassetid://10709782845",
+    ["bugoff"]="rbxassetid://88020025049245",
+    ["bugplay"]="rbxassetid://80107955888092",
+    ["building"]="rbxassetid://10709783051",
+    ["building2"]="rbxassetid://77873775611951",
+    ["bus"]="rbxassetid://10709783137",
+    ["busfront"]="rbxassetid://89863432456045",
+    ["cable"]="rbxassetid://128449944504901",
+    ["cablecar"]="rbxassetid://128643682205596",
+    ["cake"]="rbxassetid://10709783217",
+    ["cakeslice"]="rbxassetid://136769828413242",
+    ["calculator"]="rbxassetid://10709783311",
+    ["calendar"]="rbxassetid://10709789505",
+    ["calendar1"]="rbxassetid://98458364171044",
+    ["calendararrowdown"]="rbxassetid://108415736543437",
+    ["calendararrowup"]="rbxassetid://70574654109118",
+    ["calendarcheck"]="rbxassetid://71551019465748",
+    ["calendarcheck2"]="rbxassetid://120231170248276",
+    ["calendarclock"]="rbxassetid://119132152594595",
+    ["calendarcog"]="rbxassetid://122402172360287",
+    ["calendardays"]="rbxassetid://99072017568595",
+    ["calendarfold"]="rbxassetid://117368871270394",
+    ["calendarheart"]="rbxassetid://88839008103676",
+    ["calendarminus"]="rbxassetid://137354318924383",
+    ["calendarminus2"]="rbxassetid://98846170279891",
+    ["calendaroff"]="rbxassetid://109726151749217",
+    ["calendarplus"]="rbxassetid://125266115249843",
+    ["calendarplus2"]="rbxassetid://112264562093883",
+    ["calendarrange"]="rbxassetid://103641849247576",
+    ["calendars"]="rbxassetid://130944763042289",
+    ["calendarsearch"]="rbxassetid://92010083223634",
+    ["calendarsync"]="rbxassetid://78082218499697",
+    ["calendarx"]="rbxassetid://106703374806500",
+    ["calendarx2"]="rbxassetid://107518051061147",
+    ["camera"]="rbxassetid://10709789686",
+    ["cameraoff"]="rbxassetid://81057636835256",
+    ["candy"]="rbxassetid://107812129154678",
+    ["candycane"]="rbxassetid://71689468772492",
+    ["candyoff"]="rbxassetid://110232752314832",
+    ["cannabis"]="rbxassetid://98792006538601",
+    ["cannabisoff"]="rbxassetid://101938500363812",
+    ["captions"]="rbxassetid://104960225031445",
+    ["captionsoff"]="rbxassetid://105223545364193",
+    ["car"]="rbxassetid://10709789810",
+    ["caravan"]="rbxassetid://120070979471783",
+    ["cardsim"]="rbxassetid://134490550095771",
+    ["carfront"]="rbxassetid://87380942739063",
+    ["carrot"]="rbxassetid://119118221444304",
+    ["cartaxifront"]="rbxassetid://122455403384057",
+    ["caselower"]="rbxassetid://129303130603241",
+    ["casesensitive"]="rbxassetid://125410273293056",
+    ["caseupper"]="rbxassetid://111633433531325",
+    ["cassettetape"]="rbxassetid://137065788934157",
+    ["cast"]="rbxassetid://98202245922071",
+    ["castle"]="rbxassetid://119275077187784",
+    ["cat"]="rbxassetid://124252153404931",
+    ["cctv"]="rbxassetid://99979894766624",
+    ["cctvoff"]="rbxassetid://75925370187295",
+    ["chartarea"]="rbxassetid://123446436762366",
+    ["chartbar"]="rbxassetid://105389816384108",
+    ["chartbarbig"]="rbxassetid://72336824986044",
+    ["chartbardecreasing"]="rbxassetid://107217459044963",
+    ["chartbarincreasing"]="rbxassetid://88268905998571",
+    ["chartbarstacked"]="rbxassetid://98478751113024",
+    ["chartcandlestick"]="rbxassetid://125676898615697",
+    ["chartcolumn"]="rbxassetid://97915995538580",
+    ["chartcolumnbig"]="rbxassetid://98598733210787",
+    ["chartcolumndecreasing"]="rbxassetid://73586137373563",
+    ["chartcolumnincreasing"]="rbxassetid://120421615068601",
+    ["chartcolumnstacked"]="rbxassetid://86031449675105",
+    ["chartgantt"]="rbxassetid://88811660555940",
+    ["chartline"]="rbxassetid://101833156055618",
+    ["chartnetwork"]="rbxassetid://104027882693561",
+    ["chartnoaxescolumn"]="rbxassetid://94078751170351",
+    ["chartnoaxescolumndecreasing"]="rbxassetid://123371717192542",
+    ["chartnoaxescolumnincreasing"]="rbxassetid://140383830943049",
+    ["chartnoaxescombined"]="rbxassetid://121424233161912",
+    ["chartnoaxesgantt"]="rbxassetid://131936541106368",
+    ["chartpie"]="rbxassetid://113412261630136",
+    ["chartscatter"]="rbxassetid://108217585014571",
+    ["chartspline"]="rbxassetid://90307460742494",
+    ["check"]="rbxassetid://10709790644",
+    ["checkcheck"]="rbxassetid://95183312173858",
+    ["checkcircle"]="rbxassetid://10709790387",
+    ["checkline"]="rbxassetid://115122343485290",
+    ["chefhat"]="rbxassetid://10709790757",
+    ["cherry"]="rbxassetid://139519182403183",
+    ["chessbishop"]="rbxassetid://121701705580238",
+    ["chessking"]="rbxassetid://90885687223462",
+    ["chessknight"]="rbxassetid://96467707042169",
+    ["chesspawn"]="rbxassetid://111318574652751",
+    ["chessqueen"]="rbxassetid://98304702099749",
+    ["chessrook"]="rbxassetid://76223925830262",
+    ["chevrondown"]="rbxassetid://10709790948",
+    ["chevronfirst"]="rbxassetid://105243363790238",
+    ["chevronlast"]="rbxassetid://89268452603731",
+    ["chevronleft"]="rbxassetid://10709791281",
+    ["chevronright"]="rbxassetid://10709791437",
+    ["chevronsdown"]="rbxassetid://100524612205956",
+    ["chevronsdownup"]="rbxassetid://139404716013205",
+    ["chevronsleft"]="rbxassetid://82617201744347",
+    ["chevronsleftright"]="rbxassetid://87910685945204",
+    ["chevronsleftrightellipsis"]="rbxassetid://125035817741526",
+    ["chevronsright"]="rbxassetid://139121276490483",
+    ["chevronsrightleft"]="rbxassetid://87149546686569",
+    ["chevronsup"]="rbxassetid://100467452364672",
+    ["chevronsupdown"]="rbxassetid://131833120209646",
+    ["chevronup"]="rbxassetid://10709791523",
+    ["chrome"]="rbxassetid://10709797725",
+    ["chromium"]="rbxassetid://128165143739006",
+    ["church"]="rbxassetid://113714744350666",
+    ["cigarette"]="rbxassetid://137149549886852",
+    ["cigaretteoff"]="rbxassetid://77797883078452",
+    ["circle"]="rbxassetid://10709798174",
+    ["circlealert"]="rbxassetid://83898160590116",
+    ["circlearrowdown"]="rbxassetid://95901860261344",
+    ["circlearrowleft"]="rbxassetid://102148876968988",
+    ["circlearrowoutdownleft"]="rbxassetid://140598097856694",
+    ["circlearrowoutdownright"]="rbxassetid://119952801379305",
+    ["circlearrowoutupleft"]="rbxassetid://132858212688303",
+    ["circlearrowoutupright"]="rbxassetid://81783743753173",
+    ["circlearrowright"]="rbxassetid://70786767999559",
+    ["circlearrowup"]="rbxassetid://84395128546494",
+    ["circlecheck"]="rbxassetid://85262178816537",
+    ["circlecheckbig"]="rbxassetid://93202927221730",
+    ["circlechevrondown"]="rbxassetid://137069490345718",
+    ["circlechevronleft"]="rbxassetid://130250009740827",
+    ["circlechevronright"]="rbxassetid://125943696958495",
+    ["circlechevronup"]="rbxassetid://111223574026321",
+    ["circledashed"]="rbxassetid://126799443883746",
+    ["circledivide"]="rbxassetid://106398997754208",
+    ["circledollarsign"]="rbxassetid://91106238890387",
+    ["circledot"]="rbxassetid://82947033619201",
+    ["circledotdashed"]="rbxassetid://111451232827180",
+    ["circleellipsis"]="rbxassetid://91687150884779",
+    ["circleequal"]="rbxassetid://95133963751438",
+    ["circlefadingarrowup"]="rbxassetid://104648212910336",
+    ["circlefadingplus"]="rbxassetid://91847890443490",
+    ["circlegauge"]="rbxassetid://108157549473765",
+    ["circleminus"]="rbxassetid://133556159576809",
+    ["circleoff"]="rbxassetid://97923456918886",
+    ["circleparking"]="rbxassetid://124034962915196",
+    ["circleparkingoff"]="rbxassetid://128369410981252",
+    ["circlepause"]="rbxassetid://139337739700879",
+    ["circlepercent"]="rbxassetid://133311912860256",
+    ["circlepile"]="rbxassetid://116353155251541",
+    ["circleplay"]="rbxassetid://120408917249739",
+    ["circleplus"]="rbxassetid://113157136350384",
+    ["circlepoundsterling"]="rbxassetid://105476153083828",
+    ["circlepower"]="rbxassetid://140676030155098",
+    ["circlequestionmark"]="rbxassetid://97516698664325",
+    ["circleslash"]="rbxassetid://125206439913049",
+    ["circleslash2"]="rbxassetid://136766902186549",
+    ["circlesmall"]="rbxassetid://73685402843600",
+    ["circlestar"]="rbxassetid://120318414957104",
+    ["circlestop"]="rbxassetid://87400503942659",
+    ["circleuser"]="rbxassetid://136220511671311",
+    ["circleuserround"]="rbxassetid://95489465399880",
+    ["circlex"]="rbxassetid://76821953846248",
+    ["circuitboard"]="rbxassetid://107695264369312",
+    ["citrus"]="rbxassetid://139018222976433",
+    ["clapperboard"]="rbxassetid://132660667070200",
+    ["clipboard"]="rbxassetid://10709799288",
+    ["clipboardcheck"]="rbxassetid://92649798577170",
+    ["clipboardclock"]="rbxassetid://123957515687745",
+    ["clipboardcopy"]="rbxassetid://125851897718493",
+    ["clipboardlist"]="rbxassetid://96460215958908",
+    ["clipboardminus"]="rbxassetid://107968008485671",
+    ["clipboardpaste"]="rbxassetid://74382068849983",
+    ["clipboardpen"]="rbxassetid://75290966822953",
+    ["clipboardpenline"]="rbxassetid://77711589791615",
+    ["clipboardplus"]="rbxassetid://134285318675662",
+    ["clipboardtype"]="rbxassetid://89949374318028",
+    ["clipboardx"]="rbxassetid://102222456890103",
+    ["clock"]="rbxassetid://10709805144",
+    ["clock1"]="rbxassetid://129363225422045",
+    ["clock10"]="rbxassetid://104332695855541",
+    ["clock11"]="rbxassetid://119023205186105",
+    ["clock12"]="rbxassetid://117789618723068",
+    ["clock2"]="rbxassetid://134710777209413",
+    ["clock3"]="rbxassetid://136385631189327",
+    ["clock4"]="rbxassetid://121808839832144",
+    ["clock5"]="rbxassetid://85082019959457",
+    ["clock6"]="rbxassetid://71009733505593",
+    ["clock7"]="rbxassetid://103111188546225",
+    ["clock8"]="rbxassetid://110059272125337",
+    ["clock9"]="rbxassetid://77610027126437",
+    ["clockalert"]="rbxassetid://97157344465162",
+    ["clockarrowdown"]="rbxassetid://92349314416042",
+    ["clockarrowup"]="rbxassetid://111484286332629",
+    ["clockcheck"]="rbxassetid://85231630218857",
+    ["clockfading"]="rbxassetid://93205297285245",
+    ["clockplus"]="rbxassetid://93367709263150",
+    ["closedcaption"]="rbxassetid://99832644030788",
+    ["cloud"]="rbxassetid://10709806740",
+    ["cloudalert"]="rbxassetid://91967273658626",
+    ["cloudbackup"]="rbxassetid://111649579696132",
+    ["cloudcheck"]="rbxassetid://97318598202432",
+    ["cloudcog"]="rbxassetid://96497764065749",
+    ["clouddownload"]="rbxassetid://121435581993566",
+    ["clouddrizzle"]="rbxassetid://139525315752605",
+    ["cloudfog"]="rbxassetid://76650233148776",
+    ["cloudhail"]="rbxassetid://72320462748242",
+    ["cloudlightning"]="rbxassetid://133517088924849",
+    ["cloudmoon"]="rbxassetid://71938114737914",
+    ["cloudmoonrain"]="rbxassetid://127667837827018",
+    ["cloudoff"]="rbxassetid://131907154501444",
+    ["cloudrain"]="rbxassetid://105547081967408",
+    ["cloudrainwind"]="rbxassetid://107414583736721",
+    ["cloudsnow"]="rbxassetid://72307126270226",
+    ["cloudsun"]="rbxassetid://86114208148727",
+    ["cloudsunrain"]="rbxassetid://99041604425705",
+    ["cloudsync"]="rbxassetid://79393911188593",
+    ["cloudupload"]="rbxassetid://93307473217005",
+    ["cloudy"]="rbxassetid://105360479023346",
+    ["clover"]="rbxassetid://10709806995",
+    ["club"]="rbxassetid://108490365816628",
+    ["code"]="rbxassetid://10709810463",
+    ["code2"]="rbxassetid://10709807111",
+    ["codepen"]="rbxassetid://135643965971885",
+    ["codesandbox"]="rbxassetid://106911852964823",
+    ["codexml"]="rbxassetid://130150477351734",
+    ["coffee"]="rbxassetid://10709810814",
+    ["cog"]="rbxassetid://10709810948",
+    ["coins"]="rbxassetid://10709811110",
+    ["columns2"]="rbxassetid://113004100221850",
+    ["columns3"]="rbxassetid://115223357399375",
+    ["columns3cog"]="rbxassetid://121589691981064",
+    ["columns4"]="rbxassetid://130807991968419",
+    ["combine"]="rbxassetid://79908476334048",
+    ["command"]="rbxassetid://93648221906330",
+    ["compass"]="rbxassetid://10709811445",
+    ["component"]="rbxassetid://110027788875080",
+    ["computer"]="rbxassetid://77480056459407",
+    ["conciergebell"]="rbxassetid://140384259310436",
+    ["cone"]="rbxassetid://97759550688437",
+    ["construction"]="rbxassetid://106539489968173",
+    ["contact"]="rbxassetid://75868297719012",
+    ["contactround"]="rbxassetid://71907624112229",
+    ["container"]="rbxassetid://91507237573499",
+    ["contrast"]="rbxassetid://10709811939",
+    ["cookie"]="rbxassetid://10709812067",
+    ["cookingpot"]="rbxassetid://94959783129799",
+    ["copy"]="rbxassetid://10709812159",
+    ["copycheck"]="rbxassetid://91177247988892",
+    ["copyleft"]="rbxassetid://78559055698593",
+    ["copyminus"]="rbxassetid://109524509933035",
+    ["copyplus"]="rbxassetid://113618379616952",
+    ["copyright"]="rbxassetid://129433635747111",
+    ["copyslash"]="rbxassetid://93805787810390",
+    ["copyx"]="rbxassetid://106557557978061",
+    ["cornerdownleft"]="rbxassetid://90473561177832",
+    ["cornerdownright"]="rbxassetid://86512767702085",
+    ["cornerleftdown"]="rbxassetid://139876989150630",
+    ["cornerleftup"]="rbxassetid://126228268096099",
+    ["cornerrightdown"]="rbxassetid://89237035551302",
+    ["cornerrightup"]="rbxassetid://112851237026705",
+    ["cornerupleft"]="rbxassetid://84669279763024",
+    ["cornerupright"]="rbxassetid://115099889693145",
+    ["cpu"]="rbxassetid://10709813383",
+    ["creativecommons"]="rbxassetid://90408210735312",
+    ["creditcard"]="rbxassetid://99163352872346",
+    ["croissant"]="rbxassetid://130710485559420",
+    ["crop"]="rbxassetid://10709818245",
+    ["cross"]="rbxassetid://10709818399",
+    ["crosshair"]="rbxassetid://10709818534",
+    ["crown"]="rbxassetid://10709818626",
+    ["cuboid"]="rbxassetid://75618807946111",
+    ["cupsoda"]="rbxassetid://121098640829562",
+    ["currency"]="rbxassetid://90551250119972",
+    ["cylinder"]="rbxassetid://90569677179169",
+    ["dam"]="rbxassetid://76874486231393",
+    ["database"]="rbxassetid://10709818996",
+    ["databasebackup"]="rbxassetid://103403210984699",
+    ["databasesearch"]="rbxassetid://92017137080138",
+    ["databasezap"]="rbxassetid://131199921258418",
+    ["decimalsarrowleft"]="rbxassetid://120198500638749",
+    ["decimalsarrowright"]="rbxassetid://118263047146797",
+    ["delete"]="rbxassetid://10709819059",
+    ["dessert"]="rbxassetid://71508133278830",
+    ["diameter"]="rbxassetid://97429051503783",
+    ["diamond"]="rbxassetid://10709819149",
+    ["diamondminus"]="rbxassetid://128989071438290",
+    ["diamondpercent"]="rbxassetid://107717860105959",
+    ["diamondplus"]="rbxassetid://134701163723675",
+    ["dice1"]="rbxassetid://112650149591038",
+    ["dice2"]="rbxassetid://112278274566793",
+    ["dice3"]="rbxassetid://118526270626312",
+    ["dice4"]="rbxassetid://113365650364004",
+    ["dice5"]="rbxassetid://72768312430593",
+    ["dice6"]="rbxassetid://85376239182543",
+    ["dices"]="rbxassetid://81268120302865",
+    ["diff"]="rbxassetid://135052708609715",
+    ["disc"]="rbxassetid://101908120120777",
+    ["disc2"]="rbxassetid://91419420404185",
+    ["disc3"]="rbxassetid://135470554736048",
+    ["discalbum"]="rbxassetid://74693460404344",
+    ["divide"]="rbxassetid://136678191878278",
+    ["dna"]="rbxassetid://74007982981741",
+    ["dnaoff"]="rbxassetid://89612426361540",
+    ["dock"]="rbxassetid://121997427160252",
+    ["dog"]="rbxassetid://71920105558570",
+    ["dollarsign"]="rbxassetid://127320961224019",
+    ["donut"]="rbxassetid://72204922742657",
+    ["doorclosed"]="rbxassetid://136249099949073",
+    ["doorclosedlocked"]="rbxassetid://74027613267551",
+    ["dooropen"]="rbxassetid://91306356501736",
+    ["dot"]="rbxassetid://137321056643916",
+    ["download"]="rbxassetid://10723344270",
+    ["draftingcompass"]="rbxassetid://99701976182841",
+    ["drama"]="rbxassetid://110297795801577",
+    ["dribbble"]="rbxassetid://80231809663849",
+    ["drill"]="rbxassetid://108644821412796",
+    ["drone"]="rbxassetid://117299095794783",
+    ["droplet"]="rbxassetid://10723344432",
+    ["dropletoff"]="rbxassetid://119365002225172",
+    ["droplets"]="rbxassetid://140111846025180",
+    ["drum"]="rbxassetid://136979060344890",
+    ["drumstick"]="rbxassetid://104662462521709",
+    ["dumbbell"]="rbxassetid://80277236776212",
+    ["ear"]="rbxassetid://121894949934209",
+    ["earoff"]="rbxassetid://87421916192807",
+    ["earth"]="rbxassetid://76231597751076",
+    ["earthlock"]="rbxassetid://88814147073745",
+    ["eclipse"]="rbxassetid://114829622118222",
+    ["edit"]="rbxassetid://10734883598",
+    ["egg"]="rbxassetid://117851493400222",
+    ["eggfried"]="rbxassetid://90622538210545",
+    ["eggoff"]="rbxassetid://92288321309285",
+    ["ellipse"]="rbxassetid://71559658267482",
+    ["ellipsis"]="rbxassetid://140019550645825",
+    ["ellipsisvertical"]="rbxassetid://117978708573781",
+    ["emotes"]="rbxassetid://110297795801577",
+    ["equal"]="rbxassetid://123467780715624",
+    ["equalapproximately"]="rbxassetid://105382689698323",
+    ["equalnot"]="rbxassetid://76864449458032",
+    ["eraser"]="rbxassetid://133957773112410",
+    ["ethernetport"]="rbxassetid://75391715149314",
+    ["euro"]="rbxassetid://72229646524456",
+    ["evcharger"]="rbxassetid://97906158859623",
+    ["expand"]="rbxassetid://137492887754537",
+    ["externallink"]="rbxassetid://129331830773832",
+    ["eye"]="rbxassetid://10723346959",
+    ["eyeclosed"]="rbxassetid://111063268625789",
+    ["eyeoff"]="rbxassetid://10723346871",
+    ["face"]="rbxassetid://10734964441",
+    ["facebook"]="rbxassetid://72098528632192",
+    ["factory"]="rbxassetid://10723347051",
+    ["fan"]="rbxassetid://78391400440696",
+    ["fastforward"]="rbxassetid://10723354521",
+    ["feather"]="rbxassetid://10723354671",
+    ["fence"]="rbxassetid://123451565578029",
+    ["ferriswheel"]="rbxassetid://79729205796176",
+    ["figma"]="rbxassetid://10723354801",
+    ["file"]="rbxassetid://10723374641",
+    ["filearchive"]="rbxassetid://77018106869967",
+    ["fileaxis3d"]="rbxassetid://133912328009885",
+    ["filebadge"]="rbxassetid://74564895394477",
+    ["filebox"]="rbxassetid://119264004071690",
+    ["filebraces"]="rbxassetid://95314128621234",
+    ["filebracescorner"]="rbxassetid://77253337986109",
+    ["filechartcolumn"]="rbxassetid://82048481252560",
+    ["filechartcolumnincreasing"]="rbxassetid://134449481172067",
+    ["filechartline"]="rbxassetid://71954360551345",
+    ["filechartpie"]="rbxassetid://81072193564497",
+    ["filecheck"]="rbxassetid://82604001452455",
+    ["filecheckcorner"]="rbxassetid://76295552859171",
+    ["fileclock"]="rbxassetid://102325208830990",
+    ["filecode"]="rbxassetid://10723356507",
+    ["filecodecorner"]="rbxassetid://78293841184371",
+    ["filecog"]="rbxassetid://101385347151368",
+    ["filediff"]="rbxassetid://96147216772241",
+    ["filedigit"]="rbxassetid://89220220354580",
+    ["filedown"]="rbxassetid://120650154178290",
+    ["fileexclamationpoint"]="rbxassetid://102821865889635",
+    ["fileheadphone"]="rbxassetid://100533735901986",
+    ["fileheart"]="rbxassetid://132214916401696",
+    ["fileimage"]="rbxassetid://10723357790",
+    ["fileinput"]="rbxassetid://124728604166044",
+    ["filekey"]="rbxassetid://118790255921100",
+    ["filelock"]="rbxassetid://72170228691242",
+    ["fileminus"]="rbxassetid://111014798459222",
+    ["fileminuscorner"]="rbxassetid://119263271735124",
+    ["filemusic"]="rbxassetid://134948051536671",
+    ["fileoutput"]="rbxassetid://92146832572911",
+    ["filepen"]="rbxassetid://79556179730240",
+    ["filepenline"]="rbxassetid://104622936345006",
+    ["fileplay"]="rbxassetid://89006821567838",
+    ["fileplus"]="rbxassetid://78881710800060",
+    ["filepluscorner"]="rbxassetid://76544604043974",
+    ["filequestionmark"]="rbxassetid://127617422859576",
+    ["files"]="rbxassetid://102806336233202",
+    ["filescan"]="rbxassetid://129480105228213",
+    ["filesearch"]="rbxassetid://97780235974933",
+    ["filesearchcorner"]="rbxassetid://90974165234008",
+    ["filesignal"]="rbxassetid://122070252538165",
+    ["filesliders"]="rbxassetid://85787771732439",
+    ["filespreadsheet"]="rbxassetid://134501869359270",
+    ["filestack"]="rbxassetid://138929929862605",
+    ["filesymlink"]="rbxassetid://91865722036510",
+    ["fileterminal"]="rbxassetid://116757454755476",
+    ["filetext"]="rbxassetid://10723367380",
+    ["filetype"]="rbxassetid://115272552799361",
+    ["filetypecorner"]="rbxassetid://124902230275209",
+    ["fileup"]="rbxassetid://131173039312748",
+    ["fileuser"]="rbxassetid://99552018455009",
+    ["filevideocamera"]="rbxassetid://81719056173960",
+    ["filevolume"]="rbxassetid://111264764438958",
+    ["filex"]="rbxassetid://107333775515154",
+    ["filexcorner"]="rbxassetid://87554136773609",
+    ["film"]="rbxassetid://120978945609706",
+    ["filter"]="rbxassetid://10723375128",
+    ["fingerprint"]="rbxassetid://10723375250",
+    ["fingerprintpattern"]="rbxassetid://80934710831288",
+    ["fireextinguisher"]="rbxassetid://111643493006960",
+    ["fish"]="rbxassetid://124360663785796",
+    ["fishinghook"]="rbxassetid://121038780855899",
+    ["fishingrod"]="rbxassetid://71754848048049",
+    ["fishoff"]="rbxassetid://89756724887508",
+    ["fishsymbol"]="rbxassetid://118475177681618",
+    ["flag"]="rbxassetid://10723375890",
+    ["flagoff"]="rbxassetid://112944528856799",
+    ["flagtriangleleft"]="rbxassetid://88045221285272",
+    ["flagtriangleright"]="rbxassetid://108292480304566",
+    ["flame"]="rbxassetid://10723376114",
+    ["flamekindling"]="rbxassetid://139728976917928",
+    ["flashlight"]="rbxassetid://10723376471",
+    ["flashlightoff"]="rbxassetid://79780362871740",
+    ["flaskconical"]="rbxassetid://128406680901165",
+    ["flaskconicaloff"]="rbxassetid://112597970025298",
+    ["flaskround"]="rbxassetid://127508287324940",
+    ["fliphorizontal"]="rbxassetid://122937530107837",
+    ["fliphorizontal2"]="rbxassetid://103726993598186",
+    ["flipvertical"]="rbxassetid://108003917346888",
+    ["flipvertical2"]="rbxassetid://103836358956328",
+    ["flower"]="rbxassetid://86129438272762",
+    ["flower2"]="rbxassetid://72934574245145",
+    ["focus"]="rbxassetid://87493973153317",
+    ["folder"]="rbxassetid://10723387563",
+    ["folderarchive"]="rbxassetid://97312009460206",
+    ["foldercheck"]="rbxassetid://128492920904557",
+    ["folderclock"]="rbxassetid://111964836738545",
+    ["folderclosed"]="rbxassetid://118286209350843",
+    ["foldercode"]="rbxassetid://70624096349370",
+    ["foldercog"]="rbxassetid://85299519462846",
+    ["folderdot"]="rbxassetid://138687772725278",
+    ["folderdown"]="rbxassetid://118044108459225",
+    ["foldergit"]="rbxassetid://121885778095158",
+    ["foldergit2"]="rbxassetid://101394054141166",
+    ["folderheart"]="rbxassetid://79104747211105",
+    ["folderinput"]="rbxassetid://90699920697871",
+    ["folderkanban"]="rbxassetid://78313285104072",
+    ["folderkey"]="rbxassetid://85270407596791",
+    ["folderlock"]="rbxassetid://119201572260567",
+    ["folderminus"]="rbxassetid://85648718999010",
+    ["folderopen"]="rbxassetid://76018996254888",
+    ["folderopendot"]="rbxassetid://74741494767354",
+    ["folderoutput"]="rbxassetid://101532447937612",
+    ["folderpen"]="rbxassetid://112770491173911",
+    ["folderplus"]="rbxassetid://91865663406119",
+    ["folderroot"]="rbxassetid://103333751154693",
+    ["folders"]="rbxassetid://110351216219061",
+    ["foldersearch"]="rbxassetid://110568075123861",
+    ["foldersearch2"]="rbxassetid://71276453442655",
+    ["foldersymlink"]="rbxassetid://127485747227189",
+    ["foldersync"]="rbxassetid://91544602659796",
+    ["foldertree"]="rbxassetid://85577554337861",
+    ["folderup"]="rbxassetid://72008269765857",
+    ["folderx"]="rbxassetid://91699618247635",
+    ["foldhorizontal"]="rbxassetid://92835712442240",
+    ["foldvertical"]="rbxassetid://108873727253656",
+    ["footprints"]="rbxassetid://139192589041315",
+    ["forklift"]="rbxassetid://72030930983101",
+    ["form"]="rbxassetid://72999643971000",
+    ["forward"]="rbxassetid://10723388016",
+    ["frame"]="rbxassetid://109080612832751",
+    ["framer"]="rbxassetid://108384807262391",
+    ["frown"]="rbxassetid://10723394681",
+    ["fuel"]="rbxassetid://106447647274511",
+    ["fullscreen"]="rbxassetid://77793665526178",
+    ["funnel"]="rbxassetid://108829540827529",
+    ["funnelplus"]="rbxassetid://100780233821928",
+    ["funnelx"]="rbxassetid://70984385812555",
+    ["galleryhorizontal"]="rbxassetid://80004001442122",
+    ["galleryhorizontalend"]="rbxassetid://74672430161161",
+    ["gallerythumbnails"]="rbxassetid://136219289862706",
+    ["galleryvertical"]="rbxassetid://119299431466725",
+    ["galleryverticalend"]="rbxassetid://106461402088317",
+    ["gamepad"]="rbxassetid://10723395457",
+    ["gamepad2"]="rbxassetid://92483947987410",
+    ["gamepaddirectional"]="rbxassetid://84342305212226",
+    ["gauge"]="rbxassetid://10723395708",
+    ["gavel"]="rbxassetid://78952298198456",
+    ["gem"]="rbxassetid://10723396000",
+    ["georgianlari"]="rbxassetid://98084432591687",
+    ["ghost"]="rbxassetid://10723396107",
+    ["gift"]="rbxassetid://10723396402",
+    ["gitbranch"]="rbxassetid://10723396676",
+    ["gitbranchminus"]="rbxassetid://97385010649411",
+    ["gitbranchplus"]="rbxassetid://125944221134316",
+    ["gitcommithorizontal"]="rbxassetid://133646041800147",
+    ["gitcommitvertical"]="rbxassetid://122098032990350",
+    ["gitcompare"]="rbxassetid://91945124438792",
+    ["gitcomparearrows"]="rbxassetid://84874426520216",
+    ["gitfork"]="rbxassetid://89954992404765",
+    ["gitgraph"]="rbxassetid://86166832019304",
+    ["github"]="rbxassetid://120349554354380",
+    ["gitlab"]="rbxassetid://114054627192933",
+    ["gitmerge"]="rbxassetid://131833355158059",
+    ["gitmergeconflict"]="rbxassetid://85677801675703",
+    ["gitpullrequest"]="rbxassetid://138463010991471",
+    ["gitpullrequestarrow"]="rbxassetid://94507974577439",
+    ["gitpullrequestclosed"]="rbxassetid://78070600389091",
+    ["gitpullrequestcreate"]="rbxassetid://105929577383926",
+    ["gitpullrequestcreatearrow"]="rbxassetid://127422677061091",
+    ["gitpullrequestdraft"]="rbxassetid://76173459869943",
+    ["glasses"]="rbxassetid://87936407455373",
+    ["glasswater"]="rbxassetid://115526102400988",
+    ["globe"]="rbxassetid://10723404337",
+    ["globelock"]="rbxassetid://134065526704402",
+    ["globeoff"]="rbxassetid://77775243585824",
+    ["globex"]="rbxassetid://109268097029296",
+    ["goal"]="rbxassetid://120517954878160",
+    ["gpu"]="rbxassetid://95577823614219",
+    ["graduationcap"]="rbxassetid://10723404691",
+    ["grape"]="rbxassetid://134760640415561",
+    ["grid"]="rbxassetid://10723404936",
+    ["grid2x2"]="rbxassetid://99050491897640",
+    ["grid2x2check"]="rbxassetid://138468840220821",
+    ["grid2x2plus"]="rbxassetid://91811610580247",
+    ["grid2x2x"]="rbxassetid://72407303981388",
+    ["grid3x2"]="rbxassetid://95528684210010",
+    ["grid3x3"]="rbxassetid://70419024781206",
+    ["grip"]="rbxassetid://109058783556768",
+    ["griphorizontal"]="rbxassetid://136255899715930",
+    ["gripvertical"]="rbxassetid://137183678565296",
+    ["group"]="rbxassetid://107643418926671",
+    ["guitar"]="rbxassetid://75915531867926",
+    ["hair"]="rbxassetid://10734942778",
+    ["ham"]="rbxassetid://74465607934635",
+    ["hamburger"]="rbxassetid://93086916815495",
+    ["hammer"]="rbxassetid://10723405360",
+    ["hand"]="rbxassetid://10723405649",
+    ["handbag"]="rbxassetid://135675846264061",
+    ["handcoins"]="rbxassetid://126990543175462",
+    ["handfist"]="rbxassetid://83341608917591",
+    ["handgrab"]="rbxassetid://88867162163985",
+    ["handheart"]="rbxassetid://117507367668412",
+    ["handhelping"]="rbxassetid://89897738419446",
+    ["handmetal"]="rbxassetid://113619498548713",
+    ["handplatter"]="rbxassetid://88594727743168",
+    ["handshake"]="rbxassetid://78442115255814",
+    ["harddrive"]="rbxassetid://10723405749",
+    ["harddrivedownload"]="rbxassetid://73913801230614",
+    ["harddriveupload"]="rbxassetid://85762133615118",
+    ["hardhat"]="rbxassetid://128050846767382",
+    ["hash"]="rbxassetid://10723405975",
+    ["hatglasses"]="rbxassetid://101165538224815",
+    ["haze"]="rbxassetid://108857561768901",
+    ["hd"]="rbxassetid://71682790698278",
+    ["hdmiport"]="rbxassetid://103693661037020",
+    ["heading"]="rbxassetid://129254312067735",
+    ["heading1"]="rbxassetid://118129315662110",
+    ["heading2"]="rbxassetid://110209069670094",
+    ["heading3"]="rbxassetid://90267885237062",
+    ["heading4"]="rbxassetid://129625620307602",
+    ["heading5"]="rbxassetid://120386663181267",
+    ["heading6"]="rbxassetid://90959079775093",
+    ["headphoneoff"]="rbxassetid://85038251615641",
+    ["headphones"]="rbxassetid://10723406165",
+    ["headset"]="rbxassetid://129269236787694",
+    ["heart"]="rbxassetid://10723406885",
+    ["heartcrack"]="rbxassetid://110987638564119",
+    ["hearthandshake"]="rbxassetid://111483078692002",
+    ["heartminus"]="rbxassetid://96827380163326",
+    ["heartoff"]="rbxassetid://89748414415617",
+    ["heartplus"]="rbxassetid://94877796283249",
+    ["heartpulse"]="rbxassetid://129352925579546",
+    ["heater"]="rbxassetid://140478466880916",
+    ["helicopter"]="rbxassetid://111557171735930",
+    ["helpcircle"]="rbxassetid://10723406988",
+    ["hexagon"]="rbxassetid://10723407092",
+    ["highlighter"]="rbxassetid://77411555641113",
+    ["history"]="rbxassetid://10723407335",
+    ["home"]="rbxassetid://10723407389",
+    ["hop"]="rbxassetid://82778923997672",
+    ["hopoff"]="rbxassetid://103386036934034",
+    ["hospital"]="rbxassetid://105868763850707",
+    ["hotel"]="rbxassetid://132283390859718",
+    ["hourglass"]="rbxassetid://86160434939203",
+    ["house"]="rbxassetid://98755624629571",
+    ["househeart"]="rbxassetid://136054771868597",
+    ["houseplug"]="rbxassetid://71438263712075",
+    ["houseplus"]="rbxassetid://118495165208309",
+    ["housewifi"]="rbxassetid://126495519725698",
+    ["icecreambowl"]="rbxassetid://124867218454386",
+    ["icecreamcone"]="rbxassetid://90751397288639",
+    ["idcard"]="rbxassetid://75354294622640",
+    ["idcardlanyard"]="rbxassetid://90761480469224",
+    ["image"]="rbxassetid://10723415040",
+    ["imagedown"]="rbxassetid://78972295741235",
+    ["imageminus"]="rbxassetid://101066016918565",
+    ["imageoff"]="rbxassetid://81934811700938",
+    ["imageplay"]="rbxassetid://129501806784210",
+    ["imageplus"]="rbxassetid://70391970623917",
+    ["images"]="rbxassetid://79350649395557",
+    ["imageup"]="rbxassetid://126610009605241",
+    ["imageupscale"]="rbxassetid://106963545024679",
+    ["import"]="rbxassetid://116545008906029",
+    ["inbox"]="rbxassetid://10723415335",
+    ["indianrupee"]="rbxassetid://113038778381805",
+    ["infinity"]="rbxassetid://10723415766",
+    ["info"]="rbxassetid://10723415903",
+    ["inspect"]="rbxassetid://10723416057",
+    ["inspectionpanel"]="rbxassetid://70905313146088",
+    ["instagram"]="rbxassetid://119864798614855",
+    ["italic"]="rbxassetid://10723416195",
+    ["iterationccw"]="rbxassetid://140221832794083",
+    ["iterationcw"]="rbxassetid://95534489554662",
+    ["japaneseyen"]="rbxassetid://106362863465813",
+    ["joystick"]="rbxassetid://10723416527",
+    ["kanban"]="rbxassetid://125934100055431",
+    ["kayak"]="rbxassetid://136107544609389",
+    ["key"]="rbxassetid://10723416652",
+    ["keyboard"]="rbxassetid://10723416765",
+    ["keyboardmusic"]="rbxassetid://121058541758636",
+    ["keyboardoff"]="rbxassetid://92466375369772",
+    ["keyround"]="rbxassetid://83619031955390",
+    ["keysquare"]="rbxassetid://94621420033649",
+    ["lamp"]="rbxassetid://110730830653382",
+    ["lampceiling"]="rbxassetid://80032758469141",
+    ["lampdesk"]="rbxassetid://85290686983238",
+    ["lampfloor"]="rbxassetid://104585881375892",
+    ["lampwalldown"]="rbxassetid://91271394132073",
+    ["lampwallup"]="rbxassetid://132141464337445",
+    ["landmark"]="rbxassetid://76885079756393",
+    ["landplot"]="rbxassetid://96449039620294",
+    ["languages"]="rbxassetid://90816903776498",
+    ["laptop"]="rbxassetid://10723423881",
+    ["laptopminimal"]="rbxassetid://136705765566068",
+    ["laptopminimalcheck"]="rbxassetid://114352019833865",
+    ["lasso"]="rbxassetid://121072936884007",
+    ["lassoselect"]="rbxassetid://105609719912753",
+    ["laugh"]="rbxassetid://104491311361166",
+    ["layers"]="rbxassetid://10723424505",
+    ["layers2"]="rbxassetid://70536710516357",
+    ["layersplus"]="rbxassetid://77587765623057",
+    ["layout"]="rbxassetid://10723425376",
+    ["layoutdashboard"]="rbxassetid://139929981863901",
+    ["layoutgrid"]="rbxassetid://81344910161871",
+    ["layoutlist"]="rbxassetid://87462136296578",
+    ["layoutpanelleft"]="rbxassetid://125092469751491",
+    ["layoutpaneltop"]="rbxassetid://91943941515944",
+    ["layouttemplate"]="rbxassetid://115564446417985",
+    ["leaf"]="rbxassetid://10723425539",
+    ["leafygreen"]="rbxassetid://105146290493154",
+    ["lectern"]="rbxassetid://106166425183862",
+    ["lensconcave"]="rbxassetid://94819631937027",
+    ["lensconvex"]="rbxassetid://74736504195474",
+    ["library"]="rbxassetid://10723425615",
+    ["librarybig"]="rbxassetid://106794530191412",
+    ["lifebuoy"]="rbxassetid://81168450671956",
+    ["ligature"]="rbxassetid://111397873269411",
+    ["lightbulb"]="rbxassetid://10723425852",
+    ["lightbulboff"]="rbxassetid://83795722296178",
+    ["linechart"]="rbxassetid://10723426393",
+    ["linedotrighthorizontal"]="rbxassetid://104718593155221",
+    ["linesquiggle"]="rbxassetid://109555164424447",
+    ["linestyle"]="rbxassetid://90176717785772",
+    ["link"]="rbxassetid://10723426722",
+    ["link2"]="rbxassetid://86072351557466",
+    ["link2off"]="rbxassetid://76885956296867",
+    ["linkedin"]="rbxassetid://132842789255788",
+    ["list"]="rbxassetid://10723433811",
+    ["listcheck"]="rbxassetid://72374358471156",
+    ["listchecks"]="rbxassetid://99809353635593",
+    ["listchevronsdownup"]="rbxassetid://137409641500711",
+    ["listchevronsupdown"]="rbxassetid://81825351389084",
+    ["listcollapse"]="rbxassetid://124505247702401",
+    ["listend"]="rbxassetid://77650610048119",
+    ["listfilter"]="rbxassetid://103321376129527",
+    ["listfilterplus"]="rbxassetid://96385120752336",
+    ["listindentdecrease"]="rbxassetid://137879979228193",
+    ["listindentincrease"]="rbxassetid://79051053161201",
+    ["listminus"]="rbxassetid://138507965142671",
+    ["listmusic"]="rbxassetid://126380635781840",
+    ["listordered"]="rbxassetid://83212528113913",
+    ["listplus"]="rbxassetid://112384738137814",
+    ["listrestart"]="rbxassetid://91703153577421",
+    ["liststart"]="rbxassetid://84828348299727",
+    ["listtodo"]="rbxassetid://132980603752108",
+    ["listtree"]="rbxassetid://97685396239010",
+    ["listvideo"]="rbxassetid://93648525452489",
+    ["listx"]="rbxassetid://113025303988861",
+    ["loader"]="rbxassetid://10723434070",
+    ["loadercircle"]="rbxassetid://116535712789945",
+    ["loaderpinwheel"]="rbxassetid://108513357940900",
+    ["locate"]="rbxassetid://10723434557",
+    ["locatefixed"]="rbxassetid://137367361548433",
+    ["locateoff"]="rbxassetid://73729216338137",
+    ["lock"]="rbxassetid://10723434711",
+    ["lockkeyhole"]="rbxassetid://78672912777756",
+    ["lockkeyholeopen"]="rbxassetid://110863509313073",
+    ["lockopen"]="rbxassetid://93597915325122",
+    ["login"]="rbxassetid://10723434830",
+    ["logout"]="rbxassetid://10723434906",
+    ["logs"]="rbxassetid://89772091251787",
+    ["lollipop"]="rbxassetid://84681611583044",
+    ["luggage"]="rbxassetid://76619236486400",
+    ["magnet"]="rbxassetid://10723435069",
+    ["mail"]="rbxassetid://10734885430",
+    ["mailbox"]="rbxassetid://82765503320335",
+    ["mailcheck"]="rbxassetid://86921536259917",
+    ["mailminus"]="rbxassetid://81989813236553",
+    ["mailopen"]="rbxassetid://122785416858638",
+    ["mailplus"]="rbxassetid://104886401588341",
+    ["mailquestionmark"]="rbxassetid://126540170949819",
+    ["mails"]="rbxassetid://90673453450080",
+    ["mailsearch"]="rbxassetid://135616173775287",
+    ["mailwarning"]="rbxassetid://81495303676089",
+    ["mailx"]="rbxassetid://74607841705644",
+    ["map"]="rbxassetid://10734886202",
+    ["mapminus"]="rbxassetid://129525760577747",
+    ["mappin"]="rbxassetid://10734886004",
+    ["mappincheck"]="rbxassetid://118110914690154",
+    ["mappincheckinside"]="rbxassetid://107130529843809",
+    ["mappinhouse"]="rbxassetid://80546885029816",
+    ["mappinminus"]="rbxassetid://74518762643623",
+    ["mappinminusinside"]="rbxassetid://79005529692964",
+    ["mappinned"]="rbxassetid://103963788475034",
+    ["mappinoff"]="rbxassetid://82474689391020",
+    ["mappinpen"]="rbxassetid://113515395277504",
+    ["mappinplus"]="rbxassetid://91875228967029",
+    ["mappinplusinside"]="rbxassetid://134639656514430",
+    ["mappinsearch"]="rbxassetid://89065012915078",
+    ["mappinx"]="rbxassetid://101085273547316",
+    ["mappinxinside"]="rbxassetid://126235934252379",
+    ["mapplus"]="rbxassetid://129388826743495",
+    ["mars"]="rbxassetid://111287112372511",
+    ["marsstroke"]="rbxassetid://131973193186828",
+    ["martini"]="rbxassetid://82977695401058",
+    ["mask"]="rbxassetid://102636443033920",
+    ["maximize"]="rbxassetid://10734886735",
+    ["maximize2"]="rbxassetid://73085922906397",
+    ["medal"]="rbxassetid://10734887072",
+    ["megaphone"]="rbxassetid://10734887454",
+    ["megaphoneoff"]="rbxassetid://124280774193935",
+    ["meh"]="rbxassetid://132197867028557",
+    ["memorystick"]="rbxassetid://93212591343119",
+    ["menu"]="rbxassetid://10734887784",
+    ["merge"]="rbxassetid://126201866476775",
+    ["messagecircle"]="rbxassetid://10734888000",
+    ["messagecirclecheck"]="rbxassetid://132772297689418",
+    ["messagecirclecode"]="rbxassetid://112865244991651",
+    ["messagecircledashed"]="rbxassetid://81525157881897",
+    ["messagecircleheart"]="rbxassetid://101990756073677",
+    ["messagecirclemore"]="rbxassetid://92856823884663",
+    ["messagecircleoff"]="rbxassetid://134955643890328",
+    ["messagecircleplus"]="rbxassetid://106562979649273",
+    ["messagecirclequestionmark"]="rbxassetid://107700302759934",
+    ["messagecirclereply"]="rbxassetid://137071749508334",
+    ["messagecirclewarning"]="rbxassetid://119020096067894",
+    ["messagecirclex"]="rbxassetid://126843387725536",
+    ["messagesquare"]="rbxassetid://10734888228",
+    ["messagesquarecheck"]="rbxassetid://125789987055668",
+    ["messagesquarecode"]="rbxassetid://110968863152123",
+    ["messagesquaredashed"]="rbxassetid://107653455516238",
+    ["messagesquarediff"]="rbxassetid://75472190472625",
+    ["messagesquaredot"]="rbxassetid://127806382463916",
+    ["messagesquareheart"]="rbxassetid://75612811742074",
+    ["messagesquarelock"]="rbxassetid://81268215619563",
+    ["messagesquaremore"]="rbxassetid://120139782405970",
+    ["messagesquareoff"]="rbxassetid://99961019005789",
+    ["messagesquareplus"]="rbxassetid://76934450256199",
+    ["messagesquarequote"]="rbxassetid://116670768629340",
+    ["messagesquarereply"]="rbxassetid://130985622754637",
+    ["messagesquareshare"]="rbxassetid://131017005324026",
+    ["messagesquaretext"]="rbxassetid://94899503194205",
+    ["messagesquarewarning"]="rbxassetid://138432903962261",
+    ["messagesquarex"]="rbxassetid://137285463279462",
+    ["messagessquare"]="rbxassetid://97532166733358",
+    ["metronome"]="rbxassetid://101991829345965",
+    ["mic"]="rbxassetid://10734888864",
+    ["micoff"]="rbxassetid://82123034444822",
+    ["microchip"]="rbxassetid://73937907669903",
+    ["microscope"]="rbxassetid://10734889106",
+    ["microwave"]="rbxassetid://108411735353008",
+    ["micvocal"]="rbxassetid://99082286164362",
+    ["milestone"]="rbxassetid://101618292325920",
+    ["milk"]="rbxassetid://96221903896918",
+    ["milkoff"]="rbxassetid://72388480962742",
+    ["minimize"]="rbxassetid://121304296213645",
+    ["minimize2"]="rbxassetid://116269596042539",
+    ["minus"]="rbxassetid://10734896206",
+    ["mirrorrectangular"]="rbxassetid://109046769760336",
+    ["mirrorround"]="rbxassetid://121534049429097",
+    ["monitor"]="rbxassetid://10734896881",
+    ["monitorcheck"]="rbxassetid://86651948439229",
+    ["monitorcloud"]="rbxassetid://85931096038318",
+    ["monitorcog"]="rbxassetid://94345128715799",
+    ["monitordot"]="rbxassetid://130394010063680",
+    ["monitordown"]="rbxassetid://97466933743423",
+    ["monitoroff"]="rbxassetid://74395526657953",
+    ["monitorpause"]="rbxassetid://76002184067562",
+    ["monitorplay"]="rbxassetid://133018824306217",
+    ["monitorsmartphone"]="rbxassetid://84335680433378",
+    ["monitorspeaker"]="rbxassetid://81744810060380",
+    ["monitorstop"]="rbxassetid://98708958984757",
+    ["monitorup"]="rbxassetid://96035360858377",
+    ["monitorx"]="rbxassetid://126265210441423",
+    ["moon"]="rbxassetid://10734897102",
+    ["moonstar"]="rbxassetid://82782200506348",
+    ["motorbike"]="rbxassetid://94580787368233",
+    ["mountain"]="rbxassetid://10734897956",
+    ["mountainsnow"]="rbxassetid://105315495740588",
+    ["mouse"]="rbxassetid://10734898592",
+    ["mouseleft"]="rbxassetid://99144293708743",
+    ["mouseoff"]="rbxassetid://75267871697595",
+    ["mousepointer"]="rbxassetid://72322454962935",
+    ["mousepointer2"]="rbxassetid://117093892862228",
+    ["mousepointer2off"]="rbxassetid://104701076865632",
+    ["mousepointerban"]="rbxassetid://106849413057133",
+    ["mousepointerclick"]="rbxassetid://107150227368485",
+    ["mouseright"]="rbxassetid://88331710212594",
+    ["move"]="rbxassetid://10734900011",
+    ["move3d"]="rbxassetid://103365982054003",
+    ["movediagonal"]="rbxassetid://101433481954184",
+    ["movediagonal2"]="rbxassetid://117298577948096",
+    ["movedown"]="rbxassetid://70510115135583",
+    ["movedownleft"]="rbxassetid://102819433534567",
+    ["movedownright"]="rbxassetid://101479760041877",
+    ["movehorizontal"]="rbxassetid://88513523439149",
+    ["moveleft"]="rbxassetid://137614740247980",
+    ["moveright"]="rbxassetid://132455779472989",
+    ["moveup"]="rbxassetid://84505444262658",
+    ["moveupleft"]="rbxassetid://139079815540148",
+    ["moveupright"]="rbxassetid://105885140592646",
+    ["movevertical"]="rbxassetid://86234730730899",
+    ["music"]="rbxassetid://10734905958",
+    ["music2"]="rbxassetid://134397426600888",
+    ["music3"]="rbxassetid://94466120066498",
+    ["music4"]="rbxassetid://132459323665838",
+    ["navigation"]="rbxassetid://10734906744",
+    ["navigation2"]="rbxassetid://81889066747907",
+    ["navigation2off"]="rbxassetid://116569611780763",
+    ["navigationoff"]="rbxassetid://87003270290777",
+    ["network"]="rbxassetid://10734906975",
+    ["newspaper"]="rbxassetid://10734907168",
+    ["nfc"]="rbxassetid://76822396542242",
+    ["nonbinary"]="rbxassetid://78442360386235",
+    ["notebook"]="rbxassetid://136132108664987",
+    ["notebookpen"]="rbxassetid://140380614761023",
+    ["notebooktabs"]="rbxassetid://127371085570083",
+    ["notebooktext"]="rbxassetid://93061585217270",
+    ["notepadtext"]="rbxassetid://93404682958966",
+    ["notepadtextdashed"]="rbxassetid://135793446376219",
+    ["nut"]="rbxassetid://127146410705656",
+    ["nutoff"]="rbxassetid://78795397311573",
+    ["octagon"]="rbxassetid://120803515514852",
+    ["octagonalert"]="rbxassetid://140438367956051",
+    ["octagonminus"]="rbxassetid://74720436795421",
+    ["octagonpause"]="rbxassetid://103161463909039",
+    ["octagonx"]="rbxassetid://90498161006311",
+    ["omega"]="rbxassetid://70414080018786",
+    ["option"]="rbxassetid://100776883894054",
+    ["orbit"]="rbxassetid://108926136860562",
+    ["origami"]="rbxassetid://136020626667101",
+    ["outfit"]="rbxassetid://106579555405966",
+    ["package"]="rbxassetid://10734909540",
+    ["package2"]="rbxassetid://70394974762575",
+    ["packagecheck"]="rbxassetid://102374216055130",
+    ["packageminus"]="rbxassetid://114492858789692",
+    ["packageopen"]="rbxassetid://132890233237818",
+    ["packageplus"]="rbxassetid://129261988138366",
+    ["packagesearch"]="rbxassetid://95465120894145",
+    ["packagex"]="rbxassetid://70818501607442",
+    ["paintbrush"]="rbxassetid://10734910187",
+    ["paintbrushvertical"]="rbxassetid://105151296591292",
+    ["paintbucket"]="rbxassetid://124275586663284",
+    ["paintroller"]="rbxassetid://115248074358348",
+    ["palette"]="rbxassetid://10734910430",
+    ["panda"]="rbxassetid://132509022802512",
+    ["panelbottom"]="rbxassetid://132127145048511",
+    ["panelbottomclose"]="rbxassetid://74287004071159",
+    ["panelbottomdashed"]="rbxassetid://131084651621603",
+    ["panelbottomopen"]="rbxassetid://107768659586540",
+    ["panelleft"]="rbxassetid://97419752870313",
+    ["panelleftclose"]="rbxassetid://126579818823552",
+    ["panelleftdashed"]="rbxassetid://75536606374585",
+    ["panelleftopen"]="rbxassetid://111075816195767",
+    ["panelleftrightdashed"]="rbxassetid://110100707973959",
+    ["panelright"]="rbxassetid://116365035443156",
+    ["panelrightclose"]="rbxassetid://139528655524132",
+    ["panelrightdashed"]="rbxassetid://94959793877311",
+    ["panelrightopen"]="rbxassetid://118114419142794",
+    ["panelsleftbottom"]="rbxassetid://72996856149149",
+    ["panelsrightbottom"]="rbxassetid://90659068960726",
+    ["panelstopleft"]="rbxassetid://79858853850600",
+    ["paneltop"]="rbxassetid://75838479462875",
+    ["paneltopbottomdashed"]="rbxassetid://134737235653344",
+    ["paneltopclose"]="rbxassetid://83578325777808",
+    ["paneltopdashed"]="rbxassetid://70522913169237",
+    ["paneltopopen"]="rbxassetid://137959875507454",
+    ["paperclip"]="rbxassetid://10734910927",
+    ["parentheses"]="rbxassetid://78950955173096",
+    ["parkingmeter"]="rbxassetid://84652733960568",
+    ["partypopper"]="rbxassetid://111626795712193",
+    ["pause"]="rbxassetid://10734919336",
+    ["pawprint"]="rbxassetid://112218825427601",
+    ["pccase"]="rbxassetid://122978648019101",
+    ["pen"]="rbxassetid://72037878096321",
+    ["pencil"]="rbxassetid://10734919691",
+    ["pencilline"]="rbxassetid://88392917053533",
+    ["penciloff"]="rbxassetid://103330927652832",
+    ["pencilruler"]="rbxassetid://110120288284597",
+    ["penline"]="rbxassetid://109108135755303",
+    ["penoff"]="rbxassetid://84807123119438",
+    ["pentagon"]="rbxassetid://79184802179890",
+    ["pentool"]="rbxassetid://106145404953445",
+    ["percent"]="rbxassetid://130155041032013",
+    ["personstanding"]="rbxassetid://125020872044147",
+    ["philippinepeso"]="rbxassetid://91173798254675",
+    ["phone"]="rbxassetid://10734921524",
+    ["phonecall"]="rbxassetid://70555587592860",
+    ["phoneforwarded"]="rbxassetid://113269614319737",
+    ["phoneincoming"]="rbxassetid://82863576359288",
+    ["phonemissed"]="rbxassetid://130156165198376",
+    ["phoneoff"]="rbxassetid://133318623553383",
+    ["phoneoutgoing"]="rbxassetid://104576478735825",
+    ["pi"]="rbxassetid://74936036243146",
+    ["piano"]="rbxassetid://85008880789520",
+    ["pickaxe"]="rbxassetid://105888023317688",
+    ["pictureinpicture"]="rbxassetid://80579597835123",
+    ["pictureinpicture2"]="rbxassetid://112803319544468",
+    ["piechart"]="rbxassetid://10734921727",
+    ["piggybank"]="rbxassetid://79498575790721",
+    ["pilcrow"]="rbxassetid://139512780392871",
+    ["pilcrowleft"]="rbxassetid://103803000849583",
+    ["pilcrowright"]="rbxassetid://104881733911870",
+    ["pill"]="rbxassetid://73280534813448",
+    ["pillbottle"]="rbxassetid://118394692404597",
+    ["pin"]="rbxassetid://10734922324",
+    ["pinoff"]="rbxassetid://127696372451750",
+    ["pipette"]="rbxassetid://10734922497",
+    ["pizza"]="rbxassetid://126964453193501",
+    ["plane"]="rbxassetid://10734922971",
+    ["planelanding"]="rbxassetid://122555692211889",
+    ["planetakeoff"]="rbxassetid://117179478829575",
+    ["play"]="rbxassetid://10734923549",
+    ["plug"]="rbxassetid://99782373064495",
+    ["plug2"]="rbxassetid://97912386476366",
+    ["plugzap"]="rbxassetid://74506269884055",
+    ["plus"]="rbxassetid://10734924532",
+    ["pocket"]="rbxassetid://136686762542964",
+    ["pocketknife"]="rbxassetid://134075428063965",
+    ["podcast"]="rbxassetid://109577075549215",
+    ["pointer"]="rbxassetid://92615117311099",
+    ["pointeroff"]="rbxassetid://95488389312794",
+    ["popcorn"]="rbxassetid://139446511232750",
+    ["popsicle"]="rbxassetid://112696318077073",
+    ["poundsterling"]="rbxassetid://127482649469130",
+    ["power"]="rbxassetid://10734930466",
+    ["poweroff"]="rbxassetid://118768311012214",
+    ["presentation"]="rbxassetid://106134583757890",
+    ["printer"]="rbxassetid://10734930632",
+    ["printercheck"]="rbxassetid://130273549443689",
+    ["printerx"]="rbxassetid://103002721801548",
+    ["projector"]="rbxassetid://103281856385283",
+    ["proportions"]="rbxassetid://130046855997237",
+    ["puzzle"]="rbxassetid://10734930886",
+    ["pyramid"]="rbxassetid://107811442374127",
+    ["qrcode"]="rbxassetid://105329945723350",
+    ["quote"]="rbxassetid://103271711590001",
+    ["rabbit"]="rbxassetid://98580518804206",
+    ["radar"]="rbxassetid://138528222906635",
+    ["radiation"]="rbxassetid://104499586848433",
+    ["radical"]="rbxassetid://132758286926047",
+    ["radio"]="rbxassetid://10734931596",
+    ["radiooff"]="rbxassetid://80359258046586",
+    ["radioreceiver"]="rbxassetid://129598303378835",
+    ["radiotower"]="rbxassetid://93958663130054",
+    ["radius"]="rbxassetid://89814505307129",
+    ["railsymbol"]="rbxassetid://134295386306962",
+    ["rainbow"]="rbxassetid://132488862841895",
+    ["rat"]="rbxassetid://127400975953159",
+    ["ratio"]="rbxassetid://126369423897295",
+    ["receipt"]="rbxassetid://77877895901792",
+    ["receiptcent"]="rbxassetid://91557573925201",
+    ["receipteuro"]="rbxassetid://94015722210295",
+    ["receiptindianrupee"]="rbxassetid://89718170439990",
+    ["receiptjapaneseyen"]="rbxassetid://132472560758851",
+    ["receiptpoundsterling"]="rbxassetid://73934967569625",
+    ["receiptrussianruble"]="rbxassetid://105164576936853",
+    ["receiptswissfranc"]="rbxassetid://72503668620116",
+    ["receipttext"]="rbxassetid://138483536013737",
+    ["receiptturkishlira"]="rbxassetid://91950765836342",
+    ["rectanglecircle"]="rbxassetid://100642423153903",
+    ["rectangleellipsis"]="rbxassetid://112919953980965",
+    ["rectanglegoggles"]="rbxassetid://98605436666727",
+    ["rectanglehorizontal"]="rbxassetid://90224199814966",
+    ["rectanglevertical"]="rbxassetid://117277050590967",
+    ["recycle"]="rbxassetid://10734932295",
+    ["redo"]="rbxassetid://10734932822",
+    ["redo2"]="rbxassetid://70451039017914",
+    ["redodot"]="rbxassetid://94252981719732",
+    ["refreshccw"]="rbxassetid://10734933056",
+    ["refreshccwdot"]="rbxassetid://106702246753270",
+    ["refreshcw"]="rbxassetid://138133190015277",
+    ["refreshcwoff"]="rbxassetid://140179498843054",
+    ["refrigerator"]="rbxassetid://102614042652753",
+    ["regex"]="rbxassetid://100727200791841",
+    ["removeformatting"]="rbxassetid://112833162022628",
+    ["repeat"]="rbxassetid://121886242955173",
+    ["repeat1"]="rbxassetid://130144534857095",
+    ["repeat2"]="rbxassetid://85927537182704",
+    ["replace"]="rbxassetid://128404082279430",
+    ["replaceall"]="rbxassetid://127862728198635",
+    ["reply"]="rbxassetid://109788633497028",
+    ["replyall"]="rbxassetid://71723137343562",
+    ["rewind"]="rbxassetid://95205297521988",
+    ["ribbon"]="rbxassetid://94265331526851",
+    ["road"]="rbxassetid://120251329173530",
+    ["rocket"]="rbxassetid://10734934585",
+    ["rockingchair"]="rbxassetid://110420269495360",
+    ["rollercoaster"]="rbxassetid://112426178972099",
+    ["rose"]="rbxassetid://126336840238769",
+    ["rotate3d"]="rbxassetid://76300551576392",
+    ["rotateccw"]="rbxassetid://110116685948665",
+    ["rotateccwkey"]="rbxassetid://74976035240976",
+    ["rotateccwsquare"]="rbxassetid://90515853170424",
+    ["rotatecw"]="rbxassetid://84183336178654",
+    ["rotatecwsquare"]="rbxassetid://77095448159303",
+    ["route"]="rbxassetid://89968303228953",
+    ["routeoff"]="rbxassetid://106350402024079",
+    ["router"]="rbxassetid://102130331994471",
+    ["rows2"]="rbxassetid://112556185960101",
+    ["rows3"]="rbxassetid://117215586961375",
+    ["rows4"]="rbxassetid://125646021959055",
+    ["rss"]="rbxassetid://131789058984793",
+    ["ruler"]="rbxassetid://10734941018",
+    ["rulerdimensionline"]="rbxassetid://70673861371412",
+    ["russianruble"]="rbxassetid://126357936542156",
+    ["sailboat"]="rbxassetid://87110567187540",
+    ["salad"]="rbxassetid://128864507821603",
+    ["sandwich"]="rbxassetid://104573187458917",
+    ["satellite"]="rbxassetid://134967053164645",
+    ["satellitedish"]="rbxassetid://136742443888305",
+    ["saudiriyal"]="rbxassetid://102282769104635",
+    ["save"]="rbxassetid://10734941499",
+    ["saveall"]="rbxassetid://116946975799440",
+    ["saveoff"]="rbxassetid://87085435778560",
+    ["scale"]="rbxassetid://108203682317477",
+    ["scale3d"]="rbxassetid://72414199620352",
+    ["scaling"]="rbxassetid://122360365318466",
+    ["scan"]="rbxassetid://10734942565",
+    ["scanbarcode"]="rbxassetid://96889457154761",
+    ["scaneye"]="rbxassetid://99244790601968",
+    ["scanface"]="rbxassetid://109959345069668",
+    ["scanheart"]="rbxassetid://106280819776142",
+    ["scanline"]="rbxassetid://126544908146540",
+    ["scanqrcode"]="rbxassetid://105409149549927",
+    ["scansearch"]="rbxassetid://80009010551347",
+    ["scantext"]="rbxassetid://73702396787766",
+    ["school"]="rbxassetid://76351530290068",
+    ["scissors"]="rbxassetid://10734942778",
+    ["scissorslinedashed"]="rbxassetid://122237447974173",
+    ["scooter"]="rbxassetid://100035452787934",
+    ["screenshare"]="rbxassetid://85137895705653",
+    ["screenshareoff"]="rbxassetid://107677572669805",
+    ["scroll"]="rbxassetid://74072101474951",
+    ["scrolltext"]="rbxassetid://97321022666868",
+    ["search"]="rbxassetid://10734943674",
+    ["searchalert"]="rbxassetid://127597984617505",
+    ["searchcheck"]="rbxassetid://75442076191356",
+    ["searchcode"]="rbxassetid://117114794592802",
+    ["searchslash"]="rbxassetid://96483932261041",
+    ["searchx"]="rbxassetid://137319957522951",
+    ["section"]="rbxassetid://91732188298948",
+    ["send"]="rbxassetid://10734943902",
+    ["sendhorizontal"]="rbxassetid://111734392411664",
+    ["sendtoback"]="rbxassetid://75340312862253",
+    ["separatorhorizontal"]="rbxassetid://84864453699927",
+    ["separatorvertical"]="rbxassetid://84031801478581",
+    ["server"]="rbxassetid://10734949856",
+    ["servercog"]="rbxassetid://138470287250966",
+    ["servercrash"]="rbxassetid://132810618000212",
+    ["serveroff"]="rbxassetid://114048751507723",
+    ["settings"]="rbxassetid://10734950309",
+    ["settings2"]="rbxassetid://135684703553372",
+    ["shapes"]="rbxassetid://129989433311409",
+    ["share"]="rbxassetid://10734950813",
+    ["share2"]="rbxassetid://71210767962065",
+    ["sheet"]="rbxassetid://134902122480171",
+    ["shell"]="rbxassetid://140212943563599",
+    ["shelvingunit"]="rbxassetid://80116568514793",
+    ["shield"]="rbxassetid://10734951847",
+    ["shieldalert"]="rbxassetid://114995877719925",
+    ["shieldban"]="rbxassetid://108765041044649",
+    ["shieldcheck"]="rbxassetid://87354736164608",
+    ["shieldcog"]="rbxassetid://129235695057857",
+    ["shieldcogcorner"]="rbxassetid://111694066132698",
+    ["shieldellipsis"]="rbxassetid://114794739892123",
+    ["shieldhalf"]="rbxassetid://117842634172647",
+    ["shieldminus"]="rbxassetid://89965059528921",
+    ["shieldoff"]="rbxassetid://133426959132690",
+    ["shieldplus"]="rbxassetid://100664857995498",
+    ["shieldquestionmark"]="rbxassetid://135722075265150",
+    ["shielduser"]="rbxassetid://124832775645347",
+    ["shieldx"]="rbxassetid://73370117343811",
+    ["ship"]="rbxassetid://83995100553930",
+    ["shipwheel"]="rbxassetid://130797795829448",
+    ["shirt"]="rbxassetid://106579555405966",
+    ["shoes"]="rbxassetid://139192589041315",
+    ["shoppingbag"]="rbxassetid://71885477293226",
+    ["shoppingbasket"]="rbxassetid://138646411956433",
+    ["shoppingcart"]="rbxassetid://10734952479",
+    ["shovel"]="rbxassetid://102465000512056",
+    ["showerhead"]="rbxassetid://75884944024117",
+    ["shredder"]="rbxassetid://122125164414463",
+    ["shrimp"]="rbxassetid://102625900815307",
+    ["shrink"]="rbxassetid://90953687918880",
+    ["shrub"]="rbxassetid://127326280714343",
+    ["shuffle"]="rbxassetid://10734953451",
+    ["sigma"]="rbxassetid://126884244870899",
+    ["signal"]="rbxassetid://78424889355261",
+    ["signalhigh"]="rbxassetid://130436670012270",
+    ["signallow"]="rbxassetid://73674683500458",
+    ["signalmedium"]="rbxassetid://125003021367019",
+    ["signalzero"]="rbxassetid://130045332414754",
+    ["signature"]="rbxassetid://114402748013000",
+    ["signpost"]="rbxassetid://106584743791433",
+    ["signpostbig"]="rbxassetid://115780185675001",
+    ["siren"]="rbxassetid://134210267818039",
+    ["skipback"]="rbxassetid://70466132711334",
+    ["skipforward"]="rbxassetid://124844823753990",
+    ["skull"]="rbxassetid://137726256442333",
+    ["slack"]="rbxassetid://96089719516736",
+    ["slash"]="rbxassetid://117792185664263",
+    ["slice"]="rbxassetid://95810504278179",
+    ["sliders"]="rbxassetid://10734963400",
+    ["slidershorizontal"]="rbxassetid://85538382643347",
+    ["slidersvertical"]="rbxassetid://101190569086853",
+    ["smartphone"]="rbxassetid://10734963940",
+    ["smartphonecharging"]="rbxassetid://102837532613995",
+    ["smartphonenfc"]="rbxassetid://82326425754446",
+    ["smile"]="rbxassetid://10734964441",
+    ["smileplus"]="rbxassetid://131981881472144",
+    ["snail"]="rbxassetid://70904536548363",
+    ["snowflake"]="rbxassetid://10734964600",
+    ["soapdispenserdroplet"]="rbxassetid://77258480479465",
+    ["sofa"]="rbxassetid://10734964852",
+    ["solarpanel"]="rbxassetid://132448188047921",
+    ["soup"]="rbxassetid://115092551871618",
+    ["space"]="rbxassetid://87072088914178",
+    ["spade"]="rbxassetid://131444449466462",
+    ["sparkle"]="rbxassetid://111044800239623",
+    ["sparkles"]="rbxassetid://138635884129147",
+    ["speaker"]="rbxassetid://10734965419",
+    ["speech"]="rbxassetid://87013139446349",
+    ["spellcheck"]="rbxassetid://91913483031334",
+    ["spellcheck2"]="rbxassetid://81556731785534",
+    ["spline"]="rbxassetid://129406685807412",
+    ["splinepointer"]="rbxassetid://84842840956804",
+    ["split"]="rbxassetid://105112438805988",
+    ["spool"]="rbxassetid://124541981347743",
+    ["sportshoe"]="rbxassetid://120495992692630",
+    ["spotlight"]="rbxassetid://77571742539344",
+    ["spraycan"]="rbxassetid://128372039366326",
+    ["sprout"]="rbxassetid://100091687832508",
+    ["square"]="rbxassetid://10734965702",
+    ["squareactivity"]="rbxassetid://89496630185293",
+    ["squarearrowdown"]="rbxassetid://135962519626588",
+    ["squarearrowdownleft"]="rbxassetid://108194680296901",
+    ["squarearrowdownright"]="rbxassetid://99403846801050",
+    ["squarearrowleft"]="rbxassetid://111671474549238",
+    ["squarearrowoutdownleft"]="rbxassetid://125714881756353",
+    ["squarearrowoutdownright"]="rbxassetid://89971003001390",
+    ["squarearrowoutupleft"]="rbxassetid://103759986579087",
+    ["squarearrowoutupright"]="rbxassetid://91221896066807",
+    ["squarearrowright"]="rbxassetid://113920471701361",
+    ["squarearrowrightenter"]="rbxassetid://138867831495334",
+    ["squarearrowrightexit"]="rbxassetid://133688575845430",
+    ["squarearrowup"]="rbxassetid://106998604646718",
+    ["squarearrowupleft"]="rbxassetid://112424670290693",
+    ["squarearrowupright"]="rbxassetid://76602291406940",
+    ["squareasterisk"]="rbxassetid://89186832353625",
+    ["squarebottomdashedscissors"]="rbxassetid://79076980104803",
+    ["squarecenterlinedashedhorizontal"]="rbxassetid://77780104374341",
+    ["squarecenterlinedashedvertical"]="rbxassetid://107878435803525",
+    ["squarechartgantt"]="rbxassetid://104034017316411",
+    ["squarecheck"]="rbxassetid://134682053539509",
+    ["squarecheckbig"]="rbxassetid://115320390907184",
+    ["squarechevrondown"]="rbxassetid://91032307924592",
+    ["squarechevronleft"]="rbxassetid://73143404829510",
+    ["squarechevronright"]="rbxassetid://90612077729930",
+    ["squarechevronup"]="rbxassetid://85565910197337",
+    ["squarecode"]="rbxassetid://81604576616881",
+    ["squaredashed"]="rbxassetid://136905537847606",
+    ["squaredashedbottom"]="rbxassetid://101102319625624",
+    ["squaredashedbottomcode"]="rbxassetid://100354801563230",
+    ["squaredashedkanban"]="rbxassetid://90388067649847",
+    ["squaredashedmousepointer"]="rbxassetid://121016142178467",
+    ["squaredashedtopsolid"]="rbxassetid://117157577548540",
+    ["squaredivide"]="rbxassetid://99894657101970",
+    ["squaredot"]="rbxassetid://116613421354866",
+    ["squareequal"]="rbxassetid://110283363706707",
+    ["squarefunction"]="rbxassetid://86075219551088",
+    ["squarekanban"]="rbxassetid://114537101260131",
+    ["squarelibrary"]="rbxassetid://73810931222081",
+    ["squarem"]="rbxassetid://117662700410577",
+    ["squaremenu"]="rbxassetid://104067089444415",
+    ["squareminus"]="rbxassetid://116764432015770",
+    ["squaremousepointer"]="rbxassetid://76141850603920",
+    ["squareparking"]="rbxassetid://133116656122387",
+    ["squareparkingoff"]="rbxassetid://100857293535141",
+    ["squarepause"]="rbxassetid://86608552787615",
+    ["squarepen"]="rbxassetid://120239476110475",
+    ["squarepercent"]="rbxassetid://87111930314567",
+    ["squarepi"]="rbxassetid://75383328781618",
+    ["squarepilcrow"]="rbxassetid://131854284699367",
+    ["squareplay"]="rbxassetid://108186325238481",
+    ["squareplus"]="rbxassetid://114713264461873",
+    ["squarepower"]="rbxassetid://129240437805187",
+    ["squareradical"]="rbxassetid://132645931868292",
+    ["squareroundcorner"]="rbxassetid://104592745113567",
+    ["squarescissors"]="rbxassetid://110601255612411",
+    ["squaresexclude"]="rbxassetid://102345385822324",
+    ["squaresigma"]="rbxassetid://113231244246816",
+    ["squaresintersect"]="rbxassetid://120869602570119",
+    ["squareslash"]="rbxassetid://105477013908757",
+    ["squaresplithorizontal"]="rbxassetid://76095370148660",
+    ["squaresplitvertical"]="rbxassetid://88589192032058",
+    ["squaresquare"]="rbxassetid://136555087357875",
+    ["squaressubtract"]="rbxassetid://131484650948795",
+    ["squarestack"]="rbxassetid://100463396619394",
+    ["squarestar"]="rbxassetid://94506958703720",
+    ["squarestop"]="rbxassetid://80018708472943",
+    ["squaresunite"]="rbxassetid://96673080107843",
+    ["squareterminal"]="rbxassetid://83969264476798",
+    ["squareuser"]="rbxassetid://70771214183445",
+    ["squareuserround"]="rbxassetid://86484997229302",
+    ["squarex"]="rbxassetid://125136183850190",
+    ["squircle"]="rbxassetid://82426632573807",
+    ["squircledashed"]="rbxassetid://129936702532522",
+    ["squirrel"]="rbxassetid://112864252085343",
+    ["stamp"]="rbxassetid://92370779813368",
+    ["star"]="rbxassetid://10734966248",
+    ["starhalf"]="rbxassetid://117449275562979",
+    ["staroff"]="rbxassetid://75742832732503",
+    ["stepback"]="rbxassetid://108672750005121",
+    ["stepforward"]="rbxassetid://126131872136145",
+    ["stethoscope"]="rbxassetid://122331031702148",
+    ["sticker"]="rbxassetid://79938203791608",
+    ["stickynote"]="rbxassetid://111894074643919",
+    ["stone"]="rbxassetid://135161057497830",
+    ["stopcircle"]="rbxassetid://10734972621",
+    ["store"]="rbxassetid://90338129673705",
+    ["stretchhorizontal"]="rbxassetid://87665042192343",
+    ["stretchvertical"]="rbxassetid://95265463417122",
+    ["strikethrough"]="rbxassetid://103417324549613",
+    ["subscript"]="rbxassetid://74553514785183",
+    ["sun"]="rbxassetid://10734974297",
+    ["sundim"]="rbxassetid://129141645592715",
+    ["sunmedium"]="rbxassetid://130278807964710",
+    ["sunmoon"]="rbxassetid://75752898854559",
+    ["sunrise"]="rbxassetid://134705665494098",
+    ["sunset"]="rbxassetid://75904872203588",
+    ["sunsnow"]="rbxassetid://112791898014579",
+    ["superscript"]="rbxassetid://96887696590118",
+    ["swatchbook"]="rbxassetid://126786244872453",
+    ["swissfranc"]="rbxassetid://113497920041625",
+    ["switchcamera"]="rbxassetid://76841154349737",
+    ["sword"]="rbxassetid://10734975486",
+    ["swords"]="rbxassetid://81872698913435",
+    ["syringe"]="rbxassetid://123891270479254",
+    ["table"]="rbxassetid://10734976230",
+    ["table2"]="rbxassetid://95751552281545",
+    ["tablecellsmerge"]="rbxassetid://95363715175258",
+    ["tablecellssplit"]="rbxassetid://114799086088649",
+    ["tablecolumnssplit"]="rbxassetid://111011625447949",
+    ["tableofcontents"]="rbxassetid://135044763275414",
+    ["tableproperties"]="rbxassetid://125062886015372",
+    ["tablerowssplit"]="rbxassetid://96443733673997",
+    ["tablet"]="rbxassetid://128403991264386",
+    ["tablets"]="rbxassetid://80835787970735",
+    ["tabletsmartphone"]="rbxassetid://133680859813404",
+    ["tag"]="rbxassetid://10734976528",
+    ["tags"]="rbxassetid://107179263080798",
+    ["tally1"]="rbxassetid://115301298241643",
+    ["tally2"]="rbxassetid://110363186864027",
+    ["tally3"]="rbxassetid://97655344572540",
+    ["tally4"]="rbxassetid://102633494371890",
+    ["tally5"]="rbxassetid://88031817475886",
+    ["tangent"]="rbxassetid://123263132981724",
+    ["target"]="rbxassetid://10734977012",
+    ["telescope"]="rbxassetid://91755049143647",
+    ["tent"]="rbxassetid://109779587826330",
+    ["tenttree"]="rbxassetid://76698322463977",
+    ["terminal"]="rbxassetid://10734982144",
+    ["testtube"]="rbxassetid://98801015650164",
+    ["testtubediagonal"]="rbxassetid://75662704378840",
+    ["testtubes"]="rbxassetid://92555361447433",
+    ["textaligncenter"]="rbxassetid://84051028246390",
+    ["textalignend"]="rbxassetid://130041738343555",
+    ["textalignjustify"]="rbxassetid://80279880143030",
+    ["textalignstart"]="rbxassetid://134489585487649",
+    ["textcursor"]="rbxassetid://115984654447300",
+    ["textcursorinput"]="rbxassetid://107551944047171",
+    ["textinitial"]="rbxassetid://129458097472087",
+    ["textquote"]="rbxassetid://139278366448736",
+    ["textsearch"]="rbxassetid://92345384671606",
+    ["textselect"]="rbxassetid://117087320884956",
+    ["textwrap"]="rbxassetid://114804318314018",
+    ["theater"]="rbxassetid://108558145549163",
+    ["thermometer"]="rbxassetid://10734983134",
+    ["thermometersnowflake"]="rbxassetid://121876188028425",
+    ["thermometersun"]="rbxassetid://106693240074310",
+    ["thumbsdown"]="rbxassetid://10734983359",
+    ["thumbsup"]="rbxassetid://10734983629",
+    ["ticket"]="rbxassetid://126527071492145",
+    ["ticketcheck"]="rbxassetid://105428777212507",
+    ["ticketminus"]="rbxassetid://78966299769328",
+    ["ticketpercent"]="rbxassetid://80834774406405",
+    ["ticketplus"]="rbxassetid://110086734392189",
+    ["tickets"]="rbxassetid://135268612687833",
+    ["ticketslash"]="rbxassetid://89045681172265",
+    ["ticketsplane"]="rbxassetid://100367018248695",
+    ["ticketx"]="rbxassetid://88674114109926",
+    ["timer"]="rbxassetid://10734984606",
+    ["timeroff"]="rbxassetid://110916370767271",
+    ["timerreset"]="rbxassetid://110052125369932",
+    ["toggleleft"]="rbxassetid://10734984834",
+    ["toggleright"]="rbxassetid://90411952142550",
+    ["toilet"]="rbxassetid://80930782432931",
+    ["toolbox"]="rbxassetid://85341033903792",
+    ["toolcase"]="rbxassetid://87533537832522",
+    ["tornado"]="rbxassetid://88358291515768",
+    ["torus"]="rbxassetid://70855707283051",
+    ["touchpad"]="rbxassetid://74882354908014",
+    ["touchpadoff"]="rbxassetid://78784008075456",
+    ["towelrack"]="rbxassetid://125223915620991",
+    ["towercontrol"]="rbxassetid://95937619060532",
+    ["toybrick"]="rbxassetid://86293483924633",
+    ["tractor"]="rbxassetid://103376704722051",
+    ["trafficcone"]="rbxassetid://74110220470369",
+    ["trainfront"]="rbxassetid://125237934215370",
+    ["trainfronttunnel"]="rbxassetid://105194827005114",
+    ["traintrack"]="rbxassetid://77451032453723",
+    ["tramfront"]="rbxassetid://93315182364998",
+    ["transgender"]="rbxassetid://135530817673639",
+    ["trash"]="rbxassetid://10747362393",
+    ["trash2"]="rbxassetid://109843431391323",
+    ["treedeciduous"]="rbxassetid://123124389219004",
+    ["treepalm"]="rbxassetid://103846705893963",
+    ["treepine"]="rbxassetid://124662547202594",
+    ["trees"]="rbxassetid://121203841375919",
+    ["trello"]="rbxassetid://130987241149527",
+    ["trendingdown"]="rbxassetid://139309232226438",
+    ["trendingup"]="rbxassetid://10747363465",
+    ["trendingupdown"]="rbxassetid://85083293981691",
+    ["triangle"]="rbxassetid://126330486745540",
+    ["trianglealert"]="rbxassetid://125920361880643",
+    ["triangledashed"]="rbxassetid://124324079103935",
+    ["triangleright"]="rbxassetid://116930791412791",
+    ["trophy"]="rbxassetid://10747363809",
+    ["truck"]="rbxassetid://10747364031",
+    ["truckelectric"]="rbxassetid://111873446387359",
+    ["turkishlira"]="rbxassetid://114589876174070",
+    ["turntable"]="rbxassetid://129870346487856",
+    ["turtle"]="rbxassetid://118295081560334",
+    ["tv"]="rbxassetid://10747364593",
+    ["tvminimal"]="rbxassetid://100382201729427",
+    ["tvminimalplay"]="rbxassetid://99201833426972",
+    ["twitch"]="rbxassetid://71383308134888",
+    ["twitter"]="rbxassetid://88791703276842",
+    ["type"]="rbxassetid://10747364761",
+    ["typeoutline"]="rbxassetid://80108627791690",
+    ["umbrella"]="rbxassetid://10747364971",
+    ["umbrellaoff"]="rbxassetid://72395143739955",
+    ["underline"]="rbxassetid://10747365191",
+    ["undo"]="rbxassetid://10747365484",
+    ["undo2"]="rbxassetid://113885292059932",
+    ["undodot"]="rbxassetid://132055277744844",
+    ["unfoldhorizontal"]="rbxassetid://117128358526398",
+    ["unfoldvertical"]="rbxassetid://116593025265499",
+    ["ungroup"]="rbxassetid://106674800451003",
+    ["university"]="rbxassetid://84652528263642",
+    ["unlink"]="rbxassetid://139835795227752",
+    ["unlink2"]="rbxassetid://128131898892572",
+    ["unlock"]="rbxassetid://10747366027",
+    ["unplug"]="rbxassetid://90171381619874",
+    ["upload"]="rbxassetid://10747366434",
+    ["usb"]="rbxassetid://117230058949613",
+    ["user"]="rbxassetid://10747373176",
+    ["usercheck"]="rbxassetid://81775205032725",
+    ["usercog"]="rbxassetid://92795491530865",
+    ["userkey"]="rbxassetid://105403041782190",
+    ["userlock"]="rbxassetid://78892639693821",
+    ["userminus"]="rbxassetid://126976941957511",
+    ["userpen"]="rbxassetid://87445472574836",
+    ["userplus"]="rbxassetid://118514469915884",
+    ["userround"]="rbxassetid://136485052187963",
+    ["userroundcheck"]="rbxassetid://118794737621941",
+    ["userroundcog"]="rbxassetid://78239503290053",
+    ["userroundkey"]="rbxassetid://124547549008939",
+    ["userroundminus"]="rbxassetid://98944176636447",
+    ["userroundpen"]="rbxassetid://108155244324878",
+    ["userroundplus"]="rbxassetid://113301899567470",
+    ["userroundsearch"]="rbxassetid://71565774381870",
+    ["userroundx"]="rbxassetid://122367980560930",
+    ["users"]="rbxassetid://10747373426",
+    ["usersearch"]="rbxassetid://101335649828115",
+    ["usersround"]="rbxassetid://103005444008339",
+    ["userstar"]="rbxassetid://98777846316000",
+    ["userx"]="rbxassetid://139748155894754",
+    ["utensils"]="rbxassetid://139952569804235",
+    ["utensilscrossed"]="rbxassetid://109520762270383",
+    ["utilitypole"]="rbxassetid://101965541238242",
+    ["van"]="rbxassetid://122066377022942",
+    ["variable"]="rbxassetid://104743088438151",
+    ["vault"]="rbxassetid://108049164599845",
+    ["vectorsquare"]="rbxassetid://86713728565344",
+    ["vegan"]="rbxassetid://119489190688082",
+    ["venetianmask"]="rbxassetid://102636443033920",
+    ["venus"]="rbxassetid://82891342220859",
+    ["venusandmars"]="rbxassetid://120227752103771",
+    ["verified"]="rbxassetid://10747374131",
+    ["vibrate"]="rbxassetid://108330910738733",
+    ["vibrateoff"]="rbxassetid://113446447326246",
+    ["video"]="rbxassetid://10747374938",
+    ["videooff"]="rbxassetid://132239189859305",
+    ["videotape"]="rbxassetid://114816894323398",
+    ["view"]="rbxassetid://118717253976805",
+    ["voicemail"]="rbxassetid://134313454010227",
+    ["volleyball"]="rbxassetid://83889351124153",
+    ["volume"]="rbxassetid://10747376008",
+    ["volume1"]="rbxassetid://98514588731639",
+    ["volume2"]="rbxassetid://89344380902620",
+    ["volumeoff"]="rbxassetid://103047478058767",
+    ["volumex"]="rbxassetid://139252359189540",
+    ["vote"]="rbxassetid://89409762851246",
+    ["wallet"]="rbxassetid://10747376205",
+    ["walletcards"]="rbxassetid://129728715308337",
+    ["walletminimal"]="rbxassetid://137800448816116",
+    ["wallpaper"]="rbxassetid://74682121235494",
+    ["wand"]="rbxassetid://10747376565",
+    ["wandsparkles"]="rbxassetid://82546429942392",
+    ["wardrobe"]="rbxassetid://136249099949073",
+    ["warehouse"]="rbxassetid://78388887451080",
+    ["washingmachine"]="rbxassetid://104194127573858",
+    ["watch"]="rbxassetid://10747376722",
+    ["waves"]="rbxassetid://10747376931",
+    ["wavesarrowdown"]="rbxassetid://129215220911792",
+    ["wavesarrowup"]="rbxassetid://102314705716217",
+    ["wavesladder"]="rbxassetid://101808619355514",
+    ["waypoints"]="rbxassetid://102450133666017",
+    ["webcam"]="rbxassetid://10747381992",
+    ["webhook"]="rbxassetid://112812457747322",
+    ["webhookoff"]="rbxassetid://96370548093471",
+    ["weight"]="rbxassetid://103860559844854",
+    ["weighttilde"]="rbxassetid://112081212176951",
+    ["wheat"]="rbxassetid://85261952080359",
+    ["wheatoff"]="rbxassetid://133294844612307",
+    ["wholeword"]="rbxassetid://90111083954485",
+    ["wifi"]="rbxassetid://10747382504",
+    ["wificog"]="rbxassetid://110500263326209",
+    ["wifihigh"]="rbxassetid://81954601342139",
+    ["wifilow"]="rbxassetid://138217335635913",
+    ["wifioff"]="rbxassetid://74113634330106",
+    ["wifipen"]="rbxassetid://91290205064712",
+    ["wifisync"]="rbxassetid://84043971055177",
+    ["wifizero"]="rbxassetid://124286465246123",
+    ["wind"]="rbxassetid://10747382750",
+    ["windarrowdown"]="rbxassetid://127753987414870",
+    ["wine"]="rbxassetid://115743721332829",
+    ["wineoff"]="rbxassetid://108294164302317",
+    ["wings"]="rbxassetid://10723354671",
+    ["workflow"]="rbxassetid://99186544029189",
+    ["worm"]="rbxassetid://115752311548091",
+    ["wrench"]="rbxassetid://10747383470",
+    ["x"]="rbxassetid://10747384394",
+    ["xcircle"]="rbxassetid://10747383819",
+    ["xlinetop"]="rbxassetid://140592656289509",
+    ["youtube"]="rbxassetid://123663668456341",
+    ["zap"]="rbxassetid://130551565616516",
+    ["zapoff"]="rbxassetid://81385483183652",
+    ["zodiacaquarius"]="rbxassetid://74560047770362",
+    ["zodiacaries"]="rbxassetid://73255859670234",
+    ["zodiaccancer"]="rbxassetid://131985162532947",
+    ["zodiaccapricorn"]="rbxassetid://97859568140652",
+    ["zodiacgemini"]="rbxassetid://80997588122992",
+    ["zodiacleo"]="rbxassetid://75509406718106",
+    ["zodiaclibra"]="rbxassetid://113222735060218",
+    ["zodiacophiuchus"]="rbxassetid://129180108892480",
+    ["zodiacpisces"]="rbxassetid://95845819440327",
+    ["zodiacsagittarius"]="rbxassetid://82651026742181",
+    ["zodiacscorpio"]="rbxassetid://113640924054631",
+    ["zodiactaurus"]="rbxassetid://123053219704400",
+    ["zodiacvirgo"]="rbxassetid://99462994613661",
+    ["zoomin"]="rbxassetid://10747384552",
+    ["zoomout"]="rbxassetid://10747384679",
 }
 local AuraTabAliases={
     personagem="avatar",character="avatar",profile="avatar",perfil="avatar",
@@ -3175,6 +5182,8 @@ local function AuraNormalizeIcon(value)
     return tostring(value):lower():gsub("^lucide[:%-]",""):gsub("[%s_%-]","")
 end
 
+AuraSupport._SetIconAssets(AuraTabAssets,AuraTabAliases)
+
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
@@ -3184,7 +5193,7 @@ end
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "5.0.0"
+local CURRENT_VERSION = "5.2.0"
 UI.Name="AURA UI";UI.Version=CURRENT_VERSION
 
 -- ════════════════════════════════════════════════════════════
@@ -3353,7 +5362,12 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	version = ValidateString(version, true) or ""
 
 	local UIS = game:GetService("UserInputService")
-	local TweenService = game:GetService("TweenService")
+    local AuraReducedMotion=AuraWindowOptions.ReducedMotion==true
+    local NativeTweenService=game:GetService("TweenService")
+    local TweenService={Create=function(_,object,info,goals)
+        if AuraReducedMotion then return {Play=function()for key,value in pairs(goals)do object[key]=value end end,Cancel=function()end}end
+        return NativeTweenService:Create(object,info,goals)
+    end}
 	local TextService = game:GetService("TextService")
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
@@ -3441,6 +5455,10 @@ function UI.CreateWindow(title, subtitle, version, extra)
     local AuraThemeChanged
 
 	local function SetTheme(themeName)
+        if typeof(themeName)=="string"and not Themes[themeName]then
+            local key=themeName:lower():gsub("[%s_%-]","")
+            for name in pairs(Themes)do if name:lower():gsub("[%s_%-]","")==key then themeName=name;break end end
+        end
 		if typeof(themeName) == "string" then
 			if not Themes[themeName] then
 				warn("UI: SetTheme - theme '" .. themeName .. "' does not exist")
@@ -3537,12 +5555,12 @@ function UI.CreateWindow(title, subtitle, version, extra)
 
 		object.TextStrokeTransparency = 1
 		object.TextStrokeColor3 = Color3.new(0, 0, 0)
-		object.RichText = false
+		object.RichText = object:GetAttribute("AURA_AllowRichText")==true
 		object:SetAttribute("PDDEV_NoTextStroke", true)
 
 		local function RemoveTextEffect(child)
 			-- A UIGradient directly on a text object can create colored/bright glyphs.
-			if child:IsA("UIGradient") or child:GetAttribute("PDDEV_TextGlow") == true then
+			if (child:IsA("UIGradient") and not child:GetAttribute("AURA_AllowedGradient")) or child:GetAttribute("PDDEV_TextGlow") == true then
 				child:Destroy()
 				return
 			end
@@ -3756,8 +5774,8 @@ function UI.CreateWindow(title, subtitle, version, extra)
 
 	local Main = Instance.new("CanvasGroup")
 	Main.Name = "MainWindow"
-	Main.Size = UDim2.new(0, 500, 0, 360)
-	Main.Position = UDim2.new(0.5, -250, 0.5, -180)
+	Main.Size = UDim2.new(0, 640, 0, 460)
+	Main.Position = UDim2.new(0.5, -320, 0.5, -230)
 	Main.BackgroundColor3 = Theme.Background
 	Main.BorderSizePixel = 0
 	Main.Active = true
@@ -3767,7 +5785,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	Main:SetAttribute("ThemeRole", "Background")
 
 	local MainCorner = Instance.new("UICorner")
-	MainCorner.CornerRadius = UDim.new(0, 8)
+	MainCorner.CornerRadius = UDim.new(0, 12)
 	MainCorner.Parent = Main
 
 	local MainStroke = Instance.new("UIStroke")
@@ -3797,14 +5815,14 @@ function UI.CreateWindow(title, subtitle, version, extra)
 
 	local TitleBar = Instance.new("Frame")
 	TitleBar.Name = "TitleBar"
-	TitleBar.Size = UDim2.new(1, 0, 0, 36)
+	TitleBar.Size = UDim2.new(1, 0, 0, 44)
 	TitleBar.BackgroundColor3 = Theme.TitleBar
 	TitleBar.BorderSizePixel = 0
 	TitleBar.Parent = Main
 	TitleBar:SetAttribute("ThemeRole", "TitleBar")
 
 	local TitleCorner = Instance.new("UICorner")
-	TitleCorner.CornerRadius = UDim.new(0, 8)
+	TitleCorner.CornerRadius = UDim.new(0, 12)
 	TitleCorner.Parent = TitleBar
 
 	local TitleBottom = Instance.new("Frame")
@@ -3851,11 +5869,11 @@ function UI.CreateWindow(title, subtitle, version, extra)
 			if not text or text == "" then return 0 end
 			return math.ceil(TextService:GetTextSize(text, size, font, Vector2.new(2000, 40)).X) + 2
 		end
-		local titleWanted = Measure(title, 15, Enum.Font.GothamMedium)
-		local subtitleWanted = Measure(subtitle, 12, Enum.Font.Gotham)
-		local versionWanted = Measure(version, 11, Enum.Font.Gotham)
-		local titleWidth = math.min(titleWanted, available * 0.42)
-		local subtitleWidth = math.min(subtitleWanted, available * 0.30)
+		local titleWanted = Measure(title, TitleLabel.TextSize, TitleLabel.Font)
+		local subtitleWanted = Measure(subtitle, SubtitleLabel.TextSize, SubtitleLabel.Font)
+		local versionWanted = Measure(version, VersionLabel.TextSize, VersionLabel.Font)
+		local titleWidth = math.min(titleWanted, available * ((subtitle=="" and version=="") and 1 or .65))
+		local subtitleWidth = math.min(subtitleWanted, math.max(0,available-titleWidth-(version~="" and 70 or 0)-8))
 		local nonEmpty = (title ~= "" and 1 or 0) + (subtitle ~= "" and 1 or 0) + (version ~= "" and 1 or 0)
 		local gaps = math.max(0, nonEmpty - 1) * gap
 		local versionWidth = math.min(versionWanted, math.max(0, available - titleWidth - subtitleWidth - gaps))
@@ -3917,35 +5935,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	-- WINDOW DRAGGING
 	-- ════════════════════════════════════════════════════════════
 
-	local dragging = false
-	local dragStart
-	local startPos
-
-	TitleBar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			dragStart = input.Position
-			startPos = Main.Position
-		end
-	end)
-
-	ConnectGlobal(UIS.InputEnded, function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = false
-		end
-	end)
-
-	ConnectGlobal(UIS.InputChanged, function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = input.Position - dragStart
-			Main.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
+	-- Mouse and touch window movement is installed by the AURA layout adapter.
 
 	-- ════════════════════════════════════════════════════════════
 	-- WINDOW RESIZING
@@ -4007,43 +5997,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		end
 	end)
 
-	local resizing = false
-	local resizeStart
-	local startSize
-
-	Resize.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			resizing = true
-			resizeStart = input.Position
-			startSize = Main.Size
-		end
-	end)
-
-	ConnectGlobal(UIS.InputEnded, function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			resizing = false
-		end
-	end)
-
-	ConnectGlobal(UIS.InputChanged, function(input)
-		if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = input.Position - resizeStart
-
-			local newX = Clamp(
-				startSize.X.Offset + delta.X,
-				MIN_WINDOW_WIDTH,
-				MAX_WINDOW_WIDTH
-			)
-
-			local newY = Clamp(
-				startSize.Y.Offset + delta.Y,
-				MIN_WINDOW_HEIGHT,
-				MAX_WINDOW_HEIGHT
-			)
-
-			Main.Size = UDim2.new(0, newX, 0, newY)
-		end
-	end)
+	-- Resizing uses the same viewport constraints as SetSize.
 
 	-- ════════════════════════════════════════════════════════════
 	-- TABS & CONTENT AREA
@@ -4051,8 +6005,8 @@ function UI.CreateWindow(title, subtitle, version, extra)
 
 	local TabFrame = Instance.new("ScrollingFrame")
 	TabFrame.Name = "TabsPanel"
-	TabFrame.Size = UDim2.new(0, 110, 1, -36)
-	TabFrame.Position = UDim2.new(0, 0, 0, 36)
+	TabFrame.Size = UDim2.new(0, 148, 1, -44)
+	TabFrame.Position = UDim2.new(0, 0, 0, 44)
 	TabFrame.BackgroundColor3 = Theme.TabBackground
 	TabFrame.BorderSizePixel = 0
 	TabFrame.ScrollBarThickness = 3
@@ -4082,8 +6036,8 @@ function UI.CreateWindow(title, subtitle, version, extra)
 
 	local Content = Instance.new("Frame")
 	Content.Name = "ContentArea"
-	Content.Size = UDim2.new(1, -110, 1, -36)
-	Content.Position = UDim2.new(0, 110, 0, 36)
+	Content.Size = UDim2.new(1, -148, 1, -44)
+	Content.Position = UDim2.new(0, 148, 0, 44)
 	Content.BackgroundColor3 = Theme.Background
 	Content.BorderSizePixel = 0
 	Content.Parent = Main
@@ -4102,11 +6056,12 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	local oldSize = Main.Size
 
 	local function ToggleMinimize()
+        if activeColorPickerClose then activeColorPickerClose()end
 		minimized = not minimized
 
 		if minimized then
 			oldSize = Main.Size
-			Main.Size = UDim2.new(0, Main.Size.X.Offset, 0, 36)
+			Main.Size = UDim2.new(0, Main.Size.X.Offset, 0, 44)
 
 			TabFrame.Visible = false
 			Content.Visible = false
@@ -4122,8 +6077,8 @@ function UI.CreateWindow(title, subtitle, version, extra)
         if OnNativeMinimize then OnNativeMinimize() end
 	end
 
-	Minimize.MouseButton1Click:Connect(ToggleMinimize)
-	Close.MouseButton1Click:Connect(function()
+	Minimize.Activated:Connect(ToggleMinimize)
+	Close.Activated:Connect(function()
 		ScreenGui:Destroy()
 	end)
 
@@ -4183,7 +6138,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		end)
 
 		if callback and typeof(callback) == "function" then
-			Btn.MouseButton1Click:Connect(callback)
+			Btn.Activated:Connect(callback)
 		end
 
 		return Btn
@@ -4244,7 +6199,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		CircleCorner.CornerRadius = UDim.new(1, 0)
 		CircleCorner.Parent = Circle
 
-		local function SetState(newState)
+		local function SetState(newState, silent)
 			if typeof(newState) ~= "boolean" or newState == state then
 				return
 			end
@@ -4256,19 +6211,19 @@ function UI.CreateWindow(title, subtitle, version, extra)
 			TweenService:Create(Circle, TweenInfo.new(ANIMATION_SPEED), {Position = goalPos}):Play()
 			TweenService:Create(Toggle, TweenInfo.new(ANIMATION_SPEED), {BackgroundColor3 = goalColor}):Play()
 
-			if typeof(callback) == "function" then
+			if not silent and typeof(callback) == "function" then
 				callback(state)
 			end
 		end
 
-		Toggle.MouseButton1Click:Connect(function()
+		Toggle.Activated:Connect(function()
 			SetState(not state)
 		end)
 
 		-- Return API
 		local ToggleAPI = {}
-		function ToggleAPI.SetState(newState)
-			SetState(newState)
+		function ToggleAPI.SetState(newState,silent)
+			SetState(newState,silent)
 		end
 		function ToggleAPI.GetState()
 			return state
@@ -4382,47 +6337,40 @@ function UI.CreateWindow(title, subtitle, version, extra)
 			return value
 		end
 
-		Handle.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				draggingSlider = true
-			end
-		end)
-
-		Handle.InputEnded:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				draggingSlider = false
-			end
-		end)
-
-		Bar.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				draggingSlider = true
-				UpdateSlider(input)
-			end
-		end)
-
-		ConnectGlobal(UIS.InputChanged, function(input)
-			if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
-				UpdateSlider(input)
-			end
-		end)
-
-		ConnectGlobal(UIS.InputEnded, function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				draggingSlider = false
-			end
-		end)
+        local sliderPointer,previousScrolling
+        Bar.Active=true;Handle.Active=true
+        local function beginPointer(input)
+            if sliderPointer then return end
+            if input.UserInputType~=Enum.UserInputType.MouseButton1 and input.UserInputType~=Enum.UserInputType.Touch then return end
+            sliderPointer=input;draggingSlider=true
+            previousScrolling=page.ScrollingEnabled;page.ScrollingEnabled=false
+            UpdateSlider(input)
+        end
+        local function releasePointer()
+            if not sliderPointer then return end
+            sliderPointer=nil;draggingSlider=false
+            if page.Parent then page.ScrollingEnabled=previousScrolling end
+        end
+        Handle.InputBegan:Connect(beginPointer);Bar.InputBegan:Connect(beginPointer)
+        ConnectGlobal(UIS.InputChanged,function(input)
+            if sliderPointer and (input==sliderPointer or(sliderPointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement))then UpdateSlider(input)end
+        end)
+        ConnectGlobal(UIS.InputEnded,function(input)
+            if sliderPointer and(input==sliderPointer or(sliderPointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1))then releasePointer()end
+        end)
+        ConnectGlobal(UIS.WindowFocusReleased,releasePointer)
+        Frame.Destroying:Connect(releasePointer)
 
 		-- Return API
 		local SliderAPI = {}
-		function SliderAPI.SetValue(value)
+		function SliderAPI.SetValue(value,silent)
 			value = Clamp(math.floor((tonumber(value) or min) + 0.5), min, max)
 			currentValue = value
 			percent = GetPercent(value)
 			Fill.Size = UDim2.new(percent, 0, 1, 0)
 			Handle.Position = UDim2.new(percent, -8, 0.5, -8)
 			Label.Text = text .. ": " .. value
-			if typeof(callback) == "function" then callback(value) end
+			if not silent and typeof(callback) == "function" then callback(value) end
 		end
 		function SliderAPI.GetValue()
 			return currentValue
@@ -4674,7 +6622,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 					TweenService:Create(OptBtn, TweenInfo.new(0.1), {BackgroundTransparency = 1}):Play()
 				end)
 
-				OptBtn.MouseButton1Click:Connect(function()
+				OptBtn.Activated:Connect(function()
 					currentValue = opt
 					UpdateButtonText()
 					open = false
@@ -4708,7 +6656,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		RebuildOptions()
 
 		-- Toggle dropdown
-		Btn.MouseButton1Click:Connect(function()
+		Btn.Activated:Connect(function()
 			open = not open
 
 			if open then
@@ -4831,7 +6779,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		local onCooldown = false
 		local cooldownToken = 0
 
-		Btn.MouseButton1Click:Connect(function()
+		Btn.Activated:Connect(function()
 			if onCooldown then return end
 
 			onCooldown = true
@@ -5338,7 +7286,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
             end
         end
 
-        ModalShield.MouseButton1Click:Connect(function()
+        ModalShield.Activated:Connect(function()
             SetOpen(false)
         end)
 
@@ -5348,10 +7296,10 @@ function UI.CreateWindow(title, subtitle, version, extra)
         Main:GetPropertyChangedSignal("Visible"):Connect(function()
             if not Main.Visible then SetOpen(false) end
         end)
-        PickerButton.MouseButton1Click:Connect(function()
+        PickerButton.Activated:Connect(function()
             SetOpen(not Popup.Visible)
         end)
-        CloseButton.MouseButton1Click:Connect(function()
+        CloseButton.Activated:Connect(function()
             SetOpen(false)
         end)
 
@@ -5664,7 +7612,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 
 		-- Keep names readable while fitting the full text inside a compact tab.
 		local panelWidth = TabFrame.AbsoluteSize.X > 0 and TabFrame.AbsoluteSize.X or TabFrame.Size.X.Offset
-		local tabFontSize = 10
+		local tabFontSize = 12
 		local textInset = iconType and 34 or 12
 		local tabTextWidth = math.max(34, panelWidth - 12 - textInset - 8)
 		local displayName = WrapTextToWidth(name, Enum.Font.Gotham, tabFontSize, tabTextWidth)
@@ -5937,7 +7885,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
             if OnNativeSelection then OnNativeSelection(Tab) end
 		end
         Tab._SelectNative=SelectNativeTab
-        TabBtn.MouseButton1Click:Connect(SelectNativeTab)
+        TabBtn.Activated:Connect(SelectNativeTab)
 
 		table.insert(Tabs, Tab)
 		local nextY = 8
@@ -6079,7 +8027,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 
 		local guiVisible = true
 
-		Ball.MouseButton1Click:Connect(function()
+		Ball.Activated:Connect(function()
 			guiVisible = not guiVisible
 			Main.Visible = guiVisible
 		end)
@@ -6154,7 +8102,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 						object.ImageColor3 = Theme.Text
 					end
 
-				elseif role == "TextDark" then
+				elseif role == "TextDarkImage" then
+                    if object:IsA("ImageLabel")or object:IsA("ImageButton")then object.ImageColor3=Theme.TextDark end
+                elseif role == "TextDark" then
 					if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 						object.TextColor3 = Theme.TextDark
 						object.TextStrokeTransparency = 1
@@ -6732,7 +8682,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 				OptionCorner.CornerRadius = UDim.new(0, 5)
 				OptionCorner.Parent = Option
 				optionButtons[value] = Option
-				Option.MouseButton1Click:Connect(function()
+				Option.Activated:Connect(function()
 					selectedValue = value
 					UpdateButtonText()
 					Panel.Visible = false
@@ -6754,7 +8704,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 			Row.Size = UDim2.new(1, -24, 0, isOpen and (32 + 3 + 184) or 32)
 		end
 
-		Button.MouseButton1Click:Connect(function()
+		Button.Activated:Connect(function()
 			isOpen = not isOpen
 			UpdatePanelPosition()
 			if isOpen then
@@ -7087,20 +9037,417 @@ function UI.CreateWindow(title, subtitle, version, extra)
         WindowAPI.GetControl=function(first,flag)return core:GetControl(first==WindowAPI and flag or first)end
         WindowAPI.SetTitle=function(first,text)
             local value=first==WindowAPI and text or first
-            TitleLabel.Text=tostring(value or "AURA UI")
+            title=FixMojibake(tostring(value or "AURA UI"));TitleLabel.Text=title;LayoutHeaderText()
         end
         WindowAPI.GetIcons=function()return UI.GetIcons()end
         WindowAPI.Destroy=function()core:Destroy()end
         WindowAPI.CreateTab=function(first,name,icon)
             if first==WindowAPI then first,name=name,icon end
-            if typeof(first)=="table" then return CreateTab(first.Name or first.Title or "Tab",first.Icon or first.Image) end
+            if typeof(first)=="table" then
+                local iconValue=first.Icon;if iconValue==nil then iconValue=first.Image end
+                return CreateTab(first.Name or first.Title or "Tab",iconValue)
+            end
             return CreateTab(first or "Tab",name)
         end
         ScreenGui.Destroying:Connect(function()WindowAPI.Destroyed=true end)
+        -- AURA 5.1: one geometry model for native and extended APIs.
+        local windowOptions=AuraWindowOptions or {}
+        local baseSizes=setmetatable({},{__mode="k"})
+        local textBusy=false
+        local function connect(signal,fn)return ConnectGlobal(signal,fn)end
+        local function viewSize()
+            local camera=workspace.CurrentCamera
+            local v=camera and camera.ViewportSize or Vector2.new(1280,720)
+            local ok,top,bottom=pcall(function()return game:GetService("GuiService"):GetGuiInset()end)
+            if ok and top and bottom then v=Vector2.new(v.X-top.X-bottom.X,v.Y-top.Y-bottom.Y)end
+            return v
+        end
+        local function positionPixels()
+            local v=viewSize();local p=Main.Position
+            return Vector2.new(p.X.Scale*v.X+p.X.Offset,p.Y.Scale*v.Y+p.Y.Offset)
+        end
+        local function clampPosition(point)
+            local v=viewSize()
+            local x=math.clamp(point.X,6,math.max(6,v.X-Main.Size.X.Offset-6))
+            local y=math.clamp(point.Y,6,math.max(6,v.Y-Main.Size.Y.Offset-6))
+            Main.Position=UDim2.fromOffset(x,y)
+        end
+        core.MinSize=windowOptions.MinSize or Vector2.new(300,220)
+        core.MaxSize=windowOptions.MaxSize or Vector2.new(1000,800)
+        function core:SetSize(first,second)
+            local wanted=typeof(first)=="Vector2" and first or Vector2.new(tonumber(first)or 640,tonumber(second)or 460)
+            local v=viewSize();local p=positionPixels()
+            local maxX=math.max(160,math.min(self.MaxSize.X,v.X-12))
+            local maxY=math.max(120,math.min(self.MaxSize.Y,v.Y-12))
+            local width=math.clamp(wanted.X,math.min(self.MinSize.X,maxX),maxX)
+            local height=math.clamp(wanted.Y,math.min(self.MinSize.Y,maxY),maxY)
+            oldSize=UDim2.fromOffset(width,height)
+            self._unminimizedSize=Vector2.new(width,height)
+            Main.Size=UDim2.fromOffset(width,minimized and 44 or height)
+            clampPosition(p)
+            if self.RefreshLayout then self:RefreshLayout()end
+            return Vector2.new(width,height)
+        end
+        function core:Center()
+            local v=viewSize();local size=Main.Size
+            Main.Position=UDim2.fromOffset(math.max(6,(v.X-size.X.Offset)/2),math.max(6,(v.Y-size.Y.Offset)/2))
+            return self
+        end
+        function core:SetPosition(value)
+            local v=viewSize()
+            local point=typeof(value)=="UDim2" and Vector2.new(value.X.Scale*v.X+value.X.Offset,value.Y.Scale*v.Y+value.Y.Offset)or value
+            if typeof(point)=="Vector2"then clampPosition(point)end
+            return self
+        end
+        function core:GetPosition()return positionPixels()end
+        function core:SetCornerRadius(value)
+            local radius=math.clamp(tonumber(value)or 12,4,24)
+            MainCorner.CornerRadius=UDim.new(0,radius);TitleCorner.CornerRadius=UDim.new(0,radius)
+            self.CornerRadius=radius;return self
+        end
+        function core:SetTitle(value)
+            title=FixMojibake(tostring(value or "AURA UI"));TitleLabel.Text=title;LayoutHeaderText()
+            return self
+        end
+        function core:SetSubtitle(value)
+            subtitle=FixMojibake(tostring(value or ""));SubtitleLabel.Text=subtitle;LayoutHeaderText();return self
+        end
+        function core:SetTitleGradient(colors,rotation)
+            local current=TitleLabel:FindFirstChild("AuraTitleGradient")
+            if current then current:Destroy()end
+            if colors==false or colors==nil then return self end
+            if typeof(colors)=="ColorSequence"then
+                current=Instance.new("UIGradient");current.Color=colors
+            elseif type(colors)=="table" and #colors>=2 then
+                local points={}
+                for i,color in ipairs(colors)do if typeof(color)~="Color3"then return false end;table.insert(points,ColorSequenceKeypoint.new((i-1)/(#colors-1),color))end
+                current=Instance.new("UIGradient");current.Color=ColorSequence.new(points)
+            else return false end
+            current.Name="AuraTitleGradient";current.Rotation=tonumber(rotation)or 0
+            current:SetAttribute("AURA_AllowedGradient",true);current.Parent=TitleLabel
+            return self
+        end
+        core.Notify=function(_,options)return WindowAPI.Notify(options)end
+        local visibilityMethod=core.Toggle
+        function core:Toggle(value)
+            local visible=value
+            if visible==nil then visible=not Main.Visible end
+            if visible==false then
+                if activeColorPickerClose then activeColorPickerClose()end
+                if self._modal then self._modal:Close(false)end
+            end
+            return visibilityMethod(self,value)
+        end
+        local floatingMethod=core.SetFloatingButton
+        function core:SetFloatingButton(options)
+            floatingMethod(self,options);WindowAPI.FloatingButton=self.FloatingButton;return self
+        end
+        core.SetBubble=core.SetFloatingButton
+        function core:GetThemeNames()return GetAllThemes()end
+        function core:SetReducedMotion(value)
+            AuraReducedMotion=value==true;self.Animations=not AuraReducedMotion;return self
+        end
+        function core:SetAnimations(value)return self:SetReducedMotion(value==false)end
+        local densityGap={Compact=5,Comfortable=8,Spacious=12}
+        core.Density=windowOptions.Density or "Comfortable"
+        function core:SetDensity(value)
+            if not densityGap[value]then return false end
+            self.Density=value
+            for _,tab in ipairs(Tabs)do
+                local layout=tab.Page:FindFirstChildOfClass("UIListLayout")
+                if layout then layout.Padding=UDim.new(0,densityGap[value])end
+            end
+            relayout();return self
+        end
+        function core:SetSidebarWidth(value)
+            self.SidebarWidth=math.clamp(tonumber(value)or 148,112,210);self:RefreshLayout();return self
+        end
+        function core:SetSearchVisible(value)
+            self.SearchVisible=value~=false;search.Visible=self.SearchVisible;self:RefreshLayout();return self
+        end
+        function core:SetTextScale(value)
+            self.TextScale=math.clamp(tonumber(value)or 1,.85,1.25)
+            textBusy=true
+            for object,base in pairs(baseSizes)do if object.Parent then object.TextSize=math.floor(base*self.TextScale+.5)end end
+            textBusy=false
+            for object,base in pairs(self._fontSizes)do if object.Parent then object.TextSize=math.floor(base*self.TextScale+.5)end end
+            for _,control in pairs(self.Flags)do
+                if control.RefreshLayout then control:RefreshLayout()elseif control.Reflow then control:Reflow()end
+            end
+            self:RefreshLayout();return self
+        end
+        local function registerText(object)
+            if not(object:IsA("TextLabel")or object:IsA("TextButton")or object:IsA("TextBox"))then return end
+            if baseSizes[object]then return end
+            baseSizes[object]=core._fontSizes[object]or object.TextSize
+            if core.TextScale~=1 then object.TextSize=math.floor(baseSizes[object]*core.TextScale+.5)end
+            connect(object:GetPropertyChangedSignal("TextSize"),function()
+                if not textBusy and core.TextScale==1 then baseSizes[object]=object.TextSize end
+            end)
+        end
+        for _,object in ipairs(Main:GetDescendants())do registerText(object)end
+        connect(Main.DescendantAdded,function(object)
+            task.defer(function()if object.Parent then registerText(object)end end)
+        end)
+        local noResults=Instance.new("TextLabel")
+        noResults.Name="SearchEmpty";noResults.Text="Nenhuma função encontrada. Tente outro nome."
+        noResults.BackgroundTransparency=1;noResults.TextColor3=Theme.TextDark;noResults.TextSize=13
+        noResults.Font=Enum.Font.Gotham;noResults.TextWrapped=true;noResults.Visible=false
+        noResults.Position=UDim2.fromOffset(20,72);noResults.Size=UDim2.new(1,-40,0,60)
+        noResults.Parent=Content;noResults:SetAttribute("ThemeRole","TextDark")
+        local resetSearch=Instance.new("TextButton")
+        resetSearch.Name="ClearSearch";resetSearch.Text="×";resetSearch.TextSize=18
+        resetSearch.Font=Enum.Font.Gotham;resetSearch.BackgroundTransparency=1;resetSearch.TextColor3=Theme.TextDark
+        resetSearch.Size=UDim2.fromOffset(28,28);resetSearch.Position=UDim2.new(1,-30,.5,-14)
+        resetSearch.Visible=false;resetSearch.Parent=search;resetSearch:SetAttribute("ThemeRole","TextDark")
+        connect(resetSearch.Activated,function()core:SetSearch("")end)
+        local searchApply=core._applySearch
+        function core:_applySearch()
+            searchApply(self)
+            local any=false
+            for _,tab in ipairs(Tabs)do if tab.Button.Visible then any=true;break end end
+            noResults.Visible=search.Text~="" and not any;resetSearch.Visible=search.Text~=""
+        end
+        local refreshing=false
+        local function tabLayout(tab)
+            if not tab.Button.Parent then return end
+            local hasIcon=tab.Icon~=nil
+            local left=hasIcon and 36 or 12
+            local width=math.max(34,TabFrame.Size.X.Offset-12-left-12)
+            local text=WrapTextToWidth(tab.Name,tab.Label.Font,tab.Label.TextSize,width)
+            local bounds=TextService:GetTextSize(text,tab.Label.TextSize,tab.Label.Font,Vector2.new(width,10000))
+            tab.Label.Text=text;tab.Label.TextWrapped=false
+            tab.Label.Position=UDim2.fromOffset(left,5);tab.Label.Size=UDim2.new(1,-left-10,1,-10)
+            tab.Label.TextXAlignment=Enum.TextXAlignment.Left
+            tab.Button.Size=UDim2.new(1,-12,0,math.max(38,math.ceil(bounds.Y)+14))
+            local corner=tab.Button:FindFirstChildOfClass("UICorner")
+            if corner then corner.CornerRadius=UDim.new(0,8)end
+            if tab.Icon then tab.Icon.Size=UDim2.fromOffset(18,18);tab.Icon.Position=UDim2.new(0,10,.5,-9)end
+        end
+        function core:RefreshLayout()
+            if refreshing or not Main.Parent then return end;refreshing=true
+            local width=math.min(self.SidebarWidth or 148,math.max(112,math.floor(Main.Size.X.Offset*.30)))
+            TabFrame.Size=UDim2.new(0,width,1,-44);TabFrame.Position=UDim2.fromOffset(0,44)
+            Content.Size=UDim2.new(1,-width,1,-44);Content.Position=UDim2.fromOffset(width,44)
+            SidebarDivider.Position=UDim2.fromOffset(width-1,54);SidebarDivider.Size=UDim2.new(0,1,1,-64)
+            SidebarDivider.Visible=not minimized
+            local top=self.SearchVisible==false and 0 or 48
+            for _,tab in ipairs(Tabs)do
+                tab.Page.Position=UDim2.fromOffset(0,top);tab.Page.Size=UDim2.new(1,0,1,-top)
+                tabLayout(tab)
+            end
+            LayoutHeaderText();relayout();refreshing=false
+        end
+        local attachPrevious=AttachAuraTab
+        AttachAuraTab=function(tab)
+            attachPrevious(tab)
+            local nativeName=tab.SetName;local nativeIcon=tab.SetIcon
+            tab.SetName=function(first,value)
+                value=first==tab and value or first
+                tab.Name=FixMojibake(tostring(value or "Tab"));tab.Page.Name=tab.Name.."_Page"
+                core:RefreshLayout();core:_applySearch();return tab
+            end
+            tab.SetIcon=function(first,value)
+                value=first==tab and value or first
+                nativeIcon(value);core:RefreshLayout();return tab
+            end
+            local layout=tab.Page:FindFirstChildOfClass("UIListLayout")
+            if layout then layout.Padding=UDim.new(0,densityGap[core.Density]or 8)end
+            core:RefreshLayout();return tab
+        end
+        local function soften(widget,radius)
+            local corner=widget:FindFirstChildOfClass("UICorner")or Instance.new("UICorner")
+            corner.CornerRadius=UDim.new(0,radius);corner.Parent=widget
+        end
+        function core:DecorateNative(widget,kind,api,handle)
+            widget.Size=UDim2.new(1,0,0,widget.Size.Y.Offset)
+            if kind=="AddButton"or kind=="AddCooldownButton"then
+                widget.Size=UDim2.new(1,0,0,44);soften(widget,8)
+                widget.TextXAlignment=Enum.TextXAlignment.Left
+                local pad=Instance.new("UIPadding");pad.PaddingLeft=UDim.new(0,14);pad.PaddingRight=UDim.new(0,38);pad.Parent=widget
+                local hint=Instance.new("ImageLabel");hint.Name="AuraActionHint";hint.BackgroundTransparency=1
+                hint.Image=AuraTabAssets.arrowupright or "";hint.ImageColor3=Theme.TextDark
+                hint.Size=UDim2.fromOffset(15,15);hint.Position=UDim2.new(1,15,.5,-7.5);hint.Parent=widget
+                hint:SetAttribute("ThemeRole","TextDarkImage")
+                local function reflow()
+                    if not widget.Parent then return end
+                    local bounds=TextService:GetTextSize(widget.Text,widget.TextSize,widget.Font,Vector2.new(math.max(40,widget.AbsoluteSize.X-52),10000))
+                    widget.TextWrapped=true;widget.Size=UDim2.new(1,0,0,math.max(44,math.ceil(bounds.Y)+20))
+                end
+                connect(widget:GetPropertyChangedSignal("AbsoluteSize"),reflow)
+                connect(widget:GetPropertyChangedSignal("Text"),reflow)
+                connect(widget:GetPropertyChangedSignal("TextSize"),reflow)
+                handle.Reflow=reflow;task.defer(reflow)
+            elseif kind=="AddTextBox"and widget:IsA("TextBox")then
+                soften(widget,8);widget.Size=UDim2.new(1,0,0,40)
+            elseif kind=="AddToggle"or kind=="AddSlider"then
+                widget.BackgroundTransparency=0;widget.BackgroundColor3=Theme.Button;widget:SetAttribute("ThemeRole","Button")
+                soften(widget,8)
+                local label=widget:FindFirstChildOfClass("TextLabel")
+                local action=kind=="AddToggle"and widget:FindFirstChildOfClass("TextButton")or nil
+                local bar=kind=="AddSlider"and widget:FindFirstChildOfClass("Frame")or nil
+                local function reflow()
+                    if not widget.Parent or not label then return end
+                    local available=math.max(40,widget.AbsoluteSize.X-(action and 84 or 24))
+                    local bounds=TextService:GetTextSize(label.Text,label.TextSize,label.Font,Vector2.new(available,10000))
+                    local h=math.max(20,math.ceil(bounds.Y))
+                    label.TextWrapped=true;label.Position=UDim2.fromOffset(12,10);label.Size=UDim2.new(1,action and -84 or -24,0,h)
+                    widget.Size=UDim2.new(1,0,0,math.max(44,h+(bar and 38 or 20)))
+                    if action then action.Position=UDim2.new(1,-56,.5,-11)end
+                    if bar then bar.Position=UDim2.fromOffset(12,h+20);bar.Size=UDim2.new(1,-24,0,8)end
+                end
+                connect(widget:GetPropertyChangedSignal("AbsoluteSize"),reflow)
+                connect(label:GetPropertyChangedSignal("Text"),reflow)
+                connect(label:GetPropertyChangedSignal("TextSize"),reflow)
+                handle.Reflow=reflow;task.defer(reflow)
+            end
+        end
+        OnNativeMinimize=function()
+            core.Minimized=minimized
+            if minimized then core._unminimizedSize=Vector2.new(oldSize.X.Offset,oldSize.Y.Offset)end
+            SidebarDivider.Visible=not minimized;core:_emit("MinimizedChanged",minimized)
+        end
+        local gesture,gestureStart,gesturePosition,gestureSize,gestureInput
+        local function isPointer(input)return input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch end
+        local function startGesture(kind,input)
+            if not isPointer(input)or core._modal or (kind=="resize"and minimized)then return end
+            if kind=="drag"and input.Position.X>TitleBar.AbsolutePosition.X+TitleBar.AbsoluteSize.X-76 then return end
+            gesture=kind;gestureInput=input;gestureStart=input.Position;gesturePosition=positionPixels();gestureSize=core:GetSize()
+        end
+        connect(TitleBar.InputBegan,function(input)startGesture("drag",input)end)
+        connect(Resize.InputBegan,function(input)startGesture("resize",input)end)
+        connect(UIS.InputChanged,function(input)
+            if not gesture then return end
+            local touch=gestureInput.UserInputType==Enum.UserInputType.Touch
+            if (touch and input~=gestureInput)or(not touch and input.UserInputType~=Enum.UserInputType.MouseMovement)then return end
+            local delta=input.Position-gestureStart
+            if gesture=="drag"then clampPosition(Vector2.new(gesturePosition.X+delta.X,gesturePosition.Y+delta.Y))
+            else core:SetSize(gestureSize.X+delta.X,gestureSize.Y+delta.Y)end
+        end)
+        connect(UIS.InputEnded,function(input)
+            if gesture and(input==gestureInput or(gestureInput.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1))then gesture=nil;gestureInput=nil end
+        end)
+        connect(UIS.WindowFocusReleased,function()gesture=nil;gestureInput=nil end)
+        connect(Main:GetPropertyChangedSignal("AbsoluteSize"),function()core:RefreshLayout()end)
+        if workspace.CurrentCamera then connect(workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"),function()
+            local saved=core._unminimizedSize or core:GetSize();core:SetSize(saved);clampPosition(positionPixels())
+        end)end
+        local function held(key)local ok,result=pcall(UIS.IsKeyDown,UIS,key);return ok and result end
+        connect(UIS.InputBegan,function(input,processed)
+            if processed or core._modal then return end
+            local focused=UIS:GetFocusedTextBox()
+            local ctrl=held(Enum.KeyCode.LeftControl)or held(Enum.KeyCode.RightControl)
+            if ctrl and input.KeyCode==Enum.KeyCode.K and search.Visible then
+                core:Toggle(true);search:CaptureFocus()
+            elseif ctrl and input.KeyCode==Enum.KeyCode.Tab and not focused then core:NextTab(held(Enum.KeyCode.LeftShift)and -1 or 1)
+            elseif input.KeyCode==Enum.KeyCode.Escape and focused==search then core:SetSearch("");search:ReleaseFocus()end
+        end)
+        Minimize.Position=UDim2.new(1,-72,0,6);Close.Position=UDim2.new(1,-36,0,6)
+        search.Size=UDim2.new(1,-24,0,34);search.Position=UDim2.fromOffset(12,8)
+        search:FindFirstChildOfClass("UICorner").CornerRadius=UDim.new(0,8)
+        local searchPadding=search:FindFirstChildOfClass("UIPadding")
+        searchPadding.PaddingLeft=UDim.new(0,12);searchPadding.PaddingRight=UDim.new(0,30)
+        core.SidebarWidth=windowOptions.SidebarWidth or 148
+        core.SearchVisible=windowOptions.SearchVisible~=false;search.Visible=core.SearchVisible
+        core:SetCornerRadius(windowOptions.CornerRadius or 12)
+        local function bindPublic(name)
+            WindowAPI[name]=function(first,...)
+                local results=first==WindowAPI and table.pack(core[name](core,...))or table.pack(core[name](core,first,...))
+                if results[1]==core then results[1]=WindowAPI end
+                return table.unpack(results,1,results.n)
+            end
+        end
+        for _,name in ipairs({"SelectTab","Minimize","SetPosition","GetPosition","SetCornerRadius","SetTitle","SetSubtitle","SetTitleGradient","SetDensity","SetSidebarWidth","SetSearchVisible","SetTextScale","RefreshLayout","GetThemeNames","CreateSettingsTab","CreateIconBrowser"})do bindPublic(name)end
+        WindowAPI.GetCapabilities=function()
+            return {Version=CURRENT_VERSION,Touch=UIS.TouchEnabled==true,Keyboard=UIS.KeyboardEnabled~=false,
+                Gamepad=UIS.GamepadEnabled==true,FileRead=type(readfile)=="function",FileWrite=type(writefile)=="function",
+                Clipboard=type(setclipboard)=="function"or type(toclipboard)=="function",
+                Icons=#UI.GetIcons(),BackgroundImage=true,FloatingImage=true,Audio=true,Video=true,
+                ConfigJSON=true,Profiles=true,UndoRedo=true,Search=true,TitleGradient=true}
+        end
+        WindowAPI.RegisterIcon=function(first,name,value)return UI.RegisterIcon(first==WindowAPI and name or first,first==WindowAPI and value or name)end
+        WindowAPI.GetIcon=function(first,name)return UI.GetIcon(first==WindowAPI and name or first)end
+        -- Complete, dark tinted palettes: the chosen color is used verbatim for neon borders.
+        local colorChoices={
+            {"Roxo neon",Color3.fromRGB(181,105,255)},
+            {"Verde neon",Color3.fromRGB(76,235,149)},
+            {"Azul neon",Color3.fromRGB(80,158,255)},
+            {"Rosa neon",Color3.fromRGB(255,109,191)},
+            {"Vermelho neon",Color3.fromRGB(255,100,113)},
+            {"Laranja neon",Color3.fromRGB(255,166,76)},
+            {"Ciano neon",Color3.fromRGB(68,225,238)},
+            {"Amarelo neon",Color3.fromRGB(245,218,91)},
+        }
+        local function coloredPalette(color)
+            return {
+                Background=color:Lerp(Color3.fromRGB(8,10,15),.78),
+                TitleBar=color:Lerp(Color3.fromRGB(19,21,27),.77),
+                TabBackground=color:Lerp(Color3.fromRGB(12,14,20),.82),
+                TabSelected=color:Lerp(Color3.fromRGB(20,22,29),.56),
+                Button=color:Lerp(Color3.fromRGB(25,27,34),.78),
+                ButtonHover=color:Lerp(Color3.fromRGB(32,34,41),.66),
+                Text=Color3.fromRGB(239,242,248),TextDark=Color3.fromRGB(177,184,200),
+                Accent=color,ToggleOn=color,ToggleOff=color:Lerp(Color3.fromRGB(37,40,50),.75),
+                Border=color,TabBorder=color,DropdownHover=color:Lerp(Color3.fromRGB(32,34,41),.66),
+                Cooldown=Color3.fromRGB(101,51,64),Error=Color3.fromRGB(255,112,128),
+                Success=Color3.fromRGB(85,228,151),Warning=Color3.fromRGB(245,201,105),
+            }
+        end
+        for _,choice in ipairs(colorChoices)do RegisterTheme(choice[1],coloredPalette(choice[2]))end
+        local themeAliases={
+            roxo="Roxo neon",purple="Roxo neon",violet="Roxo neon",verde="Verde neon",green="Verde neon",
+            azul="Azul neon",blue="Azul neon",rosa="Rosa neon",pink="Rosa neon",
+            vermelho="Vermelho neon",red="Vermelho neon",laranja="Laranja neon",orange="Laranja neon",
+            ciano="Ciano neon",cyan="Ciano neon",amarelo="Amarelo neon",yellow="Amarelo neon",
+        }
+        for alias,name in pairs(themeAliases)do RegisterTheme(alias,Themes[name])end
+        AuraTabAliases.engrenagem="settings";AuraTabAliases.ingrenagem="settings";AuraTabAliases.gear="settings"
+        local borderDefaults=setmetatable({},{__mode="k"})
+        local function applyNeon()
+            local enabled=Theme.Border==Theme.Accent
+            core.NeonBorders=enabled
+            for _,object in ipairs(Main:GetDescendants())do
+                if object:IsA("UIStroke")then
+                    local role=object:GetAttribute("ThemeRole")
+                    if object==MainStroke or role=="Border"or role=="TabBorder"then
+                        local base=borderDefaults[object]
+                        if not base then base={Alpha=object.Transparency,Width=object.Thickness};borderDefaults[object]=base end
+                        object.Color=Theme.Border
+                        object.Transparency=enabled and (object==MainStroke and 0 or .38)or base.Alpha
+                        object.Thickness=enabled and (object==MainStroke and 2 or 1)or base.Width
+                    end
+                end
+            end
+        end
+        local themeApply=ApplyTheme
+        ApplyTheme=function()themeApply();applyNeon()end
+        WindowAPI.ApplyTheme=function()ApplyTheme();core:SyncTheme();applyNeon()end
+        local themeChanged=AuraThemeChanged
+        AuraThemeChanged=function(value)
+            themeChanged(value);applyNeon()
+        end
+        function core:GetColorThemeNames()
+            local names={"Dark"}
+            for _,choice in ipairs(colorChoices)do table.insert(names,choice[1])end
+            table.insert(names,"Personalizado");return names
+        end
+        function core:SetColorTheme(color)
+            if typeof(color)~="Color3"then return false end
+            return self:SetTheme(coloredPalette(color))
+        end
+        core.SetAccent=core.SetColorTheme
+        core.CreateConfigTab=core.CreateSettingsTab
+        core.AddConfigTab=core.CreateSettingsTab
+        for _,name in ipairs({"GetColorThemeNames","SetColorTheme","SetAccent","CreateConfigTab","AddConfigTab"})do bindPublic(name)end
+        if windowOptions.ConfigTab then core:CreateConfigTab(type(windowOptions.ConfigTab)=="table"and windowOptions.ConfigTab or {})end
+
+        if windowOptions.TitleGradient then core:SetTitleGradient(windowOptions.TitleGradient)end
+        if windowOptions.SettingsTab then core:CreateSettingsTab(type(windowOptions.SettingsTab)=="table"and windowOptions.SettingsTab or {})end
+
         local opts=AuraWindowOptions or {}
         core.ConfigFile=opts.ConfigFile or core.ConfigFile
         if opts.Theme then SetTheme(opts.Theme)end
-        if opts.Size then core:SetSize(opts.Size);core:Center()end
+        core:SetSize(opts.Size or Vector2.new(640,460));core:Center()
         if opts.BackgroundImage then core:SetBackgroundImage(opts.BackgroundImage,opts.BackgroundTransparency)end
         if opts.FloatingButton then WindowAPI.SetFloatingButton(opts.FloatingButton)end
         if opts.TextScale then core:SetTextScale(opts.TextScale)end
@@ -7137,9 +9484,22 @@ function UI.GetIcons()
     end
     table.sort(names);return names
 end
-function UI.RegisterIcon(first,name,paths)
-    if first~=UI then paths,name=name,first end
-    return AuraSupport:RegisterIcon(name,paths)
+function UI.RegisterIcon(first,name,value)
+    if first~=UI then value,name=name,first end
+    if type(name)~="string" then return false end
+    local key=AuraNormalizeIcon(name)
+    local image=type(value)=="table" and (value.Image or value.Id) or value
+    if type(image)=="number" then image="rbxassetid://"..tostring(math.floor(image))end
+    if type(image)=="string" then
+        if image:match("^%d+$")then image="rbxassetid://"..image end
+        AuraTabAssets[key]=image;AuraSupport._SetIconAssets(AuraTabAssets,AuraTabAliases)
+        return true
+    end
+    return false
+end
+function UI.GetIcon(first,name)
+    name=first==UI and name or first
+    local key=AuraNormalizeIcon(name);return AuraTabAssets[AuraTabAliases[key] or key]
 end
 function UI.Notify(first,options)
     if first~=UI then options=first end
