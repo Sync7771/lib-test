@@ -1,14 +1,25 @@
 --[[
-AURA UI 5.2 — interface Roblox / Luau
+AURA UI 5.3.1 — interface Roblox / Luau
 Base nativa PDDEV / RCCDEV fornecida pelo usuário, com extensões AURA.
 Arquivo autossuficiente; retorna a tabela da biblioteca. Nenhuma janela é aberta ao carregar.
+
+PALETAS 5.3.1
+ Roxo ametista, verde jade, azul sereno, rosa, coral, laranja âmbar,
+ ciano e amarelo dourado: superfícies equilibradas, com hierarquia de tons.
+ A cor personalizada varia de forma contínua entre as paletas.
+
+ACABAMENTO 5.3
+ Cores mais equilibradas, barra superior com profundidade, controles com
+ preenchimentos distintos e bordas neon mais finas. Tipografia menos pesada.
+ Os temas continuam colorindo o fundo inteiro; Dark permanece uma opção separada.
 
 CONFIG OPCIONAL E TEMAS NEON
  win:CreateConfigTab() -- cria Config com engrenagem; não aparece sozinha
  -- Também pode usar CreateWindow({Title="AURA UI",ConfigTab=true})
  win:SetTheme("Roxo neon") -- ou Verde neon, Azul neon, Rosa neon etc.
  win:SetColorTheme(Color3.fromRGB(170,90,255)) -- cor exata dos destaques e bordas
- Os temas colorem o fundo dark, painéis, abas, controles e bordas neon.
+ Os temas colorem o fundo inteiro, painéis, abas, controles e bordas neon.
+ As superfícies agora têm cor visível, com texto e ícones de contraste automático.
  O seletor da Config acompanha mudanças de tema feitas pelo script.
 
 DESTAQUES DESTA VERSÃO
@@ -251,7 +262,7 @@ local AuraSupport=(function()
       No claim that this code has been executed in Roblox Studio yet.
 ]]
 
-local Aura = { Version = "5.2.0" }
+local Aura = { Version = "5.3.1" }
 Aura.__index = Aura
 
 local Players = game:GetService("Players")
@@ -340,6 +351,7 @@ local function list(obj,gap,horiz)
     },obj)
 end
 local function bind(w, obj, property, role)
+    if role=="Accent"and(property=="TextColor3"or property=="ImageColor3")and w.Theme.AccentText then role="AccentText"end
     obj[property]=w.Theme[role]
     table.insert(w._themeBindings,{object=obj,property=property,role=role})
     return obj
@@ -1306,6 +1318,7 @@ local function createRow(tab,opts,height,wide)
     outline:SetAttribute("ThemeRole","Border")
     if opts._section then root.BackgroundTransparency=1;outline.Transparency=1 end
     local name=textlabel(root,w,opts.Name or "Control",13,true)
+    name.Font=Enum.Font.GothamMedium
     name.TextWrapped=true;name.TextYAlignment=Enum.TextYAlignment.Top
     name.TextTruncate=Enum.TextTruncate.AtEnd
     local description
@@ -1419,7 +1432,7 @@ function Tab:CreateButton(options)
     local root,handle=createRow(self,rowOptions,58)
     root.Name="Action_"..tostring(options.Name or "Button")
     local border=root:FindFirstChildOfClass("UIStroke")
-    bind(w,border,"Color","Accent");border.Transparency=.73
+    bind(w,border,"Color","Accent");border.Transparency=.82
     local iconTile
     if options.Icon then
         iconTile=frame(root,w,"AccentSoft",9)
@@ -1432,13 +1445,14 @@ function Tab:CreateButton(options)
     local arrow=renderIcon(chip,w,"arrow-up-right",16,"Accent")
     arrow.Position=UDim2.new(1,-24,.5,-8)
     local caption=textlabel(chip,w,options.ButtonText or "",12,true,"Accent")
+    caption.Font=Enum.Font.GothamMedium
     caption.Position=UDim2.fromOffset(10,0);caption.Size=UDim2.new(1,-36,1,0)
     handle:Action(chip,options.ButtonText and 116 or 34,32)
     local hit=new("TextButton",{Name="ClickSurface",Text="",BackgroundTransparency=1,BorderSizePixel=0,AutoButtonColor=false,Size=UDim2.fromScale(1,1),ZIndex=5},root)
     local enabled=options.Disabled~=true
     local function paint(hovered)
         tween(w,root,{BackgroundColor3=w.Theme[hovered and enabled and "Hover" or "SurfaceAlt"]},.12)
-        tween(w,border,{Transparency=hovered and enabled and .15 or .73},.12)
+        tween(w,border,{Transparency=hovered and enabled and .32 or .82},.12)
     end
     local function fire()
         if not enabled then return end
@@ -1721,7 +1735,7 @@ function Tab:CreateDropdown(options)
         for i,b in ipairs(items) do
             local active=multi and selected[tostring(choices[i])] or (not multi and selected==choices[i])
             b.BackgroundColor3=w.Theme[active and "AccentSoft" or "Surface"]
-            b.TextColor3=w.Theme[active and "Accent" or "Text"]
+            b.TextColor3=w.Theme[active and (w.Theme.AccentText and "AccentText"or "Accent") or "Text"]
         end
     end
     local function filter()
@@ -2140,7 +2154,7 @@ function Tab:CreatePlayerList(options)
         for id,entry in pairs(entries) do
             local active=chosen[id]
             entry.Row.BackgroundColor3=w.Theme[active and "AccentSoft" or "Surface"]
-            entry.Display.TextColor3=w.Theme[active and "Accent" or "Text"]
+            entry.Display.TextColor3=w.Theme[active and (w.Theme.AccentText and "AccentText"or "Accent") or "Text"]
             entry.Mark.Visible=active==true
         end
     end
@@ -2823,7 +2837,7 @@ function Tab:CreateSegmented(options)
         for i,button in ipairs(buttons) do
             local active=values[i]==current
             button.BackgroundColor3=w.Theme[active and "AccentSoft" or "Surface"]
-            button.TextColor3=w.Theme[active and "Accent" or "Text"]
+            button.TextColor3=w.Theme[active and (w.Theme.AccentText and "AccentText"or "Accent") or "Text"]
         end
     end
     local function layout()
@@ -5193,7 +5207,7 @@ AuraSupport._SetIconAssets(AuraTabAssets,AuraTabAliases)
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "5.2.0"
+local CURRENT_VERSION = "5.3.1"
 UI.Name="AURA UI";UI.Version=CURRENT_VERSION
 
 -- ════════════════════════════════════════════════════════════
@@ -8948,6 +8962,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
         local function mapTheme()
             return {Background=Theme.Background,Surface=Theme.TitleBar,SurfaceAlt=Theme.Button,
                 Hover=Theme.ButtonHover,Accent=Theme.Accent,AccentSoft=Theme.TabSelected,
+                AccentText=(Theme.Border==Theme.Accent)and Theme.Text or Theme.Accent,
                 Text=Theme.Text,Muted=Theme.TextDark,Stroke=Theme.Border,Success=Theme.Success,
                 Warning=Theme.Warning,Danger=Theme.Error,Overlay=Theme.Background}
         end
@@ -9195,6 +9210,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
         noResults.Font=Enum.Font.Gotham;noResults.TextWrapped=true;noResults.Visible=false
         noResults.Position=UDim2.fromOffset(20,72);noResults.Size=UDim2.new(1,-40,0,60)
         noResults.Parent=Content;noResults:SetAttribute("ThemeRole","TextDark")
+        noResults.Text="Nenhum resultado. Tente outro nome."
         local resetSearch=Instance.new("TextButton")
         resetSearch.Name="ClearSearch";resetSearch.Text="×";resetSearch.TextSize=18
         resetSearch.Font=Enum.Font.Gotham;resetSearch.BackgroundTransparency=1;resetSearch.TextColor3=Theme.TextDark
@@ -9218,7 +9234,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
             local bounds=TextService:GetTextSize(text,tab.Label.TextSize,tab.Label.Font,Vector2.new(width,10000))
             tab.Label.Text=text;tab.Label.TextWrapped=false
             tab.Label.Position=UDim2.fromOffset(left,5);tab.Label.Size=UDim2.new(1,-left-10,1,-10)
-            tab.Label.TextXAlignment=Enum.TextXAlignment.Left
+            tab.Label.TextXAlignment=Enum.TextXAlignment.Left;tab.Label.Font=Enum.Font.GothamMedium
             tab.Button.Size=UDim2.new(1,-12,0,math.max(38,math.ceil(bounds.Y)+14))
             local corner=tab.Button:FindFirstChildOfClass("UICorner")
             if corner then corner.CornerRadius=UDim.new(0,8)end
@@ -9267,7 +9283,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
                 local pad=Instance.new("UIPadding");pad.PaddingLeft=UDim.new(0,14);pad.PaddingRight=UDim.new(0,38);pad.Parent=widget
                 local hint=Instance.new("ImageLabel");hint.Name="AuraActionHint";hint.BackgroundTransparency=1
                 hint.Image=AuraTabAssets.arrowupright or "";hint.ImageColor3=Theme.TextDark
-                hint.Size=UDim2.fromOffset(15,15);hint.Position=UDim2.new(1,15,.5,-7.5);hint.Parent=widget
+                hint.Size=UDim2.fromOffset(14,14);hint.Position=UDim2.new(1,15,.5,-7);hint.ImageTransparency=.25;hint.Parent=widget
                 hint:SetAttribute("ThemeRole","TextDarkImage")
                 local function reflow()
                     if not widget.Parent then return end
@@ -9367,7 +9383,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
         end
         WindowAPI.RegisterIcon=function(first,name,value)return UI.RegisterIcon(first==WindowAPI and name or first,first==WindowAPI and value or name)end
         WindowAPI.GetIcon=function(first,name)return UI.GetIcon(first==WindowAPI and name or first)end
-        -- Complete, dark tinted palettes: the chosen color is used verbatim for neon borders.
+        -- Colored surfaces with automatic text contrast: the chosen color is used verbatim for neon borders.
         local colorChoices={
             {"Roxo neon",Color3.fromRGB(181,105,255)},
             {"Verde neon",Color3.fromRGB(76,235,149)},
@@ -9378,20 +9394,71 @@ function UI.CreateWindow(title, subtitle, version, extra)
             {"Ciano neon",Color3.fromRGB(68,225,238)},
             {"Amarelo neon",Color3.fromRGB(245,218,91)},
         }
+        -- Hue ramps chosen per theme, interpolated continuously for custom colors.
+        local colorRamps={
+            {Color3.fromRGB(181,105,255),{{166,124,214},{154,109,202},{158,115,207},{221,195,249},{192,157,233},{206,177,242}}},
+            {Color3.fromRGB(76,235,149),{{113,178,143},{100,164,128},{106,170,135},{181,225,197},{148,203,169},{165,216,184}}},
+            {Color3.fromRGB(80,158,255),{{111,158,210},{98,144,198},{104,151,204},{182,210,240},{147,184,225},{166,199,235}}},
+            {Color3.fromRGB(255,109,191),{{205,139,177},{191,125,164},{198,132,170},{242,197,222},{225,170,201},{236,185,213}}},
+            {Color3.fromRGB(255,100,113),{{207,139,147},{194,125,135},{200,131,140},{244,199,204},{228,171,180},{237,187,194}}},
+            {Color3.fromRGB(255,166,76),{{213,168,129},{200,153,115},{207,161,122},{244,218,192},{233,194,160},{241,207,179}}},
+            {Color3.fromRGB(68,225,238),{{111,178,187},{98,163,173},{104,171,181},{179,225,230},{146,204,211},{163,217,223}}},
+            {Color3.fromRGB(245,218,91),{{209,189,111},{195,175,99},{201,182,105},{242,228,175},{230,211,147},{238,222,163}}},
+        }
+        for _,ramp in ipairs(colorRamps)do ramp.H,ramp.S,ramp.V=ramp[1]:ToHSV()end
+        table.sort(colorRamps,function(a,b)return a.H<b.H end)
+        local function rampSurfaces(color)
+            local h,s,v=color:ToHSV()
+            local lower,upper=colorRamps[#colorRamps],colorRamps[1]
+            local lowH,highH=lower.H,upper.H+1
+            if h<colorRamps[1].H then h=h+1 end
+            for i=1,#colorRamps-1 do
+                if h>=colorRamps[i].H and h<=colorRamps[i+1].H then
+                    lower,upper=colorRamps[i],colorRamps[i+1]
+                    lowH,highH=lower.H,upper.H;break
+                end
+            end
+            local t=math.clamp((h-lowH)/math.max(.000001,highH-lowH),0,1)
+            local saturation=lower.S+(upper.S-lower.S)*t
+            local value=lower.V+(upper.V-lower.V)*t
+            local surfaces={}
+            for i,role in ipairs({"Background","TitleBar","TabBackground","TabSelected","Button","ButtonHover"})do
+                local a=Color3.fromRGB(table.unpack(lower[2][i]))
+                local b=Color3.fromRGB(table.unpack(upper[2][i]))
+                local mixed=a:Lerp(b,t)
+                local mh,ms,mv=mixed:ToHSV()
+                surfaces[role]=Color3.fromHSV(mh,math.clamp(ms*s/math.max(.001,saturation),0,1),math.clamp(mv*v/math.max(.001,value),0,1))
+            end
+            return surfaces
+        end
+
         local function coloredPalette(color)
-            return {
-                Background=color:Lerp(Color3.fromRGB(8,10,15),.78),
-                TitleBar=color:Lerp(Color3.fromRGB(19,21,27),.77),
-                TabBackground=color:Lerp(Color3.fromRGB(12,14,20),.82),
-                TabSelected=color:Lerp(Color3.fromRGB(20,22,29),.56),
-                Button=color:Lerp(Color3.fromRGB(25,27,34),.78),
-                ButtonHover=color:Lerp(Color3.fromRGB(32,34,41),.66),
-                Text=Color3.fromRGB(239,242,248),TextDark=Color3.fromRGB(177,184,200),
-                Accent=color,ToggleOn=color,ToggleOff=color:Lerp(Color3.fromRGB(37,40,50),.75),
-                Border=color,TabBorder=color,DropdownHover=color:Lerp(Color3.fromRGB(32,34,41),.66),
-                Cooldown=Color3.fromRGB(101,51,64),Error=Color3.fromRGB(255,112,128),
-                Success=Color3.fromRGB(85,228,151),Warning=Color3.fromRGB(245,201,105),
-            }
+            local white=Color3.fromRGB(255,255,255)
+            local surfaces=rampSurfaces(color)
+            local function luminance(c)
+                local function linear(v)return v<=.04045 and v/12.92 or ((v+.055)/1.055)^2.4 end
+                return .2126*linear(c.R)+.7152*linear(c.G)+.0722*linear(c.B)
+            end
+            local function contrast(a,b)
+                local x,y=luminance(a),luminance(b)
+                return (math.max(x,y)+.05)/(math.min(x,y)+.05)
+            end
+            local dark=Color3.fromRGB(25,18,36)
+            local bright=Color3.fromRGB(250,250,255)
+            local darkMin,brightMin=100,100
+            for _,surface in pairs(surfaces)do darkMin=math.min(darkMin,contrast(dark,surface));brightMin=math.min(brightMin,contrast(bright,surface))end
+            local text=darkMin>=brightMin and dark or bright
+            local target=text==dark and white or Color3.fromRGB(0,0,0)
+            for name,surface in pairs(surfaces)do
+                for i=1,80 do if contrast(text,surface)>=4.5 then break end;surface=surface:Lerp(target,.035)end
+                surfaces[name]=surface
+            end
+            surfaces.Text=text;surfaces.TextDark=text
+            surfaces.Accent=color;surfaces.ToggleOn=color;surfaces.ToggleOff=surfaces.Button:Lerp(surfaces.TitleBar,.22)
+            surfaces.Border=color;surfaces.TabBorder=color;surfaces.DropdownHover=surfaces.ButtonHover
+            surfaces.Cooldown=Color3.fromRGB(177,83,99);surfaces.Error=Color3.fromRGB(222,52,83)
+            surfaces.Success=Color3.fromRGB(27,145,79);surfaces.Warning=Color3.fromRGB(167,109,22)
+            return surfaces
         end
         for _,choice in ipairs(colorChoices)do RegisterTheme(choice[1],coloredPalette(choice[2]))end
         local themeAliases={
@@ -9406,6 +9473,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
         local function applyNeon()
             local enabled=Theme.Border==Theme.Accent
             core.NeonBorders=enabled
+            for _,tab in ipairs(Tabs)do
+                if tab.Icon and tab.Icon:IsA("ImageLabel")then tab.Icon.ImageColor3=enabled and Theme.Text or Color3.new(1,1,1)end
+            end
             for _,object in ipairs(Main:GetDescendants())do
                 if object:IsA("UIStroke")then
                     local role=object:GetAttribute("ThemeRole")
@@ -9413,8 +9483,8 @@ function UI.CreateWindow(title, subtitle, version, extra)
                         local base=borderDefaults[object]
                         if not base then base={Alpha=object.Transparency,Width=object.Thickness};borderDefaults[object]=base end
                         object.Color=Theme.Border
-                        object.Transparency=enabled and (object==MainStroke and 0 or .38)or base.Alpha
-                        object.Thickness=enabled and (object==MainStroke and 2 or 1)or base.Width
+                        object.Transparency=enabled and (object==MainStroke and .06 or .65)or base.Alpha
+                        object.Thickness=enabled and (object==MainStroke and 1.35 or 1)or base.Width
                     end
                 end
             end
