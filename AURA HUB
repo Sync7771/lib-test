@@ -1,7 +1,46 @@
 --[[
-AURA UI 5.5 — interface Roblox / Luau
+AURA UI 5.7.0 — interface Roblox / Luau
 Base nativa PDDEV / RCCDEV fornecida pelo usuário, com extensões AURA.
 Arquivo autossuficiente; retorna a tabela da biblioteca. Nenhuma janela é aberta ao carregar.
+
+LIB DARK 5.7
+ Config > Biblioteca > Interface: AURA UI / Lib dark.
+ Interface alternativa: cabeçalho em duas linhas, marca, busca no cabeçalho,
+ navegação em painel separado, título de página e cartões de contorno suave.
+ Muda ao vivo sem recarregar o script: mesmas abas, objetos, callbacks e valores.
+ Cada interface lembra seu tema e ajustes visuais. Valores de controles são compartilhados.
+ Adapta a navegação e a busca à largura da janela; preserva minimizar/arrastar/redimensionar.
+ win:SetLibrary("Lib dark") / win:SetLibrary("AURA UI") / win:GetLibraries()
+ CreateWindow({Library="Lib dark",ConfigTab=true}) inicia na nova interface.
+ JSON e perfis preservam a interface escolhida e a aparência de cada uma.
+
+CORREÇÕES E ÍCONES 5.6.1
+ Config acompanha alterações externas de nome, subtítulo, layout e aparência.
+ Bolinha mantém posição e imagem ao editar, desativar, reativar e salvar JSON.
+ Cantos da imagem de fundo acompanham o arredondamento da janela.
+ Aliases antigos não substituem ícones Lucide distintos com o mesmo nome.
+ 434 novos ícones Geist de contorno, opcionais, com prefixo geist-.
+ Exemplos: geist-face-happy, geist-user-settings, geist-robot, geist-sparkles.
+ Também aceita sprites personalizados via RegisterIcon(nome,{Image=assetId,
+ ImageRectOffset=Vector2.new(x,y),ImageRectSize=Vector2.new(w,h)}).
+
+PERSONALIZAÇÃO 5.6
+ Config opcional: grupos recolhíveis para nome, subtítulo, fonte, cores por área,
+ cantos, barra lateral, bordas, transparência, imagem de fundo e bolinha.
+ Todas as alterações são locais à janela e aparecem ao vivo.
+ win:CreateConfigTab() / win:CreateConfigTab({Customization=false})
+ win:CreateCustomizationPanel(aba) -- painel reutilizável fora da Config
+ win:SetFont("Gotham") / win:SetFont("Original") / win:GetFonts()
+ win:SetThemeColor("Background",Color3.fromRGB(30,25,50))
+ Roles: Background, TitleBar, TabBackground, TabSelected, Button, Text,
+ TextDark, Accent, Border, ButtonHover e os demais papéis do tema nativo.
+ win:SetBorderStyle({Width=1.5,Transparency=.15,Neon=true})
+ win:UpdateFloatingButton({Text="MI",Size=50,TextColor=Color3.fromRGB(80,170,255)})
+ win:UpdateFloatingButton({Image="rbxassetid://ID"}) -- imagem substitui o texto
+ win:GetAppearance() / win:SetAppearance({Font="Arial",CornerRadius=14})
+ win:ResetAppearance() -- restaura as opções iniciais da janela
+ CreateWindow aceita Appearance={...}. JSON/perfis preservam a aparência,
+ inclusive as cores nativas individuais da barra lateral e do cabeçalho.
 
 DEGRADÊ 5.5
  O nome começa em azul-claro e termina em azul mais profundo por padrão.
@@ -275,7 +314,7 @@ local AuraSupport=(function()
       No claim that this code has been executed in Roblox Studio yet.
 ]]
 
-local Aura = { Version = "5.5.0" }
+local Aura = { Version = "5.7.0" }
 Aura.__index = Aura
 
 local Players = game:GetService("Players")
@@ -613,7 +652,8 @@ local function renderIcon(parent,w,value,size,role)
     local raw=tostring(value or "circle")
     if type(value)=="table" then raw=tostring(value.Image or value.Id or value.Name or "circle") end
     local key=raw:lower():gsub("^lucide%-",""):gsub("^lucide:",""):gsub("^rbxassetid://", "rbxassetid://")
-    key=ICON_ALIASES[key] or key
+    local direct=key:gsub("[%s_%-]","")
+    if not ICON_ASSETS[direct]then key=ICON_ALIASES[key] or key end
     local parts={}
     local function colored(obj,prop)
         bind(w,obj,prop,role or "Muted");table.insert(parts,{obj,prop});return obj
@@ -621,7 +661,10 @@ local function renderIcon(parent,w,value,size,role)
     local weight=math.clamp((size or 22)*.078,1.2,2.1)
     local normalized=key:gsub("[%s_%-]","")
     local assetKey=ICON_ASSET_ALIASES[normalized] or normalized
+    local sprite
     if ICON_ASSETS[assetKey] then raw=ICON_ASSETS[assetKey] end
+    if type(raw)=="table"then sprite=raw;raw=tostring(sprite.Image or sprite.Id or "")end
+    if type(value)=="table"and(value.ImageRectOffset or value.ImageRectPosition)then sprite=value end
     local shape=not ICON_ASSETS[assetKey] and ICONS[key] or nil
     if shape then
         for _,path in ipairs(shape) do
@@ -643,6 +686,10 @@ local function renderIcon(parent,w,value,size,role)
         end
     elseif raw:match("^%d+$") or raw:match("^rbxasset") or raw:match("^https?://") then
         local icon=new("ImageLabel",{BackgroundTransparency=1,Size=UDim2.fromScale(1,1),ScaleType=Enum.ScaleType.Fit,Image=raw:match("^%d+$") and "rbxassetid://"..raw or raw},host)
+        if sprite then
+            icon.ImageRectOffset=sprite.ImageRectOffset or sprite.ImageRectPosition or Vector2.new()
+            icon.ImageRectSize=sprite.ImageRectSize or Vector2.new()
+        end
         if role then colored(icon,"ImageColor3") end
     else
         local glyph=textlabel(host,w,raw,19,false,role or "Muted")
@@ -658,6 +705,7 @@ local function encode(value)
     if typeof(value)=="Color3" then return {__aura="Color3",hex=hex(value)} end
     if typeof(value)=="EnumItem" then return {__aura="KeyCode",name=value.Name} end
     if typeof(value)=="Vector2" then return {__aura="Vector2",x=value.X,y=value.Y} end
+    if typeof(value)=="UDim2"then return {__aura="UDim2",xs=value.X.Scale,xo=value.X.Offset,ys=value.Y.Scale,yo=value.Y.Offset}end
     if type(value)=="table" then
         local out={};for k,v in pairs(value) do out[k]=encode(v) end;return out
     end
@@ -668,6 +716,7 @@ local function decode(value)
     if value.__aura=="Color3" then return fromHex(value.hex) or BASE.Accent end
     if value.__aura=="KeyCode" then return normalizedKey(value.name) or Enum.KeyCode.Unknown end
     if value.__aura=="Vector2" then return Vector2.new(value.x or 0,value.y or 0) end
+    if value.__aura=="UDim2"then return UDim2.new(value.xs or 0,value.xo or 0,value.ys or 0,value.yo or 0)end
     local out={};for k,v in pairs(value) do out[k]=decode(v) end;return out
 end
 
@@ -774,6 +823,8 @@ end
 function Window:ExportConfig()
     local data={version=Aura.Version,colors=encode(self.Theme),theme=self.ThemeName,size=encode(self._unminimizedSize and self.Minimized and self._unminimizedSize or self:GetSize()),values={},layout={textScale=self.TextScale or 1,reducedMotion=not self.Animations,panelTransparency=self.PanelTransparency or 0,density=self.Density,sidebarWidth=self.SidebarWidth,cornerRadius=self.CornerRadius}}
     if self.GetTitleGradient then data.titleGradient=encode(self:GetTitleGradient())end
+    if self.GetAppearance then data.appearance=encode(self:GetAppearance())end
+    if self.GetLibrary then data.interface={name=self:GetLibrary(),states=encode(self:GetLibraryStates())}end
     for flag,item in pairs(self.Flags) do
         if item.Get and not item._skipSave then
             local ok,value=pcall(function()return item:Get()end)
@@ -807,6 +858,8 @@ function Window:ImportConfig(json)
         if data.layout.panelTransparency~=nil then self:SetPanelTransparency(data.layout.panelTransparency) end
     end
     if data.titleGradient~=nil and self.SetTitleGradient then self:SetTitleGradient(decode(data.titleGradient))end
+    if type(data.appearance)=="table"and self.SetAppearance then self:SetAppearance(decode(data.appearance))end
+    if type(data.interface)=="table"and self.SetLibrary then self:SetLibrary(data.interface.name,decode(data.interface.states))end
     self._pendingConfig=copy(data.values or {})
     for flag,value in pairs(data.values or {}) do
         local item=self.Flags[flag]
@@ -3419,10 +3472,89 @@ function Window:CreateTitleGradientEditor(tab,options)
     refresh();return group
 end
 
+function Window:CreateCustomizationPanel(tab,options)
+    options=options or {}
+    if not tab or not tab.CreateGroup then return false end
+    local window=self;local controls={};local syncing=false
+    local function remember(key,handle,getter)
+        handle._skipSave=true;controls[key]={Handle=handle,Get=getter};return handle
+    end
+    local function input(group,key,name,default,callback)
+        return remember(key,group:CreateInput({Name=name,Default=default,Callback=function(v)if not syncing then callback(v)end end}))
+    end
+    local typography=tab:CreateGroup({Name="Nome e fonte",Collapsed=true})
+    input(typography,"Title","Nome da GUI",self:GetAppearance().Title,function(v)window:SetTitle(v)end)
+    input(typography,"Subtitle","Subtítulo",self:GetAppearance().Subtitle,function(v)window:SetSubtitle(v)end)
+    remember("Font",typography:CreateDropdown({Name="Fonte",Options=self:GetFonts(),Default=self:GetAppearance().Font,Callback=function(v)if not syncing then window:SetFont(v)end end}))
+    local colors=tab:CreateGroup({Name="Cores por área",Description="Cada picker muda somente a área indicada.",Collapsed=true})
+    for _,row in ipairs({{"Background","Fundo"},{"TitleBar","Barra superior"},{"TabBackground","Barra lateral"},{"TabSelected","Aba selecionada"},{"Button","Botões"},{"Text","Texto principal"},{"TextDark","Texto secundário"},{"Accent","Destaque"},{"Border","Bordas"}})do
+        local role=row[1]
+        remember("Color_"..role,colors:CreateColorPicker({Name=row[2],Default=self:GetThemeColors()[role],Callback=function(v)if not syncing then window:SetThemeColor(role,v)end end}),function()return window:GetThemeColors()[role]end)
+    end
+    local geometry=tab:CreateGroup({Name="Cantos, bordas e layout",Collapsed=true})
+    for _,row in ipairs({{"CornerRadius","Arredondamento",4,24,1},{"SidebarWidth","Largura da barra lateral",112,210,1},{"PanelTransparency","Transparência dos painéis",0,.65,.05},{"BorderWidth","Espessura das bordas",.5,3,.25},{"BorderTransparency","Transparência das bordas",0,1,.05}})do
+        local key=row[1]
+        remember(key,geometry:CreateSlider({Name=row[2],Min=row[3],Max=row[4],Increment=row[5],Default=self:GetAppearance()[key],Callback=function(v)
+            if syncing then return end
+            if key=="CornerRadius"then window:SetCornerRadius(v)
+            elseif key=="SidebarWidth"then window:SetSidebarWidth(v)
+            elseif key=="PanelTransparency"then window:SetPanelTransparency(v)
+            elseif key=="BorderWidth"then window:SetBorderStyle({Width=v})
+            else window:SetBorderStyle({Transparency=v})end
+        end}))
+    end
+    remember("SearchVisible",geometry:CreateToggle({Name="Mostrar barra de pesquisa",Default=self:GetAppearance().SearchVisible,Callback=function(v)if not syncing then window:SetSearchVisible(v)end end}))
+    local bg=tab:CreateGroup({Name="Imagem de fundo",Collapsed=true})
+    input(bg,"BackgroundImage","ID ou caminho da imagem",self:GetAppearance().BackgroundImage,function(v)window:SetBackgroundImage(v,window:GetAppearance().BackgroundTransparency)end)
+    remember("BackgroundTransparency",bg:CreateSlider({Name="Transparência da imagem",Min=0,Max=1,Increment=.05,Default=self:GetAppearance().BackgroundTransparency,Callback=function(v)
+        if not syncing then local a=window:GetAppearance();window:SetBackgroundImage(a.BackgroundImage,v)end
+    end}))
+    remember("BackgroundFit",bg:CreateDropdown({Name="Ajuste da imagem",Options={"Crop","Fit","Stretch","Tile"},Default=self:GetAppearance().BackgroundFit,Callback=function(v)if not syncing then window:SetBackgroundFit(v)end end}))
+    bg:CreateButton({Name="Remover imagem",Icon="imageoff",Callback=function()window:SetBackgroundImage(false);window:_emit("AppearanceChanged")end})
+    local bubble=tab:CreateGroup({Name="Botão flutuante",Collapsed=true})
+    local current=self:GetFloatingButtonOptions(true)or {}
+    remember("BubbleEnabled",bubble:CreateToggle({Name="Ativar botão flutuante",Default=self.FloatingButton~=nil,Callback=function(v)if not syncing then if v then window:UpdateFloatingButton({})else window:SetFloatingButton(false)end end end}),function()return window.FloatingButton~=nil end)
+    input(bubble,"BubbleText","Texto do botão",current.Text or "A",function(v)window:UpdateFloatingButton({Text=v,Image=""})end)
+    input(bubble,"BubbleImage","Imagem do botão (ID)",current.Image or "",function(v)window:UpdateFloatingButton({Text=nil,Image=v})end)
+    remember("BubbleSize",bubble:CreateSlider({Name="Tamanho do botão",Min=32,Max=90,Increment=1,Default=current.Size or 46,Callback=function(v)if not syncing then window:UpdateFloatingButton({Size=v})end end}),function()return(window:GetFloatingButtonOptions(true)or {}).Size or 46 end)
+    remember("BubbleTextColor",bubble:CreateColorPicker({Name="Cor do texto do botão",Default=current.TextColor or self.Theme.Accent,Callback=function(v)if not syncing then window:UpdateFloatingButton({TextColor=v})end end}),function()return(window:GetFloatingButtonOptions(true)or {}).TextColor or window.Theme.Accent end)
+    local restore=tab:CreateGroup({Name="Restaurar aparência",Collapsed=true})
+    restore:CreateButton({Name="Voltar ao visual inicial",Icon="rotateccw",Callback=function()
+        window:Confirm({Title="Restaurar aparência?",Content="As cores, fontes e ajustes visuais voltarão aos valores iniciais.",OnConfirm=function()window:ResetAppearance()end})
+    end})
+    local function sync()
+        if tab._destroyed then return end
+        syncing=true;local a=window:GetAppearance();local b=window:GetFloatingButtonOptions(true)or {}
+        a.BubbleText=b.Text or "A";a.BubbleImage=b.Image or ""
+        for key,item in pairs(controls)do
+            local value
+            if item.Get then value=item.Get()else value=a[key]end
+            if value~=nil then item.Handle:Set(value,true)end
+        end
+        syncing=false
+    end
+    local appearanceLink=window:On("AppearanceChanged",sync)
+    local themeLink=window:On("ThemeChanged",sync)
+    track(window,tab.Page.Destroying,function()appearanceLink:Disconnect();themeLink:Disconnect()end)
+    tab.CustomizationControls=controls
+    return controls
+end
+
 function Window:CreateSettingsTab(options)
     options=options or {}
     if self._settingsTab and not self._settingsTab._destroyed then self:SelectTab(self._settingsTab);return self._settingsTab end
     local tab=self:CreateTab({Name=options.Name or "Config",Icon="settings"});self._settingsTab=tab
+    local libraryCounter=self._counter
+    local libraries=tab:CreateGroup({Name="Biblioteca",Flag="__aura_library_group",Description="Troque a interface e mantenha as abas, valores e funções do script."})
+    local selectingLibrary=false
+    local libraryPicker=libraries:CreateDropdown({Name="Interface",Flag="__aura_library_picker",Options=self:GetLibraries(),Default=self:GetLibrary(),Callback=function(value)
+        if not selectingLibrary then self:SetLibrary(value)end
+    end})
+    libraryPicker._skipSave=true
+    self._counter=libraryCounter
+    local libraryLink=self:On("LibraryChanged",function(value)selectingLibrary=true;libraryPicker:Set(value,true);selectingLibrary=false end)
+    track(self,tab.Page.Destroying,function()libraryLink:Disconnect()end)
+    tab.LibraryControl=libraryPicker
     local appearance=tab:CreateGroup({Name="Aparência",Description="Tema, legibilidade e espaçamento."})
     local themes=self.GetColorThemeNames and self:GetColorThemeNames()or {"Dark"}
     local updating=false
@@ -3450,16 +3582,32 @@ function Window:CreateSettingsTab(options)
     local destroy=tab.Destroy
     tab.Destroy=function(...)link:Disconnect();return destroy(...)end
     self._settingsControls={Theme=themePicker,Color=colorPicker}
-    appearance:CreateSlider({Name="Tamanho do texto",Min=.85,Max=1.25,Increment=.05,Default=self.TextScale or 1,Callback=function(value)self:SetTextScale(value)end})
-    appearance:CreateDropdown({Name="Espaçamento",Options={"Compact","Comfortable","Spacious"},Default=self.Density or "Comfortable",Callback=function(value)if self.SetDensity then self:SetDensity(value)end end})
-    appearance:CreateToggle({Name="Reduzir animações",Default=not self.Animations,Callback=function(value)self:SetReducedMotion(value)end})
+    local scaleControl=appearance:CreateSlider({Name="Tamanho do texto",Min=.85,Max=1.25,Increment=.05,Default=self.TextScale or 1,Callback=function(value)self:SetTextScale(value)end})
+    local densityControl=appearance:CreateDropdown({Name="Espaçamento",Options={"Compact","Comfortable","Spacious"},Default=self.Density or "Comfortable",Callback=function(value)if self.SetDensity then self:SetDensity(value)end end})
+    local motionControl=appearance:CreateToggle({Name="Reduzir animações",Default=not self.Animations,Callback=function(value)self:SetReducedMotion(value)end})
     local gradientEditor=self:CreateTitleGradientEditor(tab)
     self._settingsControls.Gradient=gradientEditor.GradientControls
     local navigation=tab:CreateGroup({Name="Janela e navegação",Collapsed=true})
     navigation:CreateButton({Name="Centralizar janela",Icon="scan",Callback=function()self:Center()end})
     navigation:CreateKeybind({Name="Mostrar ou esconder",Default=self.ToggleKey,Callback=function(key)self:SetToggleKey(key)end})
     navigation:CreateToggle({Name="Navegação por controle",Default=self.GamepadNavigation==true,Callback=function(value)self:SetGamepadNavigation(value)end})
-    navigation:CreateToggle({Name="Botão flutuante",Default=self.FloatingButton~=nil,Callback=function(value)self:SetFloatingButton(value and {Text="A"}or false)end})
+    local navigationBubble=navigation:CreateToggle({Name="Botão flutuante",Default=self.FloatingButton~=nil,Callback=function(value)if value then self:UpdateFloatingButton({})else self:SetFloatingButton(false)end end})
+    navigationBubble._skipSave=true
+    scaleControl._skipSave=true;densityControl._skipSave=true;motionControl._skipSave=true
+    self._settingsControls.TextScale=scaleControl
+    self._settingsControls.Density=densityControl
+    self._settingsControls.ReducedMotion=motionControl
+    self._settingsControls.Bubble=navigationBubble
+    local syncingAppearance=false
+    local appearanceLink=self:On("AppearanceChanged",function()
+        if syncingAppearance or tab._destroyed then return end
+        syncingAppearance=true
+        scaleControl:Set(self.TextScale or 1,true);densityControl:Set(self.Density or "Comfortable",true)
+        motionControl:Set(not self.Animations,true);navigationBubble:Set(self.FloatingButton~=nil,true)
+        syncingAppearance=false
+    end)
+    track(self,tab.Page.Destroying,function()appearanceLink:Disconnect()end)
+    if options.Customization~=false then self:CreateCustomizationPanel(tab)end
     local config=tab:CreateGroup({Name="Configurações salvas",Collapsed=true})
     local data=config:CreateTextArea({Name="Configuração JSON",Height=100,MaxLength=100000,Default=""})
     config:CreateButton({Name="Exportar configuração",Icon="download",Callback=function()data:Set(self:ExportConfig()or "",true)end})
@@ -5259,6 +5407,472 @@ local function AuraNormalizeIcon(value)
     return tostring(value):lower():gsub("^lucide[:%-]",""):gsub("[%s_%-]","")
 end
 
+--[[
+Footagesus/Icons: https://github.com/Footagesus/Icons
+MIT License
+
+Copyright (c) 2025 Footages
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+]]
+-- Optional Geist outline pack via Footagesus/Icons (embedded sprite coordinates).
+-- Use Icon="geist-face-happy", "geist-user-settings", "geist-robot" etc.
+local AuraExtraIconAssets={
+    ["geistaccessibility"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(0,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistaccessibilityunread"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(128,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistaccessibilityunread2"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(256,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymapi"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(384,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymcsv"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(512,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymgif"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(640,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymhttp"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(768,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymisr"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(896,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymjpg"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(0,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymjs"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(128,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymjson"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(256,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymmarkdown"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(384,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronympage"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(512,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymppr"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(640,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymsvg"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(768,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistacronymts"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(896,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistalignmentcenter"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(0,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistalignmentleft"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(128,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistalignmentright"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(256,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistalpha"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(384,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistanalytics"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(512,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistanchor"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(640,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistapi"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(768,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistarchive"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(896,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowcircledown"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(0,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowcircleleft"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(128,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowcircleright"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(256,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowcircleup"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(384,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowcrossed"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(512,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowdown"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(640,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowdownleft"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(768,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowdownright"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(896,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowglobe"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(0,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowleft"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(128,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowleftright"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(256,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowmove"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(384,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowmoveunread"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(512,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowright"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(640,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowup"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(768,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowupdiagonalscale"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(896,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowupdown"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(0,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowupleft"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(128,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowupright"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(256,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistarrowuprightsmall"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(384,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistbackspace"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(512,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistbarchart"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(640,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistbell"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(768,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistbelloff"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(896,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistblendmode"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(0,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistblob"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(128,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistbookclosed"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(256,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistbookopen"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(384,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistbookmark"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(512,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistbox"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(640,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistbranchminus"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(768,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistbranchplus"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(896,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistbriefcase"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(0,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistbrowserarc"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(128,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistbrowserbrave"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(256,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistbrowserchrome"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(384,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistbrowseredge"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(512,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistbrowserfirefox"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(640,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistbrowseropera"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(768,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistbrowsersafari"]={Image="rbxassetid://133454478968909",ImageRectOffset=Vector2.new(896,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistbug"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(0,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistbuildings"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(128,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcalculator"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(256,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcalendar"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(384,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcamera"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(512,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcart"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(640,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistchartactivity"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(768,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistchartbarmiddle"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(896,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistchartbarpeak"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(0,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistchartbarrandom"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(128,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistchartpie"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(256,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistcharttrendingdown"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(384,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistcharttrendingup"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(512,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistcheck"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(640,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistcheckcircle"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(768,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistchecksquare"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(0,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevroncircledown"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(128,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevroncircleleft"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(384,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevroncircleright"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(640,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevroncircleup"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(896,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevrondoubledown"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(128,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevrondoubleleft"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(256,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevrondoubleright"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(384,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevrondoubleup"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(512,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevrondown"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(640,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevrondownsmall"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(768,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevronleft"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(896,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevronleftsmall"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(0,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevronright"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(128,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevronrightsmall"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(256,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevronup"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(384,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistchevronupsmall"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(512,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistclipboard"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(640,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistclock"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(768,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistclockdashed"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(896,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistclockrewind"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(0,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistclocksmall"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(128,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistclosedcaptions"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(256,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistcloud"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(384,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistclouddownload"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(512,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistcloudupload"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(640,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistcode"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(768,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistcodeblock"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(896,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistcodebracket"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(0,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistcodewrap"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(128,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistcodepen"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(256,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistcoins"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(384,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistcommand"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(512,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistcompass"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(640,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistconnection"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(768,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistcopy"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(896,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistcornerdownleft"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(0,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistcornerdownright"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(128,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistcornerleftdown"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(256,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistcornerleftup"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(384,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistcornerrightdown"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(512,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistcornerrightup"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(640,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistcornerupleft"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(768,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistcornerupright"]={Image="rbxassetid://72981277089259",ImageRectOffset=Vector2.new(896,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistcpu"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(0,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcreditcard"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(128,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcrop"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(256,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcross"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(384,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcrosscircle"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(512,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcrosssmall"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(768,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcrosshair"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(896,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistcursor"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(0,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistcursorclick"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(128,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistdatapoint"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(256,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistdatapointlow"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(384,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistdatapointmedium"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(512,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistdatabase"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(640,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistdelta"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(768,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistdesktopdevice"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(896,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistdevicealternate"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(0,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistdisplay"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(128,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistdollar"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(256,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistdownload"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(512,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistdroplet"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(640,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistedge"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(768,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistedgeconfig"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(896,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistemail"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(0,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistenvelope"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(128,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistexternal"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(256,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistexternalsmall"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(384,384),ImageRectSize=Vector2.new(128,128)},
+    ["geisteye"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(512,384),ImageRectSize=Vector2.new(128,128)},
+    ["geisteyedashed"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(640,384),ImageRectSize=Vector2.new(128,128)},
+    ["geisteyeoff"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(768,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistfacehappy"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(896,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistfaceplus"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(0,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistfacesad"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(128,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistfacesad2"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(256,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistfacesmile"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(384,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistfacesmile2"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(512,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistfaceunhappy"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(640,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistfile"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(768,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistfiletext"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(896,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistfilezip"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(0,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistfilter"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(128,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistfingerprint"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(256,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistfirewallcheck"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(384,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistfirewallglobe"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(512,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistflag"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(640,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistflagpriority"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(768,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistfloppydisk"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(896,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistfolderclosed"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(0,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistfolderminus"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(128,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistfolderopen"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(256,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistfolderplus"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(384,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistfooter"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(512,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistforward10seconds"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(640,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistfulcrum"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(768,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistfullscreen"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(896,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistfullscreenclose"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(0,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistfunction"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(128,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistfunctionedge"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(256,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistfunctionedge2"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(384,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistfunctiongo"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(640,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistfunctionmiddleware"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(768,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistfunctionnode"]={Image="rbxassetid://73688247122068",ImageRectOffset=Vector2.new(896,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistfunctionpython"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(0,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistfunctionrectangle"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(128,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistfunctionruby"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(384,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistfunctionsquare"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(512,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistgauge"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(640,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistgitbranch"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(768,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistgitcommit"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(896,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistgitmerge"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(0,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistgitpullrequest"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(128,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistglobe"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(256,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistglobebox"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(384,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistgps"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(512,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistgridmasonry"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(640,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistgridsquare"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(768,128),ImageRectSize=Vector2.new(128,128)},
+    ["geisthash"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(896,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistheader"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(0,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistheadset"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(128,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistheart"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(256,256),ImageRectSize=Vector2.new(128,128)},
+    ["geisthome"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(512,256),ImageRectSize=Vector2.new(128,128)},
+    ["geisthook"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(640,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistimage"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(768,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistinbox"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(896,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistinboxunread"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(0,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistinboxunread2"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(128,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistinformation"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(256,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistinspect"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(640,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistinvoice"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(768,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistisr"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(896,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistkey"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(0,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistkeyold"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(128,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistkv"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(256,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlambda"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(384,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlambdarectangle"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(512,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlayers"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(768,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlayout"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(896,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlayoutdashed"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(0,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlayoutshift"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(128,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlayoutshiftunread"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(256,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlens"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(384,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlifebuoy"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(512,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlightning"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(640,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlinechart"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(768,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlink"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(896,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlinked"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(0,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistlinkedin"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(128,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistlistordered"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(256,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistlistunordered"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(384,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistloadercircle"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(512,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistlocation"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(640,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistlockclosed"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(768,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistlockclosedsmall"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(896,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistlockopen"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(0,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoamex"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(128,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoastro"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(384,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoazure"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(512,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoazuredevops"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(640,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogocheckly"]={Image="rbxassetid://81914421960723",ImageRectOffset=Vector2.new(896,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogocontentful"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(0,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogodatadog"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(128,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogodiscord"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(256,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoember"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(384,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogofacebook"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(512,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogofacebookmessenger"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(640,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogofigma"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(768,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogogatsby"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(896,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogogeist"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(0,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogogithub"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(128,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogogitlab"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(256,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogogoogle"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(384,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogogooglecloudplatform"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(512,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogohugo"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(640,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogohyper"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(768,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogolinear"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(896,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogomastercard"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(0,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogometa"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(128,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogonewrelic"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(256,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogonext"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(384,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogonode"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(512,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogonuxt"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(640,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoopenai"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(768,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogopython"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(896,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoreact"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(0,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoreddit"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(128,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoremix"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(256,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogorust"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(384,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogosanity"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(512,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoslack"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(640,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogosolid"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(896,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogosplitbee"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(0,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogosvelte"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(128,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoturbopack"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(256,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoturborepo"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(384,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogotwitterx"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(512,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogov0"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(640,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogovercel"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(768,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogovercelapi"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(896,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogovercelcircle"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(0,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogovisa"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(256,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogovite"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(384,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogovue"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(512,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogowhatsapp"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(640,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogoycombinator"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(768,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogout"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(896,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistlogs"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(0,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistmagnifyingglass"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(128,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistmagnifyingglassminus"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(256,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistmagnifyingglassplus"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(384,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistmagnifyingglasssmall"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(512,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistmenu"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(640,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistmenualt"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(768,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistmenualtunread"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(896,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistmenualtunread2"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(0,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistmessage"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(128,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistmicrophone"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(256,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistmicrophoneoff"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(384,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistmiddleware"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(512,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistminus"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(640,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistminuscircle"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(768,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistminussquaresmall"]={Image="rbxassetid://86699749765447",ImageRectOffset=Vector2.new(896,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistmonitoring"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(0,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistmonorepo"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(128,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistmoon"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(256,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistmoonalternate"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(384,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistmorehorizontal"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(512,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistmorevertical"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(640,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistmusic"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(768,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistmusicalnotes"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(896,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistnetworkdevice"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(0,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistnotebook"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(128,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistnotes"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(256,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistnotification"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(384,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistoption"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(512,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistpaperairplane"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(640,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistpaperclip"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(768,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistpause"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(896,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistpen"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(0,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistpencil"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(128,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistpenciledit"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(256,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistpercentage"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(384,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistphone"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(512,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistphonedevice"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(640,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistpictureinpicture"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(768,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistpin"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(896,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistplay"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(0,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistplus"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(256,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistpluscircle"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(384,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistplussquaresmall"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(512,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistpostgres"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(640,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistpower"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(768,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistpreviewdocument"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(896,384),ImageRectSize=Vector2.new(128,128)},
+    ["geistprevieweye"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(0,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistprism"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(128,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistpuzzle"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(512,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistquestion"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(640,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistrefreshclockwise"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(896,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistrefreshcounterclockwise"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(0,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistrepositories"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(128,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistrewind10seconds"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(256,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistrobot"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(384,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistrotateclockwise"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(512,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistrotatecounterclockwise"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(640,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistroute"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(768,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistrouter"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(896,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistrss"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(0,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistsecureconnection"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(128,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistserverless"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(256,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistservers"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(384,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistsettingsgear"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(512,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistsettingsslider"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(768,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistsettingssliders"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(896,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistshare"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(0,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistshareplay"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(128,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistshield"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(256,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistshieldcheck"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(384,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistshieldglobe"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(512,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistshieldoff"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(640,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistshieldsmall"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(768,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistshift"]={Image="rbxassetid://120220597097660",ImageRectOffset=Vector2.new(896,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistsidebarleft"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(0,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistsidebarright"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(128,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistsignin"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(256,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistskipback"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(384,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistskipforward"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(640,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistslash"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(896,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistslashback"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(0,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistslashforward"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(128,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistsortascending"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(256,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistsortdescending"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(384,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistspaces"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(512,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistsparkles"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(640,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistspeaker"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(768,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistspeakeroff"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(0,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistspeakervolumeloud"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(256,256),ImageRectSize=Vector2.new(128,128)},
+    ["geistspeakervolumequiet"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(512,256),ImageRectSize=Vector2.new(128,128)},
+    ["geiststar"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(768,256),ImageRectSize=Vector2.new(128,128)},
+    ["geiststatus"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(0,384),ImageRectSize=Vector2.new(128,128)},
+    ["geiststatussmall"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(128,384),ImageRectSize=Vector2.new(128,128)},
+    ["geiststop"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(256,384),ImageRectSize=Vector2.new(128,128)},
+    ["geiststopcircle"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(384,384),ImageRectSize=Vector2.new(128,128)},
+    ["geiststopwatch"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(640,384),ImageRectSize=Vector2.new(128,128)},
+    ["geiststopwatchfast"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(768,384),ImageRectSize=Vector2.new(128,128)},
+    ["geiststopwatchunread"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(896,384),ImageRectSize=Vector2.new(128,128)},
+    ["geiststore"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(0,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistsun"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(128,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistsunalternate"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(256,512),ImageRectSize=Vector2.new(128,128)},
+    ["geisttab"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(384,512),ImageRectSize=Vector2.new(128,128)},
+    ["geisttabletdevice"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(512,512),ImageRectSize=Vector2.new(128,128)},
+    ["geisttabs"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(640,512),ImageRectSize=Vector2.new(128,128)},
+    ["geisttag"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(768,512),ImageRectSize=Vector2.new(128,128)},
+    ["geisttarget"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(896,512),ImageRectSize=Vector2.new(128,128)},
+    ["geistterminal"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(0,640),ImageRectSize=Vector2.new(128,128)},
+    ["geistterminalwindow"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(128,640),ImageRectSize=Vector2.new(128,128)},
+    ["geisttextbold"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(256,640),ImageRectSize=Vector2.new(128,128)},
+    ["geisttextformat"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(384,640),ImageRectSize=Vector2.new(128,128)},
+    ["geisttextheading"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(512,640),ImageRectSize=Vector2.new(128,128)},
+    ["geisttextitalic"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(640,640),ImageRectSize=Vector2.new(128,128)},
+    ["geisttextstrikethrough"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(768,640),ImageRectSize=Vector2.new(128,128)},
+    ["geisttexttitle"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(896,640),ImageRectSize=Vector2.new(128,128)},
+    ["geisttextuppercase"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(0,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistthumbdown"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(128,768),ImageRectSize=Vector2.new(128,128)},
+    ["geistthumbup"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(256,768),ImageRectSize=Vector2.new(128,128)},
+    ["geisttoggleoff"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(384,768),ImageRectSize=Vector2.new(128,128)},
+    ["geisttoggleoffalt"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(512,768),ImageRectSize=Vector2.new(128,128)},
+    ["geisttoggleoffaltunread"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(640,768),ImageRectSize=Vector2.new(128,128)},
+    ["geisttoggleoffaltunread2"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(768,768),ImageRectSize=Vector2.new(128,128)},
+    ["geisttoggleon"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(896,768),ImageRectSize=Vector2.new(128,128)},
+    ["geisttoggleonalt"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(0,896),ImageRectSize=Vector2.new(128,128)},
+    ["geisttoggleonaltunread"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(128,896),ImageRectSize=Vector2.new(128,128)},
+    ["geisttoggleonaltunread2"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(256,896),ImageRectSize=Vector2.new(128,128)},
+    ["geisttoolbar"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(384,896),ImageRectSize=Vector2.new(128,128)},
+    ["geisttrash"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(512,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistuser"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(640,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistusercheck"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(768,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistusercross"]={Image="rbxassetid://72166980445410",ImageRectOffset=Vector2.new(896,896),ImageRectSize=Vector2.new(128,128)},
+    ["geistuserminus"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(0,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistuserplus"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(128,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistuserscreen"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(256,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistusersettings"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(384,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistusers"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(512,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistvariable"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(640,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistvideo"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(768,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistwarning"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(896,0),ImageRectSize=Vector2.new(128,128)},
+    ["geistwebcam"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(128,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistwebcamoff"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(256,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistwebhook"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(384,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistwindow"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(512,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistwindowglobe"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(640,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistwindowvariable"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(768,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistwrench"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(896,128),ImageRectSize=Vector2.new(128,128)},
+    ["geistzeroconfig"]={Image="rbxassetid://101990875962066",ImageRectOffset=Vector2.new(0,256),ImageRectSize=Vector2.new(128,128)},
+}
+for name,value in pairs(AuraExtraIconAssets)do AuraTabAssets[name]=value end
+-- Do not let compatibility aliases mask an existing, distinct Lucide icon.
+for name in pairs(AuraTabAliases)do if AuraTabAssets[name]then AuraTabAliases[name]=nil end end
+
 AuraSupport._SetIconAssets(AuraTabAssets,AuraTabAliases)
 
 --[[
@@ -5270,7 +5884,7 @@ AuraSupport._SetIconAssets(AuraTabAssets,AuraTabAliases)
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "5.5.0"
+local CURRENT_VERSION = "5.7.0"
 UI.Name="AURA UI";UI.Version=CURRENT_VERSION
 
 -- ════════════════════════════════════════════════════════════
@@ -7664,6 +8278,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 			if icon.Image or icon.image then
 				local image = icon.Image or icon.image
 				if typeof(image) == "number" then image = "rbxassetid://" .. tostring(math.floor(image)) end
+                if icon.ImageRectOffset or icon.ImageRectPosition or icon.ImageRectSize then
+                    return "image",{Image=tostring(image),ImageRectOffset=icon.ImageRectOffset or icon.ImageRectPosition or Vector2.new(),ImageRectSize=icon.ImageRectSize or Vector2.new()}
+                end
 				return "image", tostring(image)
 			end
 			icon = icon.Icon or icon.icon or icon.Name or icon.name
@@ -7747,7 +8364,11 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		if iconType == "image" then
 			iconWidget = Instance.new("ImageLabel")
 			iconWidget.Name = "TabIcon"
-			iconWidget.Image = iconValue
+			iconWidget.Image = type(iconValue)=="table"and iconValue.Image or iconValue
+            if type(iconValue)=="table"then
+                iconWidget.ImageRectOffset=iconValue.ImageRectOffset or Vector2.new()
+                iconWidget.ImageRectSize=iconValue.ImageRectSize or Vector2.new()
+            end
 			iconWidget.ImageColor3 = Color3.new(1, 1, 1)
 			iconWidget.BackgroundTransparency = 1
 			iconWidget.Size = UDim2.fromOffset(16, 16)
@@ -7883,7 +8504,11 @@ function UI.CreateWindow(title, subtitle, version, extra)
 			if iconType == "image" then
 				iconWidget = Instance.new("ImageLabel")
 				iconWidget.Name = "TabIcon"
-				iconWidget.Image = iconValue
+				iconWidget.Image = type(iconValue)=="table"and iconValue.Image or iconValue
+            if type(iconValue)=="table"then
+                iconWidget.ImageRectOffset=iconValue.ImageRectOffset or Vector2.new()
+                iconWidget.ImageRectSize=iconValue.ImageRectSize or Vector2.new()
+            end
 				iconWidget.ImageColor3 = Color3.new(1, 1, 1)
 				iconWidget.BackgroundTransparency = 1
 				iconWidget.Size = UDim2.fromOffset(16, 16)
@@ -9297,7 +9922,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
             local bounds=TextService:GetTextSize(text,tab.Label.TextSize,tab.Label.Font,Vector2.new(width,10000))
             tab.Label.Text=text;tab.Label.TextWrapped=false
             tab.Label.Position=UDim2.fromOffset(left,5);tab.Label.Size=UDim2.new(1,-left-10,1,-10)
-            tab.Label.TextXAlignment=Enum.TextXAlignment.Left;tab.Label.Font=Enum.Font.GothamMedium
+            tab.Label.TextXAlignment=Enum.TextXAlignment.Left;tab.Label.Font=core._selectedFont or Enum.Font.GothamMedium
             tab.Button.Size=UDim2.new(1,-12,0,math.max(38,math.ceil(bounds.Y)+14))
             local corner=tab.Button:FindFirstChildOfClass("UICorner")
             if corner then corner.CornerRadius=UDim.new(0,8)end
@@ -9713,6 +10338,402 @@ function UI.CreateWindow(title, subtitle, version, extra)
         local initialGradient=windowOptions.TitleGradient
         if initialGradient==nil then initialGradient=true end
         core:SetTitleGradient(initialGradient)
+        core._appearance={}
+        local fontNames={"Original","Gotham","SourceSans","Arial","Code","Roboto","Ubuntu"}
+        local originalFonts=setmetatable({},{__mode="k"})
+        local function textObject(object)return object:IsA("TextLabel")or object:IsA("TextButton")or object:IsA("TextBox")end
+        local function rememberFont(object)
+            if not textObject(object)then return end
+            if not originalFonts[object]then originalFonts[object]=object.Font end
+            if core._selectedFont then object.Font=core._selectedFont end
+        end
+        for _,object in ipairs(ScreenGui:GetDescendants())do rememberFont(object)end
+        connect(ScreenGui.DescendantAdded,function(object)task.defer(function()if object.Parent then rememberFont(object)end end)end)
+        function core:GetFonts()local names={};for i,v in ipairs(fontNames)do names[i]=v end;return names end
+        function core:SetFont(name)
+            local valid=false;for _,v in ipairs(fontNames)do if name==v then valid=true end end
+            if not valid then return false end
+            local selected
+            if name~="Original"then
+                local ok,value=pcall(function()return Enum.Font[name]end)
+                if not ok then return false end;selected=value
+            end
+            self._selectedFont=selected;self._appearance.Font=name
+            for object,font in pairs(originalFonts)do if object.Parent then object.Font=selected or font end end
+            self:SetTextScale(self.TextScale or 1)
+            self:_emit("AppearanceChanged");return self
+        end
+        function core:SetThemeColor(role,color)
+            if typeof(color)~="Color3"or Theme[role]==nil then return false end
+            local update={[role]=color}
+            if role=="Border"then update.TabBorder=color end
+            if role=="Accent"then update.ToggleOn=color end
+            SetTheme(update);self:_emit("AppearanceChanged");return self
+        end
+        function core:GetThemeColors()return GetTheme()end
+        local function applyBorderStyle()
+            local options=core._appearance
+            if core.FloatingButton and core._bubbleOptions and typeof(core._bubbleOptions.TextColor)=="Color3"then
+                local label=core.FloatingButton:FindFirstChildOfClass("TextLabel")
+                if label then label.TextColor3=core._bubbleOptions.TextColor end
+            end
+            if options.BorderWidth==nil and options.BorderTransparency==nil and options.Neon==nil then return end
+            for _,object in ipairs(Main:GetDescendants())do if object:IsA("UIStroke")then
+                local role=object:GetAttribute("ThemeRole")
+                if object==MainStroke or role=="Border"or role=="TabBorder"then
+                    if options.BorderWidth then object.Thickness=object==MainStroke and options.BorderWidth or math.min(1.5,options.BorderWidth)end
+                    if options.BorderTransparency then object.Transparency=math.clamp(options.BorderTransparency+(object==MainStroke and 0 or .4),0,1)end
+                    if options.Neon==false then object.Transparency=math.max(object.Transparency,.65)end
+                    if options.Neon==true and object==MainStroke then object.Transparency=options.BorderTransparency or .08 end
+                end
+            end end
+        end
+        function core:SetBorderStyle(options)
+            options=options or {}
+            if options.Width~=nil then self._appearance.BorderWidth=math.clamp(tonumber(options.Width)or 1,.5,3)end
+            if options.Transparency~=nil then self._appearance.BorderTransparency=math.clamp(tonumber(options.Transparency)or 0,0,1)end
+            if options.Neon=="Auto"then self._appearance.Neon=nil elseif options.Neon~=nil then self._appearance.Neon=options.Neon end
+            ApplyTheme();applyBorderStyle();self:_emit("AppearanceChanged");return self
+        end
+        local currentThemeApply=ApplyTheme
+        ApplyTheme=function()currentThemeApply();applyBorderStyle()end
+        local currentThemeChanged=AuraThemeChanged
+        AuraThemeChanged=function(value)currentThemeChanged(value);applyBorderStyle()end
+        local backgroundSetter=core.SetBackgroundImage
+        function core:SetBackgroundImage(image,alpha)
+            backgroundSetter(self,image,alpha)
+            if self._appearance.BackgroundFit then self:SetBackgroundFit(self._appearance.BackgroundFit)end
+            if self.PanelTransparency~=nil then self:SetPanelTransparency(self.PanelTransparency)end
+            return self
+        end
+        core.SetBackground=core.SetBackgroundImage
+        local fitSetter=core.SetBackgroundFit
+        function core:SetBackgroundFit(value)
+            if value~="Crop"and value~="Fit"and value~="Stretch"and value~="Tile"then return false end
+            self._appearance.BackgroundFit=value;fitSetter(self,value);return self
+        end
+        local bubbleSetter=core.SetFloatingButton
+        function core:SetFloatingButton(options)
+            local position=self.FloatingButton and self.FloatingButton.Position or self._bubbleOptions and self._bubbleOptions.Position
+            if self._bubbleOptions and position then self._bubbleOptions.Position=position end
+            if options~=false then
+                local copy={}
+                for k,v in pairs(type(options)=="table"and options or {})do copy[k]=v end
+                if copy.Position==nil then copy.Position=position end
+                self._bubbleOptions=copy;options=copy
+            end
+            bubbleSetter(self,options);self:_emit("AppearanceChanged");return self
+        end
+        core.SetBubble=core.SetFloatingButton
+        function core:GetFloatingButtonOptions(includeDisabled)
+            if (not self.FloatingButton and not includeDisabled)or not self._bubbleOptions then return false end
+            local copy={};for k,v in pairs(self._bubbleOptions)do copy[k]=v end
+            if self.FloatingButton then copy.Position=self.FloatingButton.Position end
+            return copy
+        end
+        function core:UpdateFloatingButton(options)
+            local value=self:GetFloatingButtonOptions(true)or {Text="A",Size=46}
+            for k,v in pairs(options or {})do value[k]=v end
+            if options and options.Image and options.Image~=""then value.Text=nil end
+            self:SetFloatingButton(value);self:_emit("AppearanceChanged");return self
+        end
+        function core:GetAppearance()
+            local a=self._appearance
+            return {Title=title,Subtitle=subtitle,Font=a.Font or "Original",NativeTheme=GetTheme(),
+                TextScale=self.TextScale or 1,Density=self.Density or "Comfortable",
+                CornerRadius=self.CornerRadius or 12,SidebarWidth=self.SidebarWidth or 148,
+                SearchVisible=self.SearchVisible~=false,ReducedMotion=not self.Animations,
+                PanelTransparency=self.PanelTransparency or 0,BorderWidth=a.BorderWidth or MainStroke.Thickness,
+                BorderTransparency=a.BorderTransparency or MainStroke.Transparency,Neon=a.Neon,
+                BackgroundImage=self.BackgroundImage and self.BackgroundImage.Visible and self.BackgroundImage.Image or "",
+                BackgroundTransparency=self.BackgroundImage and self.BackgroundImage.ImageTransparency or .35,
+                BackgroundFit=a.BackgroundFit or "Crop",FloatingButton=self:GetFloatingButtonOptions(),
+                FloatingButtonOptions=self:GetFloatingButtonOptions(true),
+                TitleGradient=self:GetTitleGradient()}
+        end
+        function core:SetAppearance(options)
+            if type(options)~="table"then return false end
+            if type(options.NativeTheme)=="table"then SetTheme(options.NativeTheme)end
+            if options.Title~=nil then self:SetTitle(options.Title)end
+            if options.Subtitle~=nil then self:SetSubtitle(options.Subtitle)end
+            if options.Font then self:SetFont(options.Font)end
+            if options.TextScale then self:SetTextScale(options.TextScale)end
+            if options.Density then self:SetDensity(options.Density)end
+            if options.CornerRadius then self:SetCornerRadius(options.CornerRadius)end
+            if options.SidebarWidth then self:SetSidebarWidth(options.SidebarWidth)end
+            if options.SearchVisible~=nil then self:SetSearchVisible(options.SearchVisible)end
+            if options.ReducedMotion~=nil then self:SetReducedMotion(options.ReducedMotion)end
+            if options.BackgroundImage~=nil then self:SetBackgroundImage(options.BackgroundImage,options.BackgroundTransparency)end
+            if options.BackgroundFit then self:SetBackgroundFit(options.BackgroundFit)end
+            if options.PanelTransparency~=nil then self:SetPanelTransparency(options.PanelTransparency)end
+            self:SetBorderStyle({Width=options.BorderWidth,Transparency=options.BorderTransparency,Neon=options.Neon})
+            if options.FloatingButton~=nil then self:SetFloatingButton(options.FloatingButton)end
+            if options.FloatingButton==false and type(options.FloatingButtonOptions)=="table"then self._bubbleOptions=options.FloatingButtonOptions end
+            if options.TitleGradient~=nil then self:SetTitleGradient(options.TitleGradient)end
+            self:_emit("AppearanceChanged");return self
+        end
+        function core:ResetAppearance()
+            if not self._initialAppearance then return false end
+            self._appearance={}
+            return self:SetAppearance(self._initialAppearance)
+        end
+        for _,name in ipairs({"SetTitle","SetSubtitle","SetCornerRadius","SetSidebarWidth","SetSearchVisible","SetTextScale","SetDensity","SetReducedMotion","SetPanelTransparency","SetBackgroundImage","SetBackgroundFit"})do
+            local setter=core[name]
+            core[name]=function(self,...)
+                local result=setter(self,...)
+                if name=="SetCornerRadius"and self.BackgroundImage then
+                    local corner=self.BackgroundImage:FindFirstChildOfClass("UICorner")
+                    if corner then corner.CornerRadius=MainCorner.CornerRadius end
+                end
+                if result~=false then self:_emit("AppearanceChanged")end
+                return result
+            end
+        end
+        core.SetBackground=core.SetBackgroundImage
+        for _,name in ipairs({"SetFont","GetFonts","SetThemeColor","GetThemeColors","SetBorderStyle","GetAppearance","SetAppearance","ResetAppearance","UpdateFloatingButton","GetFloatingButtonOptions","CreateCustomizationPanel"})do bindPublic(name)end
+
+
+        do
+            local libraryName="AURA UI"
+            local libraryStates={}
+            local initialDark
+            local remembered=setmetatable({},{__mode="k"})
+            local busy=false
+            local darkPalette={Background=Color3.fromRGB(13,15,20),TitleBar=Color3.fromRGB(19,22,29),
+                TabBackground=Color3.fromRGB(20,23,31),TabSelected=Color3.fromRGB(35,49,77),
+                Button=Color3.fromRGB(29,33,43),ButtonHover=Color3.fromRGB(38,44,57),
+                Text=Color3.fromRGB(237,241,249),TextDark=Color3.fromRGB(157,169,190),
+                Accent=Color3.fromRGB(118,159,255),ToggleOn=Color3.fromRGB(118,159,255),ToggleOff=Color3.fromRGB(57,65,82),
+                Border=Color3.fromRGB(53,62,80),TabBorder=Color3.fromRGB(53,62,80),DropdownHover=Color3.fromRGB(38,44,57),
+                Success=Color3.fromRGB(105,221,167),Error=Color3.fromRGB(248,123,145),Warning=Color3.fromRGB(239,199,125),Cooldown=Color3.fromRGB(89,43,52)}
+            local fields={"NativeTheme","Font","TextScale","Density","CornerRadius","SidebarWidth","PanelTransparency","BorderWidth","BorderTransparency","TitleGradient","Neon"}
+            local function visualState()
+                local appearance=core:GetAppearance();local state={}
+                for _,key in ipairs(fields)do state[key]=appearance[key]end
+                return state
+            end
+            local function assign(object,property,value)
+                local data=remembered[object]
+                if not data then data={};remembered[object]=data end
+                if data[property]==nil then data[property]={object[property]}end
+                object[property]=value
+            end
+            local function restore()
+                for object,props in pairs(remembered)do if object.Parent then
+                    for property,value in pairs(props)do object[property]=value[1]end
+                end end
+                remembered=setmetatable({},{__mode="k"})
+            end
+            local function make(class,name,parent,role)
+                local object=Instance.new(class);object.Name=name
+                if object:IsA("GuiObject")then object.BorderSizePixel=0;object.BackgroundTransparency=1 end
+                if role then object:SetAttribute("ThemeRole",role)end
+                object.Parent=parent;return object
+            end
+            local function rounded(object,radius)
+                local corner=object:FindFirstChildOfClass("UICorner")or make("UICorner","LibDarkCorner",object)
+                corner.CornerRadius=UDim.new(0,radius);return corner
+            end
+            local extras=make("Frame","LibDarkChrome",Main)
+            extras.Size=UDim2.fromScale(1,1);extras.Visible=false;extras.ZIndex=1
+            local rail=make("Frame","NavigationSurface",extras,"TabBackground")
+            rail.BackgroundTransparency=0;rounded(rail,12)
+            local railStroke=make("UIStroke","NavigationBorder",rail,"Border")
+            railStroke.Thickness=1;railStroke.Transparency=.6
+            local caption=make("TextLabel","NavigationCaption",extras,"TextDark")
+            caption.Text="NAVEGAÇÃO";caption.TextSize=10;caption.Font=Enum.Font.GothamMedium
+            caption.TextXAlignment=Enum.TextXAlignment.Left;caption.TextColor3=Theme.TextDark
+            local footer=make("TextLabel","LibraryCaption",extras,"TextDark")
+            footer.TextSize=10;footer.Font=Enum.Font.Gotham;footer.TextXAlignment=Enum.TextXAlignment.Left
+            local mark=make("Frame","LibDarkMark",TitleBar,"TabSelected")
+            mark.BackgroundTransparency=0;mark.Visible=false;rounded(mark,10)
+            local markImage=make("ImageLabel","Symbol",mark,"TextDarkImage")
+            markImage.Image=AuraTabAssets.layers or AuraTabAssets.box;markImage.ImageColor3=Theme.Accent
+            markImage.Size=UDim2.fromOffset(18,18);markImage.Position=UDim2.new(.5,-9,.5,-9)
+            local heading=make("TextLabel","PageHeading",Content,"Text")
+            heading.TextSize=16;heading.Font=Enum.Font.GothamBold;heading.TextXAlignment=Enum.TextXAlignment.Left
+            heading.TextTruncate=Enum.TextTruncate.AtEnd;heading.Visible=false
+            local line=make("Frame","PageRule",Content,"Border")
+            line.Visible=false;line.BackgroundTransparency=.65
+            local headerLayout=LayoutHeaderText
+            LayoutHeaderText=function()
+                if libraryName~="Lib dark"then return headerLayout()end
+                local compact=Main.Size.X.Offset<520
+                local h=minimized and 44 or 72
+                TitleBar.Size=UDim2.new(1,0,0,h)
+                local left=minimized and 48 or 64
+                local reserve=(compact or minimized or core.SearchVisible==false)and 86 or 286
+                TitleLabel.Visible=title~="";TitleLabel.TextTruncate=Enum.TextTruncate.AtEnd
+                TitleLabel.Position=UDim2.fromOffset(left,minimized and 8 or 12)
+                TitleLabel.Size=UDim2.new(1,-left-reserve,0,24)
+                SubtitleLabel.Visible=not minimized and subtitle~=""
+                SubtitleLabel.Position=UDim2.fromOffset(left,37);SubtitleLabel.Size=UDim2.new(1,-left-reserve,0,18)
+                VersionLabel.Visible=false
+                mark.Position=UDim2.fromOffset(16,minimized and 10 or 18)
+                mark.Size=UDim2.fromOffset(minimized and 24 or 36,minimized and 24 or 36)
+                Minimize.Position=UDim2.new(1,-76,0,minimized and 6 or 20)
+                Close.Position=UDim2.new(1,-40,0,minimized and 6 or 20)
+            end
+            local function styleControl(handle)
+                if libraryName~="Lib dark"or not handle.Root or not handle.Root.Parent then return end
+                local root=handle.Root
+                local corner=root:FindFirstChildOfClass("UICorner")
+                if corner then assign(corner,"CornerRadius",UDim.new(0,10))end
+                for _,child in ipairs(root:GetChildren())do
+                    if child:IsA("UIStroke")and child.Transparency<1 then assign(child,"Transparency",.72)end
+                end
+            end
+            local nativeRefresh=core.RefreshLayout
+            local function darkLayout()
+                if libraryName~="Lib dark"or busy or not Main.Parent then return end
+                busy=true
+                local width=Main.Size.X.Offset
+                local compact=width<520
+                local sidebar=compact and 58 or math.clamp(core.SidebarWidth or 174,144,210)
+                local left=sidebar+32
+                extras.Visible=not minimized;mark.Visible=true;heading.Visible=not minimized;line.Visible=not minimized
+                TopAccent.Visible=false;SidebarDivider.Visible=false;TitleBottom.Visible=false
+                TitleBar.BackgroundTransparency=1
+                rail.Position=UDim2.fromOffset(12,84);rail.Size=UDim2.new(0,sidebar,1,-98)
+                rail.BackgroundTransparency=core.PanelTransparency or 0
+                caption.Visible=not compact;caption.Position=UDim2.fromOffset(26,96);caption.Size=UDim2.fromOffset(sidebar-28,16)
+                footer.Visible=not compact;footer.Text="LIB DARK  ·  "..tostring(#Tabs).." abas"
+                footer.Position=UDim2.new(0,26,1,-41);footer.Size=UDim2.fromOffset(sidebar-28,16)
+                TabFrame.Position=UDim2.fromOffset(12,compact and 92 or 120)
+                TabFrame.Size=UDim2.new(0,sidebar,1,compact and -114 or -168)
+                TabFrame.BackgroundTransparency=1;TabFrame.ScrollBarThickness=2
+                Content.Position=UDim2.fromOffset(left,84);Content.Size=UDim2.new(1,-left-12,1,-98)
+                Content.BackgroundColor3=Theme.TitleBar
+                heading.Position=UDim2.fromOffset(16,12);heading.Size=UDim2.new(1,-32,0,24)
+                heading.Text=core.ActiveTab and core.ActiveTab.Name or title
+                line.Position=UDim2.fromOffset(16,44);line.Size=UDim2.new(1,-32,0,1)
+                local top=52
+                if compact then
+                    search.Parent=Content;search.Position=UDim2.fromOffset(12,52);search.Size=UDim2.new(1,-24,0,32)
+                    if core.SearchVisible~=false then top=92 end
+                else
+                    search.Parent=TitleBar;search.Position=UDim2.new(1,-280,0,22);search.Size=UDim2.fromOffset(190,32)
+                end
+                search.Visible=not minimized and core.SearchVisible~=false
+                local nextY=4
+                for _,tab in ipairs(Tabs)do if tab.Button.Parent then
+                    local selected=tab==core.ActiveTab
+                    tab.Label.Visible=not compact or not tab.Icon
+                    tab.Label.Position=UDim2.fromOffset(compact and 4 or 38,6)
+                    tab.Label.Size=UDim2.new(1,compact and -8 or -48,1,-12)
+                    tab.Label.TextXAlignment=compact and Enum.TextXAlignment.Center or Enum.TextXAlignment.Left
+                    local text=compact and (tab.Icon and ""or tab.Name:sub(1,2))or tab.Name
+                    local available=math.max(24,sidebar-64)
+                    tab.Label.Text=WrapTextToWidth(text,tab.Label.Font,tab.Label.TextSize,available)
+                    local bounds=TextService:GetTextSize(tab.Label.Text,tab.Label.TextSize,tab.Label.Font,Vector2.new(available,10000))
+                    tab.Button.Size=UDim2.new(1,-12,0,math.max(38,math.ceil(bounds.Y)+16))
+                    if tab.Icon then tab.Icon.Position=compact and UDim2.new(.5,-9,.5,-9)or UDim2.new(0,12,.5,-9)end
+                    local marker=tab.Button:FindFirstChild("ActiveMarker")
+                    if marker then marker.Size=UDim2.new(0,3,0,16);marker.Position=UDim2.new(0,2,.5,-8);marker.Visible=selected end
+                    local stroke=tab.Button:FindFirstChildOfClass("UIStroke")
+                    if stroke then assign(stroke,"Transparency",1)end
+                    tab.Button.BackgroundColor3=selected and Theme.TabSelected or Theme.TabBackground
+                    tab.Button.BackgroundTransparency=selected and 0 or 1
+                    if tab.Button.Visible then tab.Button.Position=UDim2.fromOffset(6,nextY);nextY=nextY+tab.Button.Size.Y.Offset+4 end
+                    tab.Page.Position=UDim2.fromOffset(0,top);tab.Page.Size=UDim2.new(1,0,1,-top)
+                    tab.Page.BackgroundTransparency=1
+                    local padding=tab.Page:FindFirstChildOfClass("UIPadding")
+                    if padding then assign(padding,"PaddingTop",UDim.new(0,4))end
+                    for _,handle in ipairs(tab.Controls or {})do styleControl(handle)end
+                end end
+                TabFrame.CanvasSize=UDim2.fromOffset(0,nextY+4)
+                LayoutHeaderText();busy=false
+            end
+            function core:RefreshLayout()
+                if busy then return end
+                nativeRefresh(self);darkLayout();return self
+            end
+            local themeApply=ApplyTheme
+            ApplyTheme=function()themeApply();darkLayout()end
+            WindowAPI.ApplyTheme=function()ApplyTheme()end
+            local selectedBefore=OnNativeSelection
+            OnNativeSelection=function(tab)if selectedBefore then selectedBefore(tab)end;darkLayout()end
+            local attachBefore=AttachAuraTab
+            AttachAuraTab=function(tab)local result=attachBefore(tab);darkLayout();return result end
+            local decorateBefore=core.DecorateNative
+            function core:DecorateNative(widget,kind,api,handle)
+                decorateBefore(self,widget,kind,api,handle);styleControl(handle)
+            end
+            local registerBefore=core._register
+            function core:_register(handle,options)
+                local result=registerBefore(self,handle,options);styleControl(handle);return result
+            end
+            local minimizeLink=core:On("MinimizedChanged",function()core:RefreshLayout()end)
+            local themeLink=core:On("ThemeChanged",darkLayout)
+            local appearanceLink=core:On("AppearanceChanged",darkLayout)
+            connect(ScreenGui.Destroying,function()minimizeLink:Disconnect();themeLink:Disconnect();appearanceLink:Disconnect()end)
+            function core:GetLibraries()return {"AURA UI","Lib dark"}end
+            function core:GetLibrary()return libraryName end
+            function core:GetLibraryStates()
+                libraryStates[libraryName]=visualState()
+                local result={};for name,state in pairs(libraryStates)do
+                    result[name]={};for key,value in pairs(state)do result[name][key]=value end
+                end
+                return result
+            end
+            function core:SetLibrary(value,states)
+                local key=tostring(value or ""):lower():gsub("[%s_%-]","")
+                local chosen=({auraui="AURA UI",aura="AURA UI",original="AURA UI",libdark="Lib dark",dark="Lib dark"})[key]
+                if not chosen then return false end
+                if type(states)=="table"then
+                    for name,state in pairs(states)do if(name=="AURA UI"or name=="Lib dark")and type(state)=="table"then
+                        local clean={};for _,field in ipairs(fields)do clean[field]=state[field]end
+                        libraryStates[name]=clean
+                    end end
+                elseif chosen==libraryName then return self end
+                if activeColorPickerClose then activeColorPickerClose()end
+                if not states then libraryStates[libraryName]=visualState()end
+                busy=true;restore()
+                libraryName=chosen;WindowAPI.Library=chosen;Main:SetAttribute("AURA_Library",chosen)
+                extras.Visible=false;mark.Visible=false;heading.Visible=false;line.Visible=false
+                search.Parent=Content;search.Position=UDim2.fromOffset(12,8);search.Size=UDim2.new(1,-24,0,34)
+                search.Visible=not minimized and self.SearchVisible~=false
+                TitleBar.Size=UDim2.new(1,0,0,44);TitleBar.BackgroundTransparency=0
+                TopAccent.Visible=true;TitleBottom.Visible=not minimized;SidebarDivider.Visible=not minimized
+                TabFrame.BackgroundTransparency=self.PanelTransparency or 0;TabFrame.ScrollBarThickness=3
+                Minimize.Position=UDim2.new(1,-72,0,6);Close.Position=UDim2.new(1,-36,0,6)
+                for _,tab in ipairs(Tabs)do
+                    tab.Label.Visible=true;tab.Button.BackgroundTransparency=0;tab.Page.BackgroundTransparency=1
+                    local marker=tab.Button:FindFirstChild("ActiveMarker")
+                    if marker then marker.Size=UDim2.new(0,3,1,-10);marker.Position=UDim2.fromOffset(3,5)end
+                end
+                local style=libraryStates[chosen]
+                if not style and chosen=="Lib dark"then
+                    style={NativeTheme=darkPalette,Font="Gotham",TextScale=1,Density="Comfortable",CornerRadius=16,
+                        SidebarWidth=174,PanelTransparency=0,BorderWidth=1,BorderTransparency=.45,Neon=false,
+                        TitleGradient={From="#B9CDFF",To="#789FFF",Rotation=0,Enabled=true}}
+                    initialDark=style
+                end
+                if style then
+                    self._appearance.Neon=nil
+                    self:SetAppearance(style)
+                end
+                local corner=Content:FindFirstChildOfClass("UICorner")
+                if chosen=="Lib dark"then assign(corner,"CornerRadius",UDim.new(0,12))end
+                if self.BackgroundImage then self.BackgroundImage.ZIndex=1 end
+                busy=false;self:RefreshLayout();ApplyTheme()
+                self:_emit("LibraryChanged",chosen);self:_emit("AppearanceChanged")
+                return self
+            end
+            local resetBefore=core.ResetAppearance
+            function core:ResetAppearance()
+                local result=resetBefore(self)
+                if result~=false and libraryName=="Lib dark"then
+                    self._appearance={}
+                    self:SetAppearance(initialDark or {NativeTheme=darkPalette,Font="Gotham",TextScale=1,Density="Comfortable",PanelTransparency=0,
+                        CornerRadius=16,SidebarWidth=174,BorderWidth=1,BorderTransparency=.45,Neon=false,
+                        TitleGradient={From="#B9CDFF",To="#789FFF",Rotation=0,Enabled=true}})
+                end
+                return result
+            end
+            for _,name in ipairs({"SetLibrary","GetLibrary","GetLibraries","GetLibraryStates"})do bindPublic(name)end
+            WindowAPI.Library=libraryName
+        end
 
         if windowOptions.ConfigTab then core:CreateConfigTab(type(windowOptions.ConfigTab)=="table"and windowOptions.ConfigTab or {})end
         if windowOptions.SettingsTab then core:CreateSettingsTab(type(windowOptions.SettingsTab)=="table"and windowOptions.SettingsTab or {})end
@@ -9725,6 +10746,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
         if opts.FloatingButton then WindowAPI.SetFloatingButton(opts.FloatingButton)end
         if opts.TextScale then core:SetTextScale(opts.TextScale)end
         if opts.ReducedMotion then core:SetReducedMotion(true)end
+        core._initialAppearance=core:GetAppearance()
+        if opts.Appearance then core:SetAppearance(opts.Appearance)end
+        if opts.Library or opts.Interface then core:SetLibrary(opts.Library or opts.Interface)end
         if opts.AutoLoadConfig then core:LoadConfig()end
         UI._lastWindow=WindowAPI
     end
@@ -9765,6 +10789,10 @@ function UI.RegisterIcon(first,name,value)
     if type(image)=="number" then image="rbxassetid://"..tostring(math.floor(image))end
     if type(image)=="string" then
         if image:match("^%d+$")then image="rbxassetid://"..image end
+        if type(value)=="table"and(value.ImageRectOffset or value.ImageRectPosition or value.ImageRectSize)then
+            image={Image=image,ImageRectOffset=value.ImageRectOffset or value.ImageRectPosition or Vector2.new(),ImageRectSize=value.ImageRectSize or Vector2.new()}
+        end
+        AuraTabAliases[key]=nil
         AuraTabAssets[key]=image;AuraSupport._SetIconAssets(AuraTabAssets,AuraTabAliases)
         return true
     end
