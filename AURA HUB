@@ -1,116 +1,124 @@
 --[[
-AURA UI 5.7.0 — interface Roblox / Luau
-Base nativa PDDEV / RCCDEV fornecida pelo usuário, com extensões AURA.
-Arquivo autossuficiente; retorna a tabela da biblioteca. Nenhuma janela é aberta ao carregar.
+AURA UI 5.7.1 - interface Roblox / Luau
+Base nativa PDDEV / RCCDEV fornecida pelo usuario, com extensoes AURA.
+Arquivo autossuficiente; retorna a tabela da biblioteca. Nenhuma janela e aberta ao carregar.
+
+ORIGINAL + TEXTO 5.7.1
+ Tema Original: fundo RGB(20,21,24), cartoes RGB(31,33,38), texto RGB(237,240,245).
+ Original e o padrao inicial e aparece na Config, sem remover Dark e Lib dark.
+ Corrige acentos de rotulos e placeholders vindos de UTF-8 lido como Latin-1/Windows-1252.
+ Nao reescreve o texto editavel durante digitacao, colagem ou troca de tema.
+ Codigo distribuido em ASCII com escapes UTF-8: editores nao alteram os acentos.
+ win:SetTheme("Original") -- tambem aceita "original"
 
 LIB DARK 5.7
  Config > Biblioteca > Interface: AURA UI / Lib dark.
- Interface alternativa: cabeçalho em duas linhas, marca, busca no cabeçalho,
- navegação em painel separado, título de página e cartões de contorno suave.
+ Interface alternativa: cabecalho em duas linhas, marca, busca no cabecalho,
+ navegacao em painel separado, titulo de pagina e cartoes de contorno suave.
  Muda ao vivo sem recarregar o script: mesmas abas, objetos, callbacks e valores.
- Cada interface lembra seu tema e ajustes visuais. Valores de controles são compartilhados.
- Adapta a navegação e a busca à largura da janela; preserva minimizar/arrastar/redimensionar.
+ Cada interface lembra seu tema e ajustes visuais. Valores de controles sao compartilhados.
+ Adapta a navegacao e a busca a largura da janela; preserva minimizar/arrastar/redimensionar.
  win:SetLibrary("Lib dark") / win:SetLibrary("AURA UI") / win:GetLibraries()
  CreateWindow({Library="Lib dark",ConfigTab=true}) inicia na nova interface.
- JSON e perfis preservam a interface escolhida e a aparência de cada uma.
+ JSON e perfis preservam a interface escolhida e a aparencia de cada uma.
 
-CORREÇÕES E ÍCONES 5.6.1
- Config acompanha alterações externas de nome, subtítulo, layout e aparência.
- Bolinha mantém posição e imagem ao editar, desativar, reativar e salvar JSON.
+CORRECOES E ICONES 5.6.1
+ Config acompanha alteracoes externas de nome, subtitulo, layout e aparencia.
+ Bolinha mantem posicao e imagem ao editar, desativar, reativar e salvar JSON.
  Cantos da imagem de fundo acompanham o arredondamento da janela.
- Aliases antigos não substituem ícones Lucide distintos com o mesmo nome.
- 434 novos ícones Geist de contorno, opcionais, com prefixo geist-.
+ Aliases antigos nao substituem icones Lucide distintos com o mesmo nome.
+ 434 novos icones Geist de contorno, opcionais, com prefixo geist-.
  Exemplos: geist-face-happy, geist-user-settings, geist-robot, geist-sparkles.
- Também aceita sprites personalizados via RegisterIcon(nome,{Image=assetId,
+ Tambem aceita sprites personalizados via RegisterIcon(nome,{Image=assetId,
  ImageRectOffset=Vector2.new(x,y),ImageRectSize=Vector2.new(w,h)}).
 
-PERSONALIZAÇÃO 5.6
- Config opcional: grupos recolhíveis para nome, subtítulo, fonte, cores por área,
- cantos, barra lateral, bordas, transparência, imagem de fundo e bolinha.
- Todas as alterações são locais à janela e aparecem ao vivo.
+PERSONALIZACAO 5.6
+ Config opcional: grupos recolhiveis para nome, subtitulo, fonte, cores por area,
+ cantos, barra lateral, bordas, transparencia, imagem de fundo e bolinha.
+ Todas as alteracoes sao locais a janela e aparecem ao vivo.
  win:CreateConfigTab() / win:CreateConfigTab({Customization=false})
- win:CreateCustomizationPanel(aba) -- painel reutilizável fora da Config
+ win:CreateCustomizationPanel(aba) -- painel reutilizavel fora da Config
  win:SetFont("Gotham") / win:SetFont("Original") / win:GetFonts()
  win:SetThemeColor("Background",Color3.fromRGB(30,25,50))
  Roles: Background, TitleBar, TabBackground, TabSelected, Button, Text,
- TextDark, Accent, Border, ButtonHover e os demais papéis do tema nativo.
+ TextDark, Accent, Border, ButtonHover e os demais papeis do tema nativo.
  win:SetBorderStyle({Width=1.5,Transparency=.15,Neon=true})
  win:UpdateFloatingButton({Text="MI",Size=50,TextColor=Color3.fromRGB(80,170,255)})
  win:UpdateFloatingButton({Image="rbxassetid://ID"}) -- imagem substitui o texto
  win:GetAppearance() / win:SetAppearance({Font="Arial",CornerRadius=14})
- win:ResetAppearance() -- restaura as opções iniciais da janela
- CreateWindow aceita Appearance={...}. JSON/perfis preservam a aparência,
- inclusive as cores nativas individuais da barra lateral e do cabeçalho.
+ win:ResetAppearance() -- restaura as opcoes iniciais da janela
+ CreateWindow aceita Appearance={...}. JSON/perfis preservam a aparencia,
+ inclusive as cores nativas individuais da barra lateral e do cabecalho.
 
-DEGRADÊ 5.5
- O nome começa em azul-claro e termina em azul mais profundo por padrão.
- A Config opcional tem pickers HSV/RGB/HEX para início/final, direção,
- ativação, inversão, restauração do azul e prévia ao vivo.
+DEGRADE 5.5
+ O nome comeca em azul-claro e termina em azul mais profundo por padrao.
+ A Config opcional tem pickers HSV/RGB/HEX para inicio/final, direcao,
+ ativacao, inversao, restauracao do azul e previa ao vivo.
  win:SetTitleGradient({From="#7EDEFF",To="#4991F5",Rotation=0})
- win:SetTitleGradient(false) -- desliga e mantém as cores para reativar
+ win:SetTitleGradient(false) -- desliga e mantem as cores para reativar
  win:SetTitleGradient(true) / win:GetTitleGradient()
  win:SetGradient(labelOuFrame,{Colors={cor1,cor2},Rotation=0})
  win:SetGradient(objeto,false) / win:GetGradient(objeto)
- win:CreateTitleGradientEditor(aba) -- editor reutilizável fora da Config
- Também aceita listas de 2–16 cores e ColorSequence no SetTitleGradient.
- A configuração JSON/perfil salva as cores e a direção do título.
- O branco de base preserva as cores exatas do degradê ao trocar o tema.
- TitleGradient=false na criação desativa o padrão.
+ win:CreateTitleGradientEditor(aba) -- editor reutilizavel fora da Config
+ Tambem aceita listas de 2-16 cores e ColorSequence no SetTitleGradient.
+ A configuracao JSON/perfil salva as cores e a direcao do titulo.
+ O branco de base preserva as cores exatas do degrade ao trocar o tema.
+ TitleGradient=false na criacao desativa o padrao.
 
 VISUAL 5.4
  Paletas profundas e saturadas: ametista, esmeralda, azul, rosa, rubi,
- âmbar, petróleo e ouro. Sem superfícies pastel.
- Fundo colorido, cartões elevados por contraste, abas selecionadas destacadas,
- texto principal claro, texto secundário suave e neon concentrado nos detalhes.
- Degradê discreto no fundo dos painéis; sem animações ou efeitos de bloom.
- A cor personalizada continua variando de forma contínua entre os temas.
+ ambar, petroleo e ouro. Sem superficies pastel.
+ Fundo colorido, cartoes elevados por contraste, abas selecionadas destacadas,
+ texto principal claro, texto secundario suave e neon concentrado nos detalhes.
+ Degrade discreto no fundo dos paineis; sem animacoes ou efeitos de bloom.
+ A cor personalizada continua variando de forma continua entre os temas.
 
 CONFIG OPCIONAL E TEMAS NEON
- win:CreateConfigTab() -- cria Config com engrenagem; não aparece sozinha
- -- Também pode usar CreateWindow({Title="AURA UI",ConfigTab=true})
+ win:CreateConfigTab() -- cria Config com engrenagem; nao aparece sozinha
+ -- Tambem pode usar CreateWindow({Title="AURA UI",ConfigTab=true})
  win:SetTheme("Roxo neon") -- ou Verde neon, Azul neon, Rosa neon etc.
  win:SetColorTheme(Color3.fromRGB(170,90,255)) -- cor exata dos destaques e bordas
- Os temas colorem o fundo inteiro, painéis, abas, controles e bordas neon.
- As superfícies agora têm cor visível, com texto e ícones de contraste automático.
- O seletor da Config acompanha mudanças de tema feitas pelo script.
+ Os temas colorem o fundo inteiro, paineis, abas, controles e bordas neon.
+ As superficies agora tem cor visivel, com texto e icones de contraste automatico.
+ O seletor da Config acompanha mudancas de tema feitas pelo script.
 
-DESTAQUES DESTA VERSÃO
-• Tema Dark padrão: grafite, texto claro, detalhe menta e cantos de 12 px.
-• Janela padrão 640 × 460, limites da tela, arraste e resize por mouse ou toque.
-• A mesma geometria é usada por SetSize, minimizar/restaurar e mudança de viewport.
-• Abas de 12 px, nomes longos com quebra, sidebar ajustável e espaçamentos consistentes.
-• 1.750 nomes de ícones Lucide incorporados como IDs. Não baixa código de outro catálogo.
-• Ícones de abas e controles usam a mesma família; aceita lucide-shirt, lucide:shirt e shirt.
-• Busca sem acentos, grupos recolhíveis, estado vazio e botão de limpar a pesquisa.
-• Catálogo de ícones com busca e paginação: instancia somente a página visível.
-• Configurações opcionais, tamanho de texto, densidade e animações reduzidas.
-• Título com degradê e parágrafo com RichText são opções explícitas.
-• Importação/exportação inclui cores do tema e preferências de layout.
-• Chamadas nativas Add* / NewTab / NewSection continuam aceitas.
+DESTAQUES DESTA VERSAO
+- Tema Dark padrao: grafite, texto claro, detalhe menta e cantos de 12 px.
+- Janela padrao 640 - 460, limites da tela, arraste e resize por mouse ou toque.
+- A mesma geometria e usada por SetSize, minimizar/restaurar e mudanca de viewport.
+- Abas de 12 px, nomes longos com quebra, sidebar ajustavel e espacamentos consistentes.
+- 1.750 nomes de icones Lucide incorporados como IDs. Nao baixa codigo de outro catalogo.
+- Icones de abas e controles usam a mesma familia; aceita lucide-shirt, lucide:shirt e shirt.
+- Busca sem acentos, grupos recolhiveis, estado vazio e botao de limpar a pesquisa.
+- Catalogo de icones com busca e paginacao: instancia somente a pagina visivel.
+- Configuracoes opcionais, tamanho de texto, densidade e animacoes reduzidas.
+- Titulo com degrade e paragrafo com RichText sao opcoes explicitas.
+- Importacao/exportacao inclui cores do tema e preferencias de layout.
+- Chamadas nativas Add* / NewTab / NewSection continuam aceitas.
 
-INÍCIO (Aura é o retorno deste módulo)
+INICIO (Aura e o retorno deste modulo)
  local win=Aura:CreateWindow({
      Title="AURA UI",Subtitle="Meu painel",Theme="Dark",Size=Vector2.new(640,460),
      Density="Comfortable",SidebarWidth=148,CornerRadius=12,AntiDuplicate=true,
-     SettingsTab=true, -- opcional; nada extra é criado sem essa opção
+     SettingsTab=true, -- opcional; nada extra e criado sem essa opcao
  })
  local tab=win:CreateTab({Name="Principal",Icon="house"})
  local avatar=win:CreateTab({Name="Avatar",Icon="avatar"})
- local group=tab:CreateGroup({Name="Preferências",Description="Organização por assunto."})
+ local group=tab:CreateGroup({Name="Preferencias",Description="Organizacao por assunto."})
  group:CreateToggle({Name="Ativar avisos",Default=true,Flag="avisos",Callback=function(value)print(value)end})
  group:CreateSlider({Name="Quantidade",Min=0,Max=100,Default=50,Flag="quantidade"})
  tab:CreateSpacer(12)
- tab:CreateButton({Name="Executar ação",Icon="play",Callback=function()print("clicou")end})
+ tab:CreateButton({Name="Executar acao",Icon="play",Callback=function()print("clicou")end})
  tab:CreatePlayerList({Name="Jogadores",Height=260,Multi=false,Callback=function(player)print(player.Name)end})
- win:CreateIconBrowser() -- aba opcional para escolher nomes de ícones
+ win:CreateIconBrowser() -- aba opcional para escolher nomes de icones
 
-ORGANIZAÇÃO
- tab:CreateGroup({Name="Seção",Collapsed=true}) / CreateAccordion
- tab:CreateSection({Name="Título"}) / CreateDivider() / CreateSpacer(16) / SetSpacing(8)
+ORGANIZACAO
+ tab:CreateGroup({Name="Secao",Collapsed=true}) / CreateAccordion
+ tab:CreateSection({Name="Titulo"}) / CreateDivider() / CreateSpacer(16) / SetSpacing(8)
  tab:SetName("Novo nome") / SetIcon("shirt") / SetVisible(false) / Select() / Destroy()
  win:SelectTab("Avatar") / NextTab(1) / RemoveTab("Avatar") / SetSearch("roupas")
  Controles retornam handles com SetName, SetVisible, SetDisabled, SetOrder e Destroy.
- Get/Set, SetDescription e métodos específicos dependem do tipo do controle.
+ Get/Set, SetDescription e metodos especificos dependem do tipo do controle.
 
 CONTROLES (Create* recebe uma tabela com Name, Description, Default, Flag e Callback)
  CreateButton, CreateToggle, CreateCheckbox, CreateSlider, CreateRangeSlider,
@@ -121,16 +129,16 @@ CONTROLES (Create* recebe uma tabela com Name, Description, Default, Flag e Call
  CreateImage, CreateGallery, CreateAudioPlayer, CreateVideo, CreatePlayerList,
  CreateDataTable, CreateConsole, CreateTooltip, CreateContextMenu, CreateStat,
  CreateEmptyState, CreateIconPicker.
- As listas de jogadores ajustam a altura à quantidade de resultados por padrão.
- CreateIconPicker({Name="Ícones",PageSize=12,Default="avatar",Callback=function(name)end})
+ As listas de jogadores ajustam a altura a quantidade de resultados por padrao.
+ CreateIconPicker({Name="Icones",PageSize=12,Default="avatar",Callback=function(name)end})
  tem SetSearch, NextPage, GetPage, Get e Set.
 
-APARÊNCIA E IMAGENS
+APARENCIA E IMAGENS
  win:SetTheme("Dark") / SetTheme("Graphite") / SetAccent(Color3.fromRGB(105,225,164))
  win:SetTextScale(1.1) / SetDensity("Compact" | "Comfortable" | "Spacious")
  win:SetCornerRadius(12) / SetSidebarWidth(148) / SetSearchVisible(true)
  win:SetReducedMotion(true) / SetAnimations(false) / SetPanelTransparency(0.2)
- win:SetTitle("Título") / SetSubtitle("Subtítulo")
+ win:SetTitle("Titulo") / SetSubtitle("Subtitulo")
  win:SetTitleGradient({Color3.fromRGB(105,225,164),Color3.fromRGB(100,170,255)})
  win:SetTitleGradient(false) -- remove o efeito
  win:SetBackgroundImage("rbxassetid://ID",0.35) / SetBackgroundImage(false)
@@ -139,20 +147,20 @@ APARÊNCIA E IMAGENS
  win:SetFloatingButton({Image="rbxassetid://ID",Size=46}) / SetFloatingButton(false)
  win:AddMinimizeButton(...) continua aceitando o formato nativo.
 
-ÍCONES
+ICONES
  Avatar: avatar, shirt, accessories, glasses, face, hair, body, animation,
  emotes, wardrobe, mask, wings, outfit, shoes, backpack, sparkles.
  Outros: house, users, music, car, bus, wrench, settings, shield, palette,
  gamepad, crown, map-pin, terminal, folder, heart, star e muitos outros.
- Nomes/aliases em português incluem roupas, cabelo, rosto, acessórios e jogadores.
+ Nomes/aliases em portugues incluem roupas, cabelo, rosto, acessorios e jogadores.
  Aura:GetIcons() / Aura:GetIcon("shirt")
- Aura:RegisterIcon("meu-icone","rbxassetid://ID") -- também disponível na janela
- ID numérico, rbxassetid://, rbxthumb:// e imagem customizada continuam aceitos.
- A disponibilidade de cada imagem depende das permissões e do carregamento no Roblox.
+ Aura:RegisterIcon("meu-icone","rbxassetid://ID") -- tambem disponivel na janela
+ ID numerico, rbxassetid://, rbxthumb:// e imagem customizada continuam aceitos.
+ A disponibilidade de cada imagem depende das permissoes e do carregamento no Roblox.
 
-CONFIGURAÇÕES E UTILITÁRIOS
+CONFIGURACOES E UTILITARIOS
  win:CreateSettingsTab() -- reutiliza a mesma aba enquanto ela existir
- win:GetCapabilities() -- informa versão, entradas e recursos opcionais disponíveis
+ win:GetCapabilities() -- informa versao, entradas e recursos opcionais disponiveis
  win:ExportConfig() / ImportConfig(jsonOuTabela) / SaveConfig() / LoadConfig()
  win:SaveProfile("nome") / LoadProfile("nome") / DeleteProfile("nome") / GetProfiles()
  win:ResetConfig() / Undo() / Redo() / GetValue("flag") / SetValue("flag",valor,true)
@@ -161,28 +169,80 @@ CONFIGURAÇÕES E UTILITÁRIOS
  win:SetSize(640,460) / SetPosition(Vector2.new(20,40)) / Center()
  win:Toggle() / Minimize(true) / SetGamepadNavigation(true) / Destroy()
  RightControl alterna visibilidade; Ctrl+K foca busca; Ctrl+Tab troca aba.
- SaveConfig/LoadConfig/perfis em disco usam readfile/writefile quando disponíveis;
- exportação/importação JSON e controles comuns não exigem essas funções.
- Áudio, vídeo e imagens usam os serviços do Roblox e seus assets autorizados.
- Os recursos extras são opcionais: nenhum dashboard ou demonstração é aberto sozinho.
+ SaveConfig/LoadConfig/perfis em disco usam readfile/writefile quando disponiveis;
+ exportacao/importacao JSON e controles comuns nao exigem essas funcoes.
+ Audio, video e imagens usam os servicos do Roblox e seus assets autorizados.
+ Os recursos extras sao opcionais: nenhum dashboard ou demonstracao e aberto sozinho.
 
 LEGADO
  local win=Aura.CreateWindow("Meu painel","","5.1")
  local tab=win.CreateTab("Principal","home")
- tab.AddButton("Botão",function()end)
+ tab.AddButton("Botao",function()end)
  tab.AddToggle("Ativo",false,function(value)end)
  tab.AddSlider("Valor",0,100,50,function(value)end)
  NewTab / NewSection / NewButton / NewToggle / NewLabel / NewSlider /
- NewDropdown / NewSearchDropdown / NewFocusTextBox também continuam disponíveis.
+ NewDropdown / NewSearchDropdown / NewFocusTextBox tambem continuam disponiveis.
 
-VALIDAÇÃO
- Sintaxe e lógica de layout, estado, busca, APIs e limpeza verificadas localmente com mocks.
- O render, o áudio/vídeo e a disponibilidade de cada asset precisam de validação no Roblox.
+VALIDACAO
+ Sintaxe e logica de layout, estado, busca, APIs e limpeza verificadas localmente com mocks.
+ O render, o audio/video e a disponibilidade de cada asset precisam de validacao no Roblox.
 ]]
+
+-- Shared, conservative repair for mis-decoded UTF-8 in labels and placeholders.
+-- Editable data never goes through this function during typing/theme refreshes.
+local function AuraRepairText(value)
+    if type(value)~="string"then return value end
+    local windowsBytes={
+        [0x20AC]=0x80,[0x201A]=0x82,[0x0192]=0x83,[0x201E]=0x84,[0x2026]=0x85,
+        [0x2020]=0x86,[0x2021]=0x87,[0x02C6]=0x88,[0x2030]=0x89,[0x0160]=0x8A,
+        [0x2039]=0x8B,[0x0152]=0x8C,[0x017D]=0x8E,[0x2018]=0x91,[0x2019]=0x92,
+        [0x201C]=0x93,[0x201D]=0x94,[0x2022]=0x95,[0x2013]=0x96,[0x2014]=0x97,
+        [0x02DC]=0x98,[0x2122]=0x99,[0x0161]=0x9A,[0x203A]=0x9B,[0x0153]=0x9C,
+        [0x017E]=0x9E,[0x0178]=0x9F,
+    }
+    local function byteFor(cp)
+        if not cp then return nil end
+        if cp<=0xFF then return cp end
+        if windowsBytes[cp]then return windowsBytes[cp]end
+        if cp>=0xFF80 and cp<=0xFFFF then return cp-0xFF00 end
+    end
+    local repaired=value
+    -- Recover the legacy full-width byte notation reported in older scripts.
+    local special="\239\191\175\239\190\191\239\191\131\239\191\175\239\190\190\194\167"
+    repaired=repaired:gsub(special,"\195\167")
+    for pass=1,4 do
+        local points={}
+        local ok=pcall(function()for _,cp in utf8.codes(repaired)do table.insert(points,cp)end end)
+        if not ok then return repaired end
+        local output={};local i=1;local changed=false
+        while i<=#points do
+            local lead=byteFor(points[i]);local length
+            if lead and lead>=0xC2 and lead<=0xDF then length=2
+            elseif lead and lead>=0xE0 and lead<=0xEF then length=3
+            elseif lead and lead>=0xF0 and lead<=0xF4 then length=4 end
+            local decoded=length and lead%(2^(7-length))or 0
+            local valid=length~=nil
+            if length then
+                for offset=1,length-1 do
+                    local byte=byteFor(points[i+offset])
+                    if not byte or byte<0x80 or byte>0xBF then valid=false;break end
+                    if offset==1 and((lead==0xE0 and byte<0xA0)or(lead==0xED and byte>=0xA0)or(lead==0xF0 and byte<0x90)or(lead==0xF4 and byte>0x8F))then valid=false;break end
+                    decoded=decoded*64+byte-0x80
+                end
+            end
+            if valid then
+                table.insert(output,utf8.char(decoded));i=i+length;changed=true
+            else table.insert(output,utf8.char(points[i]));i=i+1 end
+        end
+        if not changed then break end
+        repaired=table.concat(output)
+    end
+    return repaired
+end
 
 local AuraSupport=(function()
 --[[
-    AURA UI 4.1 — INTERFACE MODULAR
+    AURA UI 4.1 - INTERFACE MODULAR
     Client-side Roblox Luau interface library.
     License: MIT. Use in a LocalScript, or with a permitted script loader.
 
@@ -239,43 +299,43 @@ local AuraSupport=(function()
         sliders, message-circle, smile, ghost, cat, swords, refresh-cw, arrow-up-right.
 
 
-    AURA 4.0 / RECURSOS E INTEGRAÇÃO
-      Compatível com a API 3.x. Nenhuma aba é adicionada automaticamente.
-      Window:CreateShowcase() cria uma demonstração opcional dos controles novos.
+    AURA 4.0 / RECURSOS E INTEGRACAO
+      Compativel com a API 3.x. Nenhuma aba e adicionada automaticamente.
+      Window:CreateShowcase() cria uma demonstracao opcional dos controles novos.
 
-    ORGANIZAÇÃO:
-      local grupo=tab:CreateGroup({Name="Opções",Collapsed=false,Spacing=7})
+    ORGANIZACAO:
+      local grupo=tab:CreateGroup({Name="Opcoes",Collapsed=false,Spacing=7})
       grupo:CreateButton({Name="Exemplo",Icon="sparkles",Callback=function()end})
       grupo:Close();grupo:Open();grupo:SetCollapsed(true)
       tab:CreateSpacer(24);tab:SetSpacing(8)
-      Window:SetSearch("texto"); busca também em grupos e Tags={"palavra"}.
+      Window:SetSearch("texto"); busca tambem em grupos e Tags={"palavra"}.
       tab:SetName("Nome");tab:SetVisible(true);tab:Destroy()
       Window:GetTab("Nome");Window:NextTab(1);Window:RemoveTab("Nome")
 
-    CONTROLES NOVOS (Default, Flag, Callback e Description quando aplicáveis):
+    CONTROLES NOVOS (Default, Flag, Callback e Description quando aplicaveis):
       tab:CreateCheckbox({Name="Ativo",Default=true})
       tab:CreateNumberInput({Name="Quantidade",Min=0,Max=100,Increment=1,Default=5})
       tab:CreateTextArea({Name="Notas",Height=100,MaxLength=500,ReadOnly=false})
-      tab:CreateSegmented({Name="Qualidade",Options={"Baixa","Média","Alta"}})
+      tab:CreateSegmented({Name="Qualidade",Options={"Baixa","Media","Alta"}})
       tab:CreateRadioGroup({Name="Modo",Options={"A","B"},Default="A"})
       tab:CreateSearchDropdown({Name="Lista",Options={"A","B"},Multi=true})
       tab:CreateDataTable({Name="Dados",Columns={"Nome","Valor"},Rows={{"A",10}}})
       Tabelas: handle:Refresh(rows), handle:Sort(columnIndex,descending).
       Campos: Validate=function(value)return true end e MaxLength no CreateInput.
 
-    MÍDIA (assets acessíveis do Roblox; nenhum download externo):
+    MIDIA (assets acessiveis do Roblox; nenhum download externo):
       tab:CreateImage({Name="Foto",Image="rbxassetid://ID",Height=180})
       tab:CreateGallery({Name="Fotos",Images={"rbxassetid://ID"},Height=180})
-      tab:CreateVideo({Name="Vídeo",Video="rbxassetid://ID",Looped=true})
-      tab:CreateAudioPlayer({Name="Música",Sound="rbxassetid://ID",Volume=.5})
-      Vídeo/áudio: Play(), Pause(), Stop(), Set(assetId), SetVolume(0..1).
-      Não há reprodução automática. Vídeos pausam ao esconder o painel.
-      Fundo e bolinha continuam disponíveis com SetBackgroundImage e SetFloatingButton.
+      tab:CreateVideo({Name="Video",Video="rbxassetid://ID",Looped=true})
+      tab:CreateAudioPlayer({Name="Musica",Sound="rbxassetid://ID",Volume=.5})
+      Video/audio: Play(), Pause(), Stop(), Set(assetId), SetVolume(0..1).
+      Nao ha reproducao automatica. Videos pausam ao esconder o painel.
+      Fundo e bolinha continuam disponiveis com SetBackgroundImage e SetFloatingButton.
       Window:SetBackgroundFit("Crop" ou "Fit" ou "Stretch" ou "Tile")
 
-    APARÊNCIA E ACESSIBILIDADE:
+    APARENCIA E ACESSIBILIDADE:
       Temas: NeonLight, Forest, Mint, Neon, Emerald, Lime, Light, Midnight,
-        Violet e HighContrast; também aceita tabela personalizada de Color3.
+        Violet e HighContrast; tambem aceita tabela personalizada de Color3.
       Window:SetTextScale(1.1) -- 0.85 a 1.25
       Window:SetReducedMotion(true);Window:SetPanelTransparency(.2)
       Window:SetTitle("AURA HUB");Window:SetGamepadNavigation(true)
@@ -285,27 +345,27 @@ local AuraSupport=(function()
       controle:SetVisible(false), Show(), Hide(), SetDisabled(true),
         SetName("Nome"), SetDescription("Texto"), SetOrder(2) em linhas de controle.
       Window:GetControl(flag), GetValue(flag), SetValue(flag,value,silent), ResetConfig()
-      Window:On("TabChanged",function(tab)end) devolve conexão com Disconnect().
+      Window:On("TabChanged",function(tab)end) devolve conexao com Disconnect().
       Eventos: TabChanged, VisibilityChanged, MinimizedChanged, ThemeChanged,
-        ConfigLoaded e Destroyed. Window:OnDestroy(function()end) limpa integrações.
+        ConfigLoaded e Destroyed. Window:OnDestroy(function()end) limpa integracoes.
       Window:Dialog({Title="Confirmar?",Content="Mensagem",OnConfirm=function()end})
       Window:Notify({Title="Aviso",Content="Mensagem",Duration=3})
       SaveConfig/LoadConfig usam readfile/writefile opcionais; export/import JSON
-        e perfis da sessão continuam disponíveis sem essas funções.
-      Ícones: Aura:GetIcons(); ícones customizados: Aura:RegisterIcon(nome,paths).
+        e perfis da sessao continuam disponiveis sem essas funcoes.
+      Icones: Aura:GetIcons(); icones customizados: Aura:RegisterIcon(nome,paths).
 
     LIMITES:
       Biblioteca de interface local, sem alterar remotes ou regras do servidor.
-      Assets precisam de acesso permitido pela experiência e pelo Roblox.
-      As funções de arquivo variam conforme o ambiente; sem promessa de suporte
+      Assets precisam de acesso permitido pela experiencia e pelo Roblox.
+      As funcoes de arquivo variam conforme o ambiente; sem promessa de suporte
         a todos os executores ou a todos os assets.
 
-    APARÊNCIA 4.1:
-      Verde claro por padrão: Theme="MintLight". Texto verde escuro para leitura.
-      Theme="Dark" preserva a paleta escura da versão anterior.
-      CanvasGroup na raiz e nos painéis laterais/principal recorta os cantos.
+    APARENCIA 4.1:
+      Verde claro por padrao: Theme="MintLight". Texto verde escuro para leitura.
+      Theme="Dark" preserva a paleta escura da versao anterior.
+      CanvasGroup na raiz e nos paineis laterais/principal recorta os cantos.
       CornerRadius=28 no CreateWindow ou Window:SetCornerRadius(28).
-      Painéis/botões têm raios uniformizados; a faixa do cabeçalho é recuada.
+      Paineis/botoes tem raios uniformizados; a faixa do cabecalho e recuada.
 
     NOTES:
       File config persistence uses optional readfile/writefile only when available.
@@ -314,7 +374,7 @@ local AuraSupport=(function()
       No claim that this code has been executed in Roblox Studio yet.
 ]]
 
-local Aura = { Version = "5.7.0" }
+local Aura = { Version = "5.7.1" }
 Aura.__index = Aura
 
 local Players = game:GetService("Players")
@@ -363,7 +423,10 @@ end
 local guiWindows=setmetatable({},{__mode="k"})
 local function new(class, props, parent)
     local inst=Instance.new(class)
-    for key,val in pairs(props or {}) do inst[key]=val end
+    for key,val in pairs(props or {}) do
+        if key=="PlaceholderText"or(key=="Text"and(class=="TextLabel"or class=="TextButton"))then val=AuraRepairText(val)end
+        inst[key]=val
+    end
     if parent then inst.Parent=parent end
     if class=="TextLabel" or class=="TextButton" or class=="TextBox" then
         local ancestor=parent
@@ -915,7 +978,7 @@ end
 function Window:SetAnimations(enabled)self.Animations=not not enabled end
 function Window:SetLanguage(language)
     self.Language=(language=="pt" or language=="en") and language or "pt"
-    if self.SearchBox then self.SearchBox.PlaceholderText=self.Language=="pt" and "Pesquisar funções..." or "Search controls..." end
+    if self.SearchBox then self.SearchBox.PlaceholderText=self.Language=="pt" and "Pesquisar fun\195\167\195\181es..." or "Search controls..." end
 end
 function Window:SetSize(a,b)
     local desired=typeof(a)=="Vector2" and a or Vector2.new(tonumber(a) or 820,tonumber(b) or 560)
@@ -990,10 +1053,10 @@ local function titleHeader(window,root,options)
     local title=textlabel(top,window,options.Title or "AURA",17,true)
     title.Name="WindowTitle"
     title.Position=UDim2.fromOffset(60,19);title.Size=UDim2.new(1,-165,0,26)
-    local minus=textbutton(top,window,"−")
+    local minus=textbutton(top,window,"\226\136\146")
     minus.Size=UDim2.fromOffset(34,32);minus.AnchorPoint=Vector2.new(1,0)
     minus.Position=UDim2.new(1,-55,0,16)
-    local close=textbutton(top,window,"×")
+    local close=textbutton(top,window,"\195\151")
     close.Size=UDim2.fromOffset(34,32);close.AnchorPoint=Vector2.new(1,0)
     close.Position=UDim2.new(1,-16,0,16)
     hover(window,minus);hover(window,close)
@@ -1008,7 +1071,7 @@ local function createMain(window,root)
     aside.Name="Sidebar";aside.Position=UDim2.fromOffset(11,68)
     aside.Size=UDim2.new(0,201,1,-80)
     local search=new("TextBox",{
-        Name="Search",Text="",PlaceholderText="Pesquisar funções...",ClearTextOnFocus=false,
+        Name="Search",Text="",PlaceholderText="Pesquisar fun\195\167\195\181es...",ClearTextOnFocus=false,
         BackgroundColor3=window.Theme.SurfaceAlt,TextColor3=window.Theme.Text,
         PlaceholderColor3=window.Theme.Muted,Font=Enum.Font.Gotham,
         TextSize=12,TextXAlignment=Enum.TextXAlignment.Left,BorderSizePixel=0,
@@ -1160,7 +1223,7 @@ local function createKeyOverlay(window,settings)
             success=ok and res==true
         end
         if success then gate:Destroy();callback(settings.OnSuccess)
-        else msg.Text="Chave inválida. Tente novamente.";callback(settings.OnFailure) end
+        else msg.Text="Chave inv\195\161lida. Tente novamente.";callback(settings.OnFailure) end
     end
     track(window,verify.Activated,check)
     track(window,input.FocusLost,function(enter)if enter then check() end end)
@@ -1366,7 +1429,7 @@ function Window:SelectTab(tab)
         t.Indicator.Visible=selected;t._setIconColor(selected and self.Theme.Accent or self.Theme.Muted)
     end
     self.PageTitle.Text=string.upper(tab.Name)
-    self.PageDescription.Text=tostring(tab.Description or "Sua área de controles")
+    self.PageDescription.Text=tostring(tab.Description or "Sua \195\161rea de controles")
     self:_emit("TabChanged",tab)
     return true
 end
@@ -1690,7 +1753,7 @@ function Tab:CreateRangeSlider(options)
         local f2=max==min and 1 or (high-min)/(max-min)
         lo.Position=UDim2.new(f1,0,.5,0);hi.Position=UDim2.new(f2,0,.5,0)
         range.Position=UDim2.new(f1,0,0,0);range.Size=UDim2.new(f2-f1,0,1,0)
-        readout.Text=string.format("%g — %g",low,high)
+        readout.Text=string.format("%g \226\128\148 %g",low,high)
         commit(self,old,{low,high},options.Callback,silent)
     end
     function handle:Get()return {low,high}end
@@ -1785,7 +1848,7 @@ function Tab:CreateDropdown(options)
     local searchable=options.Searchable==true
     local query
     if searchable then
-        query=new("TextBox",{Name="OptionSearch",Text="",PlaceholderText="Filtrar opções...",ClearTextOnFocus=false,BackgroundColor3=w.Theme.Surface,TextColor3=w.Theme.Text,PlaceholderColor3=w.Theme.Muted,Font=Enum.Font.Gotham,TextSize=12,BorderSizePixel=0,Size=UDim2.new(1,0,0,32),TextXAlignment=Enum.TextXAlignment.Left},body)
+        query=new("TextBox",{Name="OptionSearch",Text="",PlaceholderText="Filtrar op\195\167\195\181es...",ClearTextOnFocus=false,BackgroundColor3=w.Theme.Surface,TextColor3=w.Theme.Text,PlaceholderColor3=w.Theme.Muted,Font=Enum.Font.Gotham,TextSize=12,BorderSizePixel=0,Size=UDim2.new(1,0,0,32),TextXAlignment=Enum.TextXAlignment.Left},body)
         round(query,7);padding(query,10,0,8,0);bind(w,query,"BackgroundColor3","Surface");bind(w,query,"TextColor3","Text");bind(w,query,"PlaceholderColor3","Muted")
     end
     local holder=new("ScrollingFrame",{BackgroundTransparency=1,BorderSizePixel=0,Position=UDim2.fromOffset(0,searchable and 40 or 0),Size=UDim2.new(1,0,1,searchable and -40 or 0),CanvasSize=UDim2.new(),ScrollBarThickness=3,ScrollingDirection=Enum.ScrollingDirection.Y,ClipsDescendants=true},body)
@@ -2236,7 +2299,7 @@ function Tab:CreatePlayerList(options)
             entry.Row.Visible=show
             if show then shown=shown+1 end
         end
-        count.Text=tostring(shown).." / "..tostring(total).." jogadores  •  "..tostring(#selectedPlayers()).." selecionados"
+        count.Text=tostring(shown).." / "..tostring(total).." jogadores  \226\128\162  "..tostring(#selectedPlayers()).." selecionados"
         empty.Visible=shown==0
         if options.AutoSize==false then handle:SetBodyHeight(maxHeight)
         else
@@ -2362,7 +2425,7 @@ function Tab:CreateContextMenu(options)
     local w=self.Window
     local actions=options.Options or {};local expanded=false
     local trigger=clickAction(self,root,function()end)
-    trigger.Text="Ações";handle:Action(trigger,128,34)
+    trigger.Text="A\195\167\195\181es";handle:Action(trigger,128,34)
     local body=handle:Mount(0)
     local holder=new("ScrollingFrame",{BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.fromScale(1,1),CanvasSize=UDim2.new(),ScrollBarThickness=3,ScrollingDirection=Enum.ScrollingDirection.Y},body)
     syncScroll(w,holder,list(holder,5),4)
@@ -2407,8 +2470,8 @@ end
 function Window:CreateDashboard(options)
     local tab=self:CreateTab({Name=options and options.Name or "Dashboard",Icon="home"})
     tab:CreateSection("OVERVIEW")
-    tab:CreateParagraph({Title="Welcome to AURA",Content="Green Edition • modern and customizable Roblox UI."})
-    tab:CreateBadge({Name="Status",Value="● ONLINE"})
+    tab:CreateParagraph({Title="Welcome to AURA",Content="Green Edition \226\128\162 modern and customizable Roblox UI."})
+    tab:CreateBadge({Name="Status",Value="\226\151\143 ONLINE"})
     tab:CreateProgress({Name="Layout readiness",Default=100})
     tab:CreateButton({Name="Center window",Callback=function()self:Center()end})
     tab:CreateButton({Name="Toggle animations",Callback=function()self:SetAnimations(not self.Animations)end})
@@ -2746,8 +2809,8 @@ function Window:SetSearch(value)
     self.SearchBox.Text=tostring(value or "");self:_applySearch();return self
 end
 local function searchText(value)
-    local text=tostring(value or ""):lower()
-    for _,pair in ipairs({{"á","a"},{"à","a"},{"â","a"},{"ã","a"},{"Á","a"},{"À","a"},{"Â","a"},{"Ã","a"},{"é","e"},{"ê","e"},{"É","e"},{"Ê","e"},{"í","i"},{"Í","i"},{"ó","o"},{"ô","o"},{"õ","o"},{"Ó","o"},{"Ô","o"},{"Õ","o"},{"ú","u"},{"Ú","u"},{"ç","c"},{"Ç","c"}})do text=text:gsub(pair[1],pair[2])end
+    local text=AuraRepairText(tostring(value or "")):lower()
+    for _,pair in ipairs({{"\195\161","a"},{"\195\160","a"},{"\195\162","a"},{"\195\163","a"},{"\195\129","a"},{"\195\128","a"},{"\195\130","a"},{"\195\131","a"},{"\195\169","e"},{"\195\170","e"},{"\195\137","e"},{"\195\138","e"},{"\195\173","i"},{"\195\141","i"},{"\195\179","o"},{"\195\180","o"},{"\195\181","o"},{"\195\147","o"},{"\195\148","o"},{"\195\149","o"},{"\195\186","u"},{"\195\154","u"},{"\195\167","c"},{"\195\135","c"}})do text=text:gsub(pair[1],pair[2])end
     return text
 end
 function Window:_applySearch()
@@ -3143,15 +3206,15 @@ Window.Confirm=Window.Dialog
 function Window:CreateShowcase()
     local tab=self:CreateTab({Name="Recursos AURA 4",Icon="sparkles"})
     tab:CreateParagraph({Title="Componentes opcionais",Content="Este painel demonstra os controles novos. A biblioteca continua aceitando as chamadas anteriores."})
-    local group=tab:CreateGroup({Name="Organização",Description="Grupo recolhível com controles internos."})
+    local group=tab:CreateGroup({Name="Organiza\195\167\195\163o",Description="Grupo recolh\195\173vel com controles internos."})
     group:CreateCheckbox({Name="Mostrar avisos",Default=true,Flag="showcase_checkbox"})
     group:CreateNumberInput({Name="Quantidade",Min=0,Max=100,Default=5,Flag="showcase_number"})
-    group:CreateSegmented({Name="Qualidade",Options={"Baixa","Média","Alta"},Default="Média",Flag="showcase_quality"})
+    group:CreateSegmented({Name="Qualidade",Options={"Baixa","M\195\169dia","Alta"},Default="M\195\169dia",Flag="showcase_quality"})
     tab:CreateSpacer(16)
-    tab:CreateTextArea({Name="Anotações",Default="Escreva aqui...",MaxLength=500,Flag="showcase_notes"})
+    tab:CreateTextArea({Name="Anota\195\167\195\181es",Default="Escreva aqui...",MaxLength=500,Flag="showcase_notes"})
     tab:CreateRadioGroup({Name="Tema",Options={"NeonLight","Light","Midnight","HighContrast"},Default="NeonLight",Flag="showcase_theme",Callback=function(name)self:SetTheme(name)end})
-    tab:CreateButton({Name="Abrir confirmação",Icon="message-circle",Callback=function()
-        self:Dialog({Title="Exemplo de confirmação",Content="O diálogo devolve sua escolha ao callback.",OnConfirm=function()self:Notify({Title="Confirmado",Content="A escolha foi recebida."})end})
+    tab:CreateButton({Name="Abrir confirma\195\167\195\163o",Icon="message-circle",Callback=function()
+        self:Dialog({Title="Exemplo de confirma\195\167\195\163o",Content="O di\195\161logo devolve sua escolha ao callback.",OnConfirm=function()self:Notify({Title="Confirmado",Content="A escolha foi recebida."})end})
     end})
     tab:CreateDataTable({Name="Tabela demonstrativa",Columns={"Item","Valor"},Rows={{"Exemplo A",10},{"Exemplo B",20}}})
     return tab
@@ -3189,7 +3252,7 @@ function Aura._AttachNative(gui,root,hooks,options)
         SearchBox=hooks.Search,Pages=hooks.Content,ResizeHandle=hooks.Resize,
         Tabs=hooks.Tabs,Flags={},_counter=0,_connections={},_themeBindings={},
         _fontSizes=setmetatable({},{__mode="k"}),_events={},_cleanup={},_undo={},_redo={},
-        Theme=hooks.MapTheme(),ThemeName="Dark",Animations=true,Minimized=false,
+        Theme=hooks.MapTheme(),ThemeName="Original",Animations=true,Minimized=false,
         TextScale=1,MinSize=Vector2.new(380,250),MaxSize=Vector2.new(900,700),
         ConfigFile=options.ConfigFile or "aura_ui_config.json",Language="pt",Destroyed=false,
         ToggleKey=options.ToggleKey or Enum.KeyCode.RightControl},Window)
@@ -3331,7 +3394,7 @@ function Tab:CreateStat(options)
     local root,handle=createRow(self,options,70,true)
     local w=self.Window
     local body=handle:Mount(40)
-    local value=textlabel(body,w,tostring(options.Value or options.Default or "—"),24,true,"Accent")
+    local value=textlabel(body,w,tostring(options.Value or options.Default or "\226\128\148"),24,true,"Accent")
     value.Size=UDim2.new(1,0,1,0);value.TextTruncate=Enum.TextTruncate.AtEnd
     handle._skipSave=true
     function handle:Get()return value.Text end
@@ -3342,7 +3405,7 @@ Tab.CreateStatistic=Tab.CreateStat
 
 function Tab:CreateEmptyState(options)
     options=asopts(options)
-    local handle=self:CreateParagraph({Name=options.Name or "Nada por aqui",Content=options.Content or options.Description or "Adicione controles a esta seção.",Tags=options.Tags})
+    local handle=self:CreateParagraph({Name=options.Name or "Nada por aqui",Content=options.Content or options.Description or "Adicione controles a esta se\195\167\195\163o.",Tags=options.Tags})
     handle._skipSave=true
     return handle
 end
@@ -3352,14 +3415,14 @@ function Tab:CreateIconPicker(options)
     options=asopts(options)
     local root,handle=createRow(self,options,50,true)
     local w=self.Window;local body=handle:Mount(230)
-    local field=new("TextBox",{Name="IconSearch",Text="",PlaceholderText="Buscar ícone: user, shirt, music...",ClearTextOnFocus=false,Font=Enum.Font.Gotham,TextSize=12,TextColor3=w.Theme.Text,PlaceholderColor3=w.Theme.Muted,BackgroundColor3=w.Theme.Surface,BorderSizePixel=0,Size=UDim2.new(1,0,0,32),TextXAlignment=Enum.TextXAlignment.Left},body)
+    local field=new("TextBox",{Name="IconSearch",Text="",PlaceholderText="Buscar \195\173cone: user, shirt, music...",ClearTextOnFocus=false,Font=Enum.Font.Gotham,TextSize=12,TextColor3=w.Theme.Text,PlaceholderColor3=w.Theme.Muted,BackgroundColor3=w.Theme.Surface,BorderSizePixel=0,Size=UDim2.new(1,0,0,32),TextXAlignment=Enum.TextXAlignment.Left},body)
     round(field,8);padding(field,10,0,10,0)
     bind(w,field,"TextColor3","Text");bind(w,field,"PlaceholderColor3","Muted");bind(w,field,"BackgroundColor3","Surface")
     local grid=new("Frame",{Name="IconGrid",BackgroundTransparency=1,Position=UDim2.fromOffset(0,42),Size=UDim2.new(1,0,0,150)},body)
     local info=textlabel(body,w,"",11,false,"Muted")
     info.Size=UDim2.new(1,-100,0,28);info.Position=UDim2.new(0,0,1,-28)
-    local previous=textbutton(body,w,"‹","Surface");previous.Size=UDim2.fromOffset(32,28);previous.Position=UDim2.new(1,-72,1,-28)
-    local following=textbutton(body,w,"›","Surface");following.Size=UDim2.fromOffset(32,28);following.Position=UDim2.new(1,-32,1,-28)
+    local previous=textbutton(body,w,"\226\128\185","Surface");previous.Size=UDim2.fromOffset(32,28);previous.Position=UDim2.new(1,-72,1,-28)
+    local following=textbutton(body,w,"\226\128\186","Surface");following.Size=UDim2.fromOffset(32,28);following.Position=UDim2.new(1,-32,1,-28)
     local names={};for name in pairs(ICON_ASSETS)do table.insert(names,name)end;table.sort(names)
     local filtered,page,selection={},1,options.Default
     local pageSize=math.clamp(tonumber(options.PageSize) or 12,4,24)
@@ -3391,7 +3454,7 @@ function Tab:CreateIconPicker(options)
             table.insert(tiles,{Name=name,Button=button})
             table.insert(links,track(w,button.Activated,function()handle:Set(name)end))
         end
-        info.Text=tostring(#filtered).." ícones  ·  "..page.."/"..totalPages
+        info.Text=tostring(#filtered).." \195\173cones  \194\183  "..page.."/"..totalPages
         previous.TextTransparency=page==1 and .6 or 0;following.TextTransparency=page==totalPages and .6 or 0
         paint()
     end
@@ -3430,7 +3493,7 @@ function Window:CreateTitleGradientEditor(tab,options)
     options=options or {}
     if not tab or type(tab.CreateGroup)~="function"then return false end
     local window=self
-    local group=tab:CreateGroup({Name=options.Name or "Degradê do nome",Description="Cor inicial, cor final e direção. As mudanças aparecem no título.",Collapsed=options.Collapsed==true})
+    local group=tab:CreateGroup({Name=options.Name or "Degrad\195\170 do nome",Description="Cor inicial, cor final e dire\195\167\195\163o. As mudan\195\167as aparecem no t\195\173tulo.",Collapsed=options.Collapsed==true})
     local current=self:GetTitleGradient();local syncing=false
     local preview=group:CreateLabel({Name=self:GetTitle()})
     local function update(changes)
@@ -3439,21 +3502,21 @@ function Window:CreateTitleGradientEditor(tab,options)
         for key,v in pairs(changes)do value[key]=v end
         window:SetTitleGradient(value)
     end
-    local enabled=group:CreateToggle({Name="Ativar degradê",Default=current.Enabled,Callback=function(v)update({Enabled=v})end})
-    local first=group:CreateColorPicker({Name="Cor do início",Default=current.Colors[1],Callback=function(v)
+    local enabled=group:CreateToggle({Name="Ativar degrad\195\170",Default=current.Enabled,Callback=function(v)update({Enabled=v})end})
+    local first=group:CreateColorPicker({Name="Cor do in\195\173cio",Default=current.Colors[1],Callback=function(v)
         local state=window:GetTitleGradient();update({Colors={v,state.Colors[#state.Colors]},Positions={}})
     end})
     local last=group:CreateColorPicker({Name="Cor do final",Default=current.Colors[#current.Colors],Callback=function(v)
         local state=window:GetTitleGradient();update({Colors={state.Colors[1],v},Positions={}})
     end})
-    local angle=group:CreateSlider({Name="Direção (graus)",Min=0,Max=359,Increment=1,Default=current.Rotation,Callback=function(v)update({Rotation=v})end})
+    local angle=group:CreateSlider({Name="Dire\195\167\195\163o (graus)",Min=0,Max=359,Increment=1,Default=current.Rotation,Callback=function(v)update({Rotation=v})end})
     for _,control in ipairs({enabled,first,last,angle})do control._skipSave=true end
     group:CreateButton({Name="Inverter as cores",Icon="arrowleftright",Callback=function()
         local state=window:GetTitleGradient();local colors={}
         for i=#state.Colors,1,-1 do table.insert(colors,state.Colors[i])end
         update({Colors=colors,Positions={}})
     end})
-    group:CreateButton({Name="Restaurar azul-claro → azul",Icon="rotateccw",Callback=function()
+    group:CreateButton({Name="Restaurar azul-claro \226\134\146 azul",Icon="rotateccw",Callback=function()
         window:SetTitleGradient({Colors={C(126,222,255),C(73,145,245)},Rotation=0,Enabled=true})
     end})
     local function refresh()
@@ -3484,15 +3547,15 @@ function Window:CreateCustomizationPanel(tab,options)
     end
     local typography=tab:CreateGroup({Name="Nome e fonte",Collapsed=true})
     input(typography,"Title","Nome da GUI",self:GetAppearance().Title,function(v)window:SetTitle(v)end)
-    input(typography,"Subtitle","Subtítulo",self:GetAppearance().Subtitle,function(v)window:SetSubtitle(v)end)
+    input(typography,"Subtitle","Subt\195\173tulo",self:GetAppearance().Subtitle,function(v)window:SetSubtitle(v)end)
     remember("Font",typography:CreateDropdown({Name="Fonte",Options=self:GetFonts(),Default=self:GetAppearance().Font,Callback=function(v)if not syncing then window:SetFont(v)end end}))
-    local colors=tab:CreateGroup({Name="Cores por área",Description="Cada picker muda somente a área indicada.",Collapsed=true})
-    for _,row in ipairs({{"Background","Fundo"},{"TitleBar","Barra superior"},{"TabBackground","Barra lateral"},{"TabSelected","Aba selecionada"},{"Button","Botões"},{"Text","Texto principal"},{"TextDark","Texto secundário"},{"Accent","Destaque"},{"Border","Bordas"}})do
+    local colors=tab:CreateGroup({Name="Cores por \195\161rea",Description="Cada picker muda somente a \195\161rea indicada.",Collapsed=true})
+    for _,row in ipairs({{"Background","Fundo"},{"TitleBar","Barra superior"},{"TabBackground","Barra lateral"},{"TabSelected","Aba selecionada"},{"Button","Bot\195\181es"},{"Text","Texto principal"},{"TextDark","Texto secund\195\161rio"},{"Accent","Destaque"},{"Border","Bordas"}})do
         local role=row[1]
         remember("Color_"..role,colors:CreateColorPicker({Name=row[2],Default=self:GetThemeColors()[role],Callback=function(v)if not syncing then window:SetThemeColor(role,v)end end}),function()return window:GetThemeColors()[role]end)
     end
     local geometry=tab:CreateGroup({Name="Cantos, bordas e layout",Collapsed=true})
-    for _,row in ipairs({{"CornerRadius","Arredondamento",4,24,1},{"SidebarWidth","Largura da barra lateral",112,210,1},{"PanelTransparency","Transparência dos painéis",0,.65,.05},{"BorderWidth","Espessura das bordas",.5,3,.25},{"BorderTransparency","Transparência das bordas",0,1,.05}})do
+    for _,row in ipairs({{"CornerRadius","Arredondamento",4,24,1},{"SidebarWidth","Largura da barra lateral",112,210,1},{"PanelTransparency","Transpar\195\170ncia dos pain\195\169is",0,.65,.05},{"BorderWidth","Espessura das bordas",.5,3,.25},{"BorderTransparency","Transpar\195\170ncia das bordas",0,1,.05}})do
         local key=row[1]
         remember(key,geometry:CreateSlider({Name=row[2],Min=row[3],Max=row[4],Increment=row[5],Default=self:GetAppearance()[key],Callback=function(v)
             if syncing then return end
@@ -3506,21 +3569,21 @@ function Window:CreateCustomizationPanel(tab,options)
     remember("SearchVisible",geometry:CreateToggle({Name="Mostrar barra de pesquisa",Default=self:GetAppearance().SearchVisible,Callback=function(v)if not syncing then window:SetSearchVisible(v)end end}))
     local bg=tab:CreateGroup({Name="Imagem de fundo",Collapsed=true})
     input(bg,"BackgroundImage","ID ou caminho da imagem",self:GetAppearance().BackgroundImage,function(v)window:SetBackgroundImage(v,window:GetAppearance().BackgroundTransparency)end)
-    remember("BackgroundTransparency",bg:CreateSlider({Name="Transparência da imagem",Min=0,Max=1,Increment=.05,Default=self:GetAppearance().BackgroundTransparency,Callback=function(v)
+    remember("BackgroundTransparency",bg:CreateSlider({Name="Transpar\195\170ncia da imagem",Min=0,Max=1,Increment=.05,Default=self:GetAppearance().BackgroundTransparency,Callback=function(v)
         if not syncing then local a=window:GetAppearance();window:SetBackgroundImage(a.BackgroundImage,v)end
     end}))
     remember("BackgroundFit",bg:CreateDropdown({Name="Ajuste da imagem",Options={"Crop","Fit","Stretch","Tile"},Default=self:GetAppearance().BackgroundFit,Callback=function(v)if not syncing then window:SetBackgroundFit(v)end end}))
     bg:CreateButton({Name="Remover imagem",Icon="imageoff",Callback=function()window:SetBackgroundImage(false);window:_emit("AppearanceChanged")end})
-    local bubble=tab:CreateGroup({Name="Botão flutuante",Collapsed=true})
+    local bubble=tab:CreateGroup({Name="Bot\195\163o flutuante",Collapsed=true})
     local current=self:GetFloatingButtonOptions(true)or {}
-    remember("BubbleEnabled",bubble:CreateToggle({Name="Ativar botão flutuante",Default=self.FloatingButton~=nil,Callback=function(v)if not syncing then if v then window:UpdateFloatingButton({})else window:SetFloatingButton(false)end end end}),function()return window.FloatingButton~=nil end)
-    input(bubble,"BubbleText","Texto do botão",current.Text or "A",function(v)window:UpdateFloatingButton({Text=v,Image=""})end)
-    input(bubble,"BubbleImage","Imagem do botão (ID)",current.Image or "",function(v)window:UpdateFloatingButton({Text=nil,Image=v})end)
-    remember("BubbleSize",bubble:CreateSlider({Name="Tamanho do botão",Min=32,Max=90,Increment=1,Default=current.Size or 46,Callback=function(v)if not syncing then window:UpdateFloatingButton({Size=v})end end}),function()return(window:GetFloatingButtonOptions(true)or {}).Size or 46 end)
-    remember("BubbleTextColor",bubble:CreateColorPicker({Name="Cor do texto do botão",Default=current.TextColor or self.Theme.Accent,Callback=function(v)if not syncing then window:UpdateFloatingButton({TextColor=v})end end}),function()return(window:GetFloatingButtonOptions(true)or {}).TextColor or window.Theme.Accent end)
-    local restore=tab:CreateGroup({Name="Restaurar aparência",Collapsed=true})
+    remember("BubbleEnabled",bubble:CreateToggle({Name="Ativar bot\195\163o flutuante",Default=self.FloatingButton~=nil,Callback=function(v)if not syncing then if v then window:UpdateFloatingButton({})else window:SetFloatingButton(false)end end end}),function()return window.FloatingButton~=nil end)
+    input(bubble,"BubbleText","Texto do bot\195\163o",current.Text or "A",function(v)window:UpdateFloatingButton({Text=v,Image=""})end)
+    input(bubble,"BubbleImage","Imagem do bot\195\163o (ID)",current.Image or "",function(v)window:UpdateFloatingButton({Text=nil,Image=v})end)
+    remember("BubbleSize",bubble:CreateSlider({Name="Tamanho do bot\195\163o",Min=32,Max=90,Increment=1,Default=current.Size or 46,Callback=function(v)if not syncing then window:UpdateFloatingButton({Size=v})end end}),function()return(window:GetFloatingButtonOptions(true)or {}).Size or 46 end)
+    remember("BubbleTextColor",bubble:CreateColorPicker({Name="Cor do texto do bot\195\163o",Default=current.TextColor or self.Theme.Accent,Callback=function(v)if not syncing then window:UpdateFloatingButton({TextColor=v})end end}),function()return(window:GetFloatingButtonOptions(true)or {}).TextColor or window.Theme.Accent end)
+    local restore=tab:CreateGroup({Name="Restaurar apar\195\170ncia",Collapsed=true})
     restore:CreateButton({Name="Voltar ao visual inicial",Icon="rotateccw",Callback=function()
-        window:Confirm({Title="Restaurar aparência?",Content="As cores, fontes e ajustes visuais voltarão aos valores iniciais.",OnConfirm=function()window:ResetAppearance()end})
+        window:Confirm({Title="Restaurar apar\195\170ncia?",Content="As cores, fontes e ajustes visuais voltar\195\163o aos valores iniciais.",OnConfirm=function()window:ResetAppearance()end})
     end})
     local function sync()
         if tab._destroyed then return end
@@ -3545,7 +3608,7 @@ function Window:CreateSettingsTab(options)
     if self._settingsTab and not self._settingsTab._destroyed then self:SelectTab(self._settingsTab);return self._settingsTab end
     local tab=self:CreateTab({Name=options.Name or "Config",Icon="settings"});self._settingsTab=tab
     local libraryCounter=self._counter
-    local libraries=tab:CreateGroup({Name="Biblioteca",Flag="__aura_library_group",Description="Troque a interface e mantenha as abas, valores e funções do script."})
+    local libraries=tab:CreateGroup({Name="Biblioteca",Flag="__aura_library_group",Description="Troque a interface e mantenha as abas, valores e fun\195\167\195\181es do script."})
     local selectingLibrary=false
     local libraryPicker=libraries:CreateDropdown({Name="Interface",Flag="__aura_library_picker",Options=self:GetLibraries(),Default=self:GetLibrary(),Callback=function(value)
         if not selectingLibrary then self:SetLibrary(value)end
@@ -3555,7 +3618,7 @@ function Window:CreateSettingsTab(options)
     local libraryLink=self:On("LibraryChanged",function(value)selectingLibrary=true;libraryPicker:Set(value,true);selectingLibrary=false end)
     track(self,tab.Page.Destroying,function()libraryLink:Disconnect()end)
     tab.LibraryControl=libraryPicker
-    local appearance=tab:CreateGroup({Name="Aparência",Description="Tema, legibilidade e espaçamento."})
+    local appearance=tab:CreateGroup({Name="Apar\195\170ncia",Description="Tema, legibilidade e espa\195\167amento."})
     local themes=self.GetColorThemeNames and self:GetColorThemeNames()or {"Dark"}
     local updating=false
     local selected=self.ThemeName
@@ -3565,7 +3628,7 @@ function Window:CreateSettingsTab(options)
         if updating then return end
         if value=="Personalizado"then self:SetColorTheme(self.Theme.Accent)else self:SetTheme(value)end
     end})
-    local colorPicker=appearance:CreateColorPicker({Name="Cor personalizada",Description="Muda painéis, destaques e bordas neon juntos.",Default=self.Theme.Accent,Callback=function(value)
+    local colorPicker=appearance:CreateColorPicker({Name="Cor personalizada",Description="Muda pain\195\169is, destaques e bordas neon juntos.",Default=self.Theme.Accent,Callback=function(value)
         if not updating then self:SetColorTheme(value)end
     end})
     -- Theme colors are serialized once by the window, not again as widget flags.
@@ -3583,15 +3646,15 @@ function Window:CreateSettingsTab(options)
     tab.Destroy=function(...)link:Disconnect();return destroy(...)end
     self._settingsControls={Theme=themePicker,Color=colorPicker}
     local scaleControl=appearance:CreateSlider({Name="Tamanho do texto",Min=.85,Max=1.25,Increment=.05,Default=self.TextScale or 1,Callback=function(value)self:SetTextScale(value)end})
-    local densityControl=appearance:CreateDropdown({Name="Espaçamento",Options={"Compact","Comfortable","Spacious"},Default=self.Density or "Comfortable",Callback=function(value)if self.SetDensity then self:SetDensity(value)end end})
-    local motionControl=appearance:CreateToggle({Name="Reduzir animações",Default=not self.Animations,Callback=function(value)self:SetReducedMotion(value)end})
+    local densityControl=appearance:CreateDropdown({Name="Espa\195\167amento",Options={"Compact","Comfortable","Spacious"},Default=self.Density or "Comfortable",Callback=function(value)if self.SetDensity then self:SetDensity(value)end end})
+    local motionControl=appearance:CreateToggle({Name="Reduzir anima\195\167\195\181es",Default=not self.Animations,Callback=function(value)self:SetReducedMotion(value)end})
     local gradientEditor=self:CreateTitleGradientEditor(tab)
     self._settingsControls.Gradient=gradientEditor.GradientControls
-    local navigation=tab:CreateGroup({Name="Janela e navegação",Collapsed=true})
+    local navigation=tab:CreateGroup({Name="Janela e navega\195\167\195\163o",Collapsed=true})
     navigation:CreateButton({Name="Centralizar janela",Icon="scan",Callback=function()self:Center()end})
     navigation:CreateKeybind({Name="Mostrar ou esconder",Default=self.ToggleKey,Callback=function(key)self:SetToggleKey(key)end})
-    navigation:CreateToggle({Name="Navegação por controle",Default=self.GamepadNavigation==true,Callback=function(value)self:SetGamepadNavigation(value)end})
-    local navigationBubble=navigation:CreateToggle({Name="Botão flutuante",Default=self.FloatingButton~=nil,Callback=function(value)if value then self:UpdateFloatingButton({})else self:SetFloatingButton(false)end end})
+    navigation:CreateToggle({Name="Navega\195\167\195\163o por controle",Default=self.GamepadNavigation==true,Callback=function(value)self:SetGamepadNavigation(value)end})
+    local navigationBubble=navigation:CreateToggle({Name="Bot\195\163o flutuante",Default=self.FloatingButton~=nil,Callback=function(value)if value then self:UpdateFloatingButton({})else self:SetFloatingButton(false)end end})
     navigationBubble._skipSave=true
     scaleControl._skipSave=true;densityControl._skipSave=true;motionControl._skipSave=true
     self._settingsControls.TextScale=scaleControl
@@ -3608,25 +3671,25 @@ function Window:CreateSettingsTab(options)
     end)
     track(self,tab.Page.Destroying,function()appearanceLink:Disconnect()end)
     if options.Customization~=false then self:CreateCustomizationPanel(tab)end
-    local config=tab:CreateGroup({Name="Configurações salvas",Collapsed=true})
-    local data=config:CreateTextArea({Name="Configuração JSON",Height=100,MaxLength=100000,Default=""})
-    config:CreateButton({Name="Exportar configuração",Icon="download",Callback=function()data:Set(self:ExportConfig()or "",true)end})
-    config:CreateButton({Name="Importar configuração",Icon="upload",Callback=function()
+    local config=tab:CreateGroup({Name="Configura\195\167\195\181es salvas",Collapsed=true})
+    local data=config:CreateTextArea({Name="Configura\195\167\195\163o JSON",Height=100,MaxLength=100000,Default=""})
+    config:CreateButton({Name="Exportar configura\195\167\195\163o",Icon="download",Callback=function()data:Set(self:ExportConfig()or "",true)end})
+    config:CreateButton({Name="Importar configura\195\167\195\163o",Icon="upload",Callback=function()
         local ok,err=self:ImportConfig(data:Get())
-        self:Notify({Title=ok and "Configuração aplicada"or "Não foi possível importar",Content=ok and "Valores atualizados."or tostring(err)})
+        self:Notify({Title=ok and "Configura\195\167\195\163o aplicada"or "N\195\163o foi poss\195\173vel importar",Content=ok and "Valores atualizados."or tostring(err)})
     end})
     config:CreateButton({Name="Restaurar valores iniciais",Icon="rotateccw",Callback=function()
-        self:Confirm({Title="Restaurar valores?",Content="Os controles voltarão aos valores iniciais.",OnConfirm=function()self:ResetConfig()end})
+        self:Confirm({Title="Restaurar valores?",Content="Os controles voltar\195\163o aos valores iniciais.",OnConfirm=function()self:ResetConfig()end})
     end})
     return tab
 end
 
 function Window:CreateIconBrowser(options)
     options=options or {}
-    local tab=self:CreateTab({Name=options.Name or "Ícones",Icon="shapes"})
-    tab:CreateParagraph({Name="Ícones da biblioteca",Content="Pesquise por nome e clique para selecionar. Use o nome no campo Icon de uma aba ou botão."})
-    local chosen=tab:CreateInput({Name="Ícone selecionado",Default="",ReadOnly=true})
-    tab:CreateIconPicker({Name="Catálogo Lucide",PageSize=16,Callback=function(value)chosen:Set(value,true);callback(options.Callback,value)end})
+    local tab=self:CreateTab({Name=options.Name or "\195\141cones",Icon="shapes"})
+    tab:CreateParagraph({Name="\195\141cones da biblioteca",Content="Pesquise por nome e clique para selecionar. Use o nome no campo Icon de uma aba ou bot\195\163o."})
+    local chosen=tab:CreateInput({Name="\195\141cone selecionado",Default="",ReadOnly=true})
+    tab:CreateIconPicker({Name="Cat\195\161logo Lucide",PageSize=16,Callback=function(value)chosen:Set(value,true);callback(options.Callback,value)end})
     return tab
 end
 
@@ -5390,12 +5453,12 @@ local AuraTabAssets={
 local AuraTabAliases={
     personagem="avatar",character="avatar",profile="avatar",perfil="avatar",
     roupas="shirt",roupa="shirt",clothes="shirt",clothing="shirt",camisa="shirt",tshirt="shirt",
-    acessorios="accessories",["acessórios"]="accessories",hats="accessories",hat="accessories",
-    chapeu="accessories",["chapéu"]="accessories",oculos="glasses",["óculos"]="glasses",
+    acessorios="accessories",["acess\195\179rios"]="accessories",hats="accessories",hat="accessories",
+    chapeu="accessories",["chap\195\169u"]="accessories",oculos="glasses",["\195\179culos"]="glasses",
     rosto="face",faces="face",cabelo="hair",hairs="hair",corpo="body",size="body",escala="body",
-    animations="animation",animacoes="animation",["animações"]="animation",dance="emotes",dances="emotes",danca="emotes",
+    animations="animation",animacoes="animation",["anima\195\167\195\181es"]="animation",dance="emotes",dances="emotes",danca="emotes",
     emoji="emotes",emote="emotes",costume="outfit",outfits="outfit",skin="outfit",skins="outfit",visual="outfit",
-    guardaroupa="wardrobe",closet="wardrobe",mascara="mask",["máscara"]="mask",asas="wings",sapatos="shoes",mochila="backpack",
+    guardaroupa="wardrobe",closet="wardrobe",mascara="mask",["m\195\161scara"]="mask",asas="wings",sapatos="shoes",mochila="backpack",
     effects="sparkles",efeitos="sparkles",troll="users",audio="music",boombox="music",op="crown",
     tools="wrench",ferramentas="wrench",protection="shield",protecao="shield",teleports="mappin",teleporte="mappin",
     config="settings",configuracoes="settings",jogadores="users",players="users",jogador="user",localplayer="user",
@@ -5876,20 +5939,20 @@ for name in pairs(AuraTabAliases)do if AuraTabAssets[name]then AuraTabAliases[na
 AuraSupport._SetIconAssets(AuraTabAssets,AuraTabAliases)
 
 --[[
-	╔══════════════════════════╗
-	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.6.0          ║
-	║  Last Updated: 2026      ║
-	╚══════════════════════════╝
+	----------------------------
+	-  Author: PDDEV / RCCDEV  -
+	-  Version: 4.6.0          -
+	-  Last Updated: 2026      -
+	----------------------------
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "5.7.0"
+local CURRENT_VERSION = "5.7.1"
 UI.Name="AURA UI";UI.Version=CURRENT_VERSION
 
--- ════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------
 -- TYPE DEFINITIONS & CONSTANTS
--- ════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------
 
 local ANIMATION_SPEED = 0.12 -- Short, event-driven tweens only; no permanent animation loops.
 local MIN_WINDOW_WIDTH = 380
@@ -5900,9 +5963,9 @@ local DROPDOWN_ITEM_HEIGHT = 28
 local DROPDOWN_MAX_HEIGHT = 180
 
 
--- ════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------
 -- UTILITY FUNCTIONS
--- ════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------
 
 local function ValidateColor(color)
 	if typeof(color) == "Color3" then
@@ -5911,100 +5974,7 @@ local function ValidateColor(color)
 	error("Expected Color3, got " .. typeof(color), 2)
 end
 
--- Repair frequent UTF-8 mojibake patterns caused by saving source text with
--- the wrong encoding. This is deliberately a conservative list of known pairs;
--- it does not try to reinterpret arbitrary user-entered text or binary data.
-local TEXT_ENCODING_FIXES = {
-    -- Exact malformed sequence reported by the user: "Pra￯﾿ﾃ￯ﾾ§a" -> "praça".
-    {"￯﾿ﾃ￯ﾾ§", "ç"},
-    -- Exact malformed sequence reported by the user: "apￃﾳs" -> "após".
-    {"ￃﾳ", "ó"},
-    -- Common visible replacement / mojibake markers. U+FFFD itself cannot
-    -- reveal the original missing character, but these known byte-artifacts can.
-    {"ï¿½", "�"}, {"â€�", "�"},
-    -- Common double-encoded UTF-8 (fix before the single-encoded forms).
-    {"ÃƒÂ¡", "á"}, {"ÃƒÂ ", "à"}, {"ÃƒÂ¢", "â"}, {"ÃƒÂ£", "ã"},
-    {"ÃƒÂ©", "é"}, {"ÃƒÂª", "ê"}, {"ÃƒÂ­", "í"}, {"ÃƒÂ³", "ó"},
-    {"ÃƒÂ´", "ô"}, {"ÃƒÂµ", "õ"}, {"ÃƒÂº", "ú"}, {"ÃƒÂ§", "ç"},
-    -- Common single-encoded UTF-8 mojibake.
-    {"Ã¡", "á"}, {"Ã ", "à"}, {"Ã¢", "â"}, {"Ã£", "ã"},
-    {"Ã©", "é"}, {"Ãª", "ê"}, {"Ã­", "í"}, {"Ã³", "ó"},
-    {"Ã´", "ô"}, {"Ãµ", "õ"}, {"Ãº", "ú"}, {"Ã§", "ç"},
-    {"Ã€", "À"}, {"Ã‚", "Â"}, {"Ãƒ", "Ã"}, {"Ã‰", "É"},
-    {"ÃŠ", "Ê"}, {"Ã“", "Ó"}, {"Ã”", "Ô"}, {"Ã•", "Õ"},
-    {"Ãš", "Ú"}, {"Ã‡", "Ç"}, {"Ã‘", "Ñ"},
-    {"Âº", "º"}, {"Âª", "ª"}, {"Â°", "°"}, {"Â·", "·"},
-    {"â€™", "’"}, {"â€œ", "“"}, {"â€“", "–"}, {"â€”", "—"}, {"â€¦", "…"},
-}
-
-local function ReplacePlain(text, search, replacement)
-    local startAt = 1
-    while true do
-        local first, last = string.find(text, search, startAt, true)
-        if not first then break end
-        text = string.sub(text, 1, first - 1) .. replacement .. string.sub(text, last + 1)
-        startAt = first + #replacement
-    end
-    return text
-end
-
-local function FixMojibake(value)
-    if typeof(value) ~= "string" then return value end
-    local repaired = value
-
-    -- Some editors turn UTF-8 bytes such as C3 B3 into half-width Hangul
-    -- codepoints (for example "ￃﾳ" instead of "ó"). Decode those byte pairs
-    -- programmatically so this works for every common Portuguese accent, not
-    -- only the one exact example that was reported.
-    local ok, codepoints = pcall(function()
-        local result = {}
-        for _, codepoint in utf8.codes(repaired) do
-            table.insert(result, codepoint)
-        end
-        return result
-    end)
-    if ok and codepoints then
-        local decoded = {}
-        local index = 1
-        while index <= #codepoints do
-            local current = codepoints[index]
-            local nextCodepoint = codepoints[index + 1]
-            local leadByte
-            if current == 0xFFC3 then
-                leadByte = 0xC3
-            elseif current == 0xFFC2 then
-                leadByte = 0xC2
-            end
-
-            if leadByte and nextCodepoint and nextCodepoint >= 0xFF80 and nextCodepoint <= 0xFFBF then
-                local secondByte = nextCodepoint - 0xFF00
-                local decodedCodepoint
-                if leadByte == 0xC3 then
-                    decodedCodepoint = 0xC0 + (secondByte - 0x80)
-                else
-                    decodedCodepoint = secondByte
-                end
-                if decodedCodepoint >= 0x80 and decodedCodepoint <= 0xFF then
-                    table.insert(decoded, utf8.char(decodedCodepoint))
-                    index += 2
-                else
-                    table.insert(decoded, utf8.char(current))
-                    index += 1
-                end
-            else
-                table.insert(decoded, utf8.char(current))
-                index += 1
-            end
-        end
-        repaired = table.concat(decoded)
-    end
-
-    -- Also repair common Latin-1 mojibake forms ("Ã¡", "aÃ§Ã£o", etc.).
-    for _, pair in ipairs(TEXT_ENCODING_FIXES) do
-        repaired = ReplacePlain(repaired, pair[1], pair[2])
-    end
-    return repaired
-end
+local FixMojibake=AuraRepairText
 
 -- Public helper for scripts that need to repair a string before using it.
 UI.FixTextEncoding = FixMojibake
@@ -6035,9 +6005,9 @@ local function SafeWait(duration)
 	end
 end
 
--- ════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------
 -- MAIN WINDOW CREATION
--- ════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------
 
 function UI.CreateWindow(title, subtitle, version, extra)
     local AuraWindowOptions={}
@@ -6076,11 +6046,25 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		error("LocalPlayer not found", 2)
 	end
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- DEFAULT THEME | V4.3 POLISHED CONTROLS
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
-	local Theme = {
+    local Theme = {
+        Background=Color3.fromRGB(20,21,24),TitleBar=Color3.fromRGB(25,27,31),
+        TabBackground=Color3.fromRGB(20,21,24),TabSelected=Color3.fromRGB(40,44,51),
+        Button=Color3.fromRGB(31,33,38),ButtonHover=Color3.fromRGB(38,41,47),
+        Text=Color3.fromRGB(237,240,245),TextDark=Color3.fromRGB(145,153,165),
+        Accent=Color3.fromRGB(167,186,216),ToggleOn=Color3.fromRGB(151,169,199),ToggleOff=Color3.fromRGB(25,27,31),
+        Border=Color3.fromRGB(43,47,54),TabBorder=Color3.fromRGB(43,47,54),DropdownHover=Color3.fromRGB(38,41,47),
+        Cooldown=Color3.fromRGB(89,43,52),Error=Color3.fromRGB(245,113,124),
+        Success=Color3.fromRGB(105,225,164),Warning=Color3.fromRGB(239,195,111),
+    }
+
+	local Themes = {}
+    Themes.Original=CopyTable(Theme)
+    Themes.Default=CopyTable(Theme)
+    Themes.Dark = {
 		Background = Color3.fromRGB(16, 18, 22),
 		TitleBar = Color3.fromRGB(22, 25, 30),
 		TabBackground = Color3.fromRGB(19, 22, 26),
@@ -6101,17 +6085,14 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		DropdownHover = Color3.fromRGB(38, 44, 51),
 	}
 
-	local Themes = {}
-	Themes.Default = CopyTable(Theme)
-    Themes.Dark = CopyTable(Theme)
-    Themes.dark = CopyTable(Theme)
-    Themes.AuraDark = CopyTable(Theme)
+    Themes.dark=CopyTable(Themes.Dark)
+    Themes.AuraDark=CopyTable(Themes.Dark)
 	local AcrylicEnabled = false
 	local AcrylicTransparency = { Background = 0.22, TitleBar = 0.18, TabBackground = 0.24, TabSelected = 0.16, Button = 0.20, ToggleOn = 0.08, ToggleOff = 0.10 }
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- THEME MANAGEMENT SYSTEM
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	local function RegisterTheme(name, colors)
 		if typeof(name) ~= "string" then
@@ -6211,9 +6192,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return result
 	end
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- SCREEN GUI SETUP
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = "AuraUI"
@@ -6239,7 +6220,8 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		pcall(function() object.AutoLocalize = false end)
 		if object:IsA("TextBox") then
 			object.PlaceholderText = FixMojibake(object.PlaceholderText)
-			if object.Text ~= "" then object.Text = FixMojibake(object.Text) end
+            -- TextBox.Text belongs to the caller/user. Preserve cursor, IME input,
+            -- pasted code and literal strings even when a theme refresh runs.
 		else
 			object.Text = FixMojibake(object.Text)
 		end
@@ -6459,9 +6441,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		table.clear(trackedConnections)
 	end)
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- MAIN WINDOW FRAME
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	local Main = Instance.new("CanvasGroup")
 	Main.Name = "MainWindow"
@@ -6500,9 +6482,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	TopAccentCorner.CornerRadius = UDim.new(1, 0)
 	TopAccentCorner.Parent = TopAccent
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- TITLE BAR
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	local TitleBar = Instance.new("Frame")
 	TitleBar.Name = "TitleBar"
@@ -6590,9 +6572,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		task.defer(LayoutHeaderText)
 	end)
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- WINDOW CONTROLS (Minimize & Close)
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	local function CreateControlButton(text, position)
 		local Btn = Instance.new("TextButton")
@@ -6619,18 +6601,18 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return Btn
 	end
 
-	local Minimize = CreateControlButton("−", UDim2.new(1, -68, 0, 2))
-	local Close = CreateControlButton("×", UDim2.new(1, -34, 0, 2))
+	local Minimize = CreateControlButton("\226\136\146", UDim2.new(1, -68, 0, 2))
+	local Close = CreateControlButton("\195\151", UDim2.new(1, -34, 0, 2))
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- WINDOW DRAGGING
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	-- Mouse and touch window movement is installed by the AURA layout adapter.
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- WINDOW RESIZING
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	local Resize = Instance.new("TextButton")
 	Resize.Name = "ResizeHandle"
@@ -6690,9 +6672,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 
 	-- Resizing uses the same viewport constraints as SetSize.
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- TABS & CONTENT AREA
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	local TabFrame = Instance.new("ScrollingFrame")
 	TabFrame.Name = "TabsPanel"
@@ -6738,9 +6720,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	ContentCorner.CornerRadius = UDim.new(0, 6)
 	ContentCorner.Parent = Content
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- MINIMIZE/MAXIMIZE LOGIC
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
     local OnNativeMinimize
 	local minimized = false
@@ -6773,9 +6755,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		ScreenGui:Destroy()
 	end)
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- UI COMPONENT FUNCTIONS
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	local AddButton
 	local AddToggle
@@ -6788,9 +6770,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	local AddColorPicker
 	local ShowNotification
 
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 	-- BUTTON COMPONENT
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 
 	function AddButton(page, text, callback)
 		if not page then error("Page required for AddButton", 2) end
@@ -6835,9 +6817,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return Btn
 	end
 
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 	-- TOGGLE COMPONENT
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 
 	function AddToggle(page, text, default, callback)
 		if not page then error("Page required for AddToggle", 2) end
@@ -6923,9 +6905,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return ToggleAPI
 	end
 
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 	-- SLIDER COMPONENT
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 
 	function AddSlider(page, text, min, max, default, callback)
 		if not page then error("Page required for AddSlider", 2) end
@@ -7070,9 +7052,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return SliderAPI
 	end
 
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 	-- TEXT LABEL COMPONENT
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 
 	function AddTextLabel(page, text)
 		if not page then error("Page required for AddTextLabel", 2) end
@@ -7098,9 +7080,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return Label
 	end
 
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 	-- PARAGRAPH COMPONENT
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 
 	function AddParagraph(page, title, text)
 		if not page then error("Page required for AddParagraph", 2) end
@@ -7177,9 +7159,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return Box
 	end
 
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 	-- DROPDOWN COMPONENT (IMPROVED)
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 
 	function AddDropdown(page, text, options, callback)
 		if not page then error("Page required for AddDropdown", 2) end
@@ -7434,9 +7416,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return DropdownAPI
 	end
 
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 	-- COOLDOWN BUTTON COMPONENT
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 
 	function AddCooldownButton(page, text, cooldown, callback)
 		if not page then error("Page required for AddCooldownButton", 2) end
@@ -7512,9 +7494,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return CooldownAPI
 	end
 
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 	-- TEXT BOX COMPONENT
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 
 	function AddTextBox(page, placeholder, callback)
 		if not page then error("Page required for AddTextBox", 2) end
@@ -7563,7 +7545,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 			return TextBox.Text
 		end
 		function TextBoxAPI.SetText(text)
-			TextBox.Text = ValidateString(text, true) or ""
+            TextBox.Text = text==nil and ""or tostring(text)
 		end
 		function TextBoxAPI.Clear()
 			TextBox.Text = ""
@@ -7573,9 +7555,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	end
 
 
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 	-- COLOR PICKER COMPONENT (HSV: saturation/value square + hue strip)
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 
     function AddColorPicker(page, text, defaultColor, callback)
         if not page then error("Page required for AddColorPicker", 2) end
@@ -7721,7 +7703,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
         CloseButton.Size = UDim2.new(0, 22, 0, 22)
         CloseButton.Position = UDim2.new(1, -27, 0, 3)
         CloseButton.BackgroundTransparency = 1
-        CloseButton.Text = "×"
+        CloseButton.Text = "\195\151"
         CloseButton.TextColor3 = Theme.TextDark
         CloseButton.TextSize = 15
         CloseButton.Font = Enum.Font.Gotham
@@ -8032,9 +8014,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
         return PickerAPI
     end
 
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 	-- BOTTOM-RIGHT NOTIFICATIONS
-	-- ─────────────────────────────────────────────────────────
+	-- ---------------------------------------------------------
 
 	local notificationContainer
 	local notificationLayout
@@ -8043,9 +8025,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	ShowNotification = function(title, message, duration, kind)
 		if message == nil then
 			message = title
-			title = "Notificação"
+			title = "Notifica\195\167\195\163o"
 		end
-		title = ValidateString(title, true) or "Notificação"
+		title = ValidateString(title, true) or "Notifica\195\167\195\163o"
 		message = ValidateString(message, true) or ""
 		duration = math.max(0.5, tonumber(duration) or 3.5)
 		kind = string.lower(tostring(kind or "info"))
@@ -8166,9 +8148,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return Toast
 	end
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- TAB SYSTEM
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
     local AttachAuraTab
     local OnNativeSelection
@@ -8252,21 +8234,21 @@ function UI.CreateWindow(title, subtitle, version, extra)
 
 
 	local BuiltInTabIcons = {
-		home = "⌂",
-		settings = "⚙",
-		config = "⚙",
-		palette = "◉",
-		colors = "◉",
-		info = "ⓘ",
-		about = "ⓘ",
-		flask = "⚗",
-		test = "✓",
-		user = "♙",
-		shield = "⬟",
-		game = "▶",
-		search = "⌕",
-		code = "⌘",
-		bell = "♧",
+		home = "\226\140\130",
+		settings = "\226\154\153",
+		config = "\226\154\153",
+		palette = "\226\151\137",
+		colors = "\226\151\137",
+		info = "\226\147\152",
+		about = "\226\147\152",
+		flask = "\226\154\151",
+		test = "\226\156\147",
+		user = "\226\153\153",
+		shield = "\226\172\159",
+		game = "\226\150\182",
+		search = "\226\140\149",
+		code = "\226\140\152",
+		bell = "\226\153\167",
 	}
 
 	local function ResolveTabIcon(icon)
@@ -8614,9 +8596,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return Tab
 	end
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- MINIMIZE BUTTON (FLOATING)
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	local function AddMinimizeButton(config, colonConfig)
 		-- Accept both dot syntax: Window.AddMinimizeButton({...})
@@ -8737,9 +8719,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return Ball
 	end
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- THEME APPLICATION
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	ApplyTheme = function()
 		for _, object in ipairs(ScreenGui:GetDescendants()) do
@@ -8856,7 +8838,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 			end
 		end
 		
-		-- Atualiza a cor do texto das tabs mesmo quando não estão selecionadas
+		-- Atualiza a cor do texto das tabs mesmo quando nao estao selecionadas
 		for _, tab in ipairs(Tabs) do
 			if tab.Button then
 				tab.Button.TextStrokeTransparency = 1
@@ -8874,9 +8856,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		end
 	end
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- BUILT-IN THEMES
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	RegisterTheme("Ocean", {
 		Background = Color3.fromRGB(15, 22, 30),
@@ -9093,9 +9075,9 @@ function UI.CreateWindow(title, subtitle, version, extra)
 	-- bright default strokes/text styles from remaining until the first theme change.
 	ApplyTheme()
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- PUBLIC API
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 
 	local WindowAPI = {
 		-- Version info
@@ -9204,11 +9186,11 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		if ScreenGui and ScreenGui.Parent then ScreenGui:Destroy() end
 	end
 
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	-- UI2 / IceHub compatibility layer
 	-- Maps the old CreateMain -> NewTab -> NewSection API to this library.
 	-- Both colon calls (obj:Method(...)) and dot calls (obj.Method(...)) work.
-	-- ════════════════════════════════════════════════════════════
+	-- ------------------------------------------------------------
 	local function UnpackCompatArgs(owner, a, b, c, d, e, f)
 		if a == owner then
 			return b, c, d, e, f
@@ -9481,7 +9463,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		return CreateCompatSearchDropdown(page, dropdownLabel, placeholder, items, callback)
 	end
 
-	local compatThemeName = "Default"
+	local compatThemeName = "Original"
 
 	function WindowAPI.NewTab(a, b, c)
 		-- UI2-compatible call signature: NewTab(title, icon).
@@ -9633,7 +9615,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
 		local aliases = { default = "Default", graphite = "Graphite", green = "Green", emerald = "Emerald", ocean = "Ocean", purple = "Purple", red = "Red", crimson = "Crimson", rose = "Rose", amber = "Amber", monochrome = "Monochrome", minimal = "Minimal", c00l = "c00l", cool = "c00l", troll = "Troll", brainrot = "Brainrot", barbie = "Barbie", halloween = "Purple", christmas = "Ocean" }
 		local normalized = aliases[string.lower(themeName)] or themeName
 		local result = SetTheme(normalized)
-		if result then compatThemeName = normalized end
+		if result then compatThemeName = normalized=="Default"and"Original"or normalized end
 		return result
 	end
 
@@ -9671,7 +9653,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
             end
         end
         local search=Instance.new("TextBox")
-        search.Name="AuraSearch";search.Text="";search.PlaceholderText="Pesquisar funções..."
+        search.Name="AuraSearch";search.Text="";search.PlaceholderText="Pesquisar fun\195\167\195\181es..."
         search.ClearTextOnFocus=false;search.TextSize=12;search.Font=Enum.Font.Gotham
         search.TextXAlignment=Enum.TextXAlignment.Left;search.BackgroundColor3=Theme.Button
         search.TextColor3=Theme.Text;search.PlaceholderColor3=Theme.TextDark;search.BorderSizePixel=0
@@ -9694,7 +9676,18 @@ function UI.CreateWindow(title, subtitle, version, extra)
             RelayoutTabs=relayout,BeforeRemove=function(tab)if CurrentTab==tab then CurrentTab=nil end end,
             Minimize=function(state)if state==nil or (not not state)~=minimized then ToggleMinimize()end end,
         },AuraWindowOptions)
-        AuraThemeChanged=function(value)core.ThemeName=typeof(value)=="string" and value or "Custom";core:SyncTheme()end
+        AuraThemeChanged=function(value)
+            local name=typeof(value)=="string"and value or "Custom"
+            if name=="Default"then name="Original"end
+            if name=="Custom"then
+                for _,candidate in ipairs({"Original","Dark"})do
+                    local match=true
+                    for role,color in pairs(Themes[candidate])do if Theme[role]~=color then match=false;break end end
+                    if match then name=candidate;break end
+                end
+            end
+            core.ThemeName=name;compatThemeName=name;core:SyncTheme()
+        end
         OnNativeMinimize=function()
             core.Minimized=minimized
             core:_emit("MinimizedChanged",minimized)
@@ -9893,14 +9886,14 @@ function UI.CreateWindow(title, subtitle, version, extra)
             task.defer(function()if object.Parent then registerText(object)end end)
         end)
         local noResults=Instance.new("TextLabel")
-        noResults.Name="SearchEmpty";noResults.Text="Nenhuma função encontrada. Tente outro nome."
+        noResults.Name="SearchEmpty";noResults.Text="Nenhuma fun\195\167\195\163o encontrada. Tente outro nome."
         noResults.BackgroundTransparency=1;noResults.TextColor3=Theme.TextDark;noResults.TextSize=13
         noResults.Font=Enum.Font.Gotham;noResults.TextWrapped=true;noResults.Visible=false
         noResults.Position=UDim2.fromOffset(20,72);noResults.Size=UDim2.new(1,-40,0,60)
         noResults.Parent=Content;noResults:SetAttribute("ThemeRole","TextDark")
         noResults.Text="Nenhum resultado. Tente outro nome."
         local resetSearch=Instance.new("TextButton")
-        resetSearch.Name="ClearSearch";resetSearch.Text="×";resetSearch.TextSize=18
+        resetSearch.Name="ClearSearch";resetSearch.Text="\195\151";resetSearch.TextSize=18
         resetSearch.Font=Enum.Font.Gotham;resetSearch.BackgroundTransparency=1;resetSearch.TextColor3=Theme.TextDark
         resetSearch.Size=UDim2.fromOffset(28,28);resetSearch.Position=UDim2.new(1,-30,.5,-14)
         resetSearch.Visible=false;resetSearch.Parent=search;resetSearch:SetAttribute("ThemeRole","TextDark")
@@ -10202,7 +10195,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
             themeChanged(value);applyNeon()
         end
         function core:GetColorThemeNames()
-            local names={"Dark"}
+            local names={"Original","Dark"}
             for _,choice in ipairs(colorChoices)do table.insert(names,choice[1])end
             table.insert(names,"Personalizado");return names
         end
@@ -10541,7 +10534,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
             local railStroke=make("UIStroke","NavigationBorder",rail,"Border")
             railStroke.Thickness=1;railStroke.Transparency=.6
             local caption=make("TextLabel","NavigationCaption",extras,"TextDark")
-            caption.Text="NAVEGAÇÃO";caption.TextSize=10;caption.Font=Enum.Font.GothamMedium
+            caption.Text="NAVEGA\195\135\195\131O";caption.TextSize=10;caption.Font=Enum.Font.GothamMedium
             caption.TextXAlignment=Enum.TextXAlignment.Left;caption.TextColor3=Theme.TextDark
             local footer=make("TextLabel","LibraryCaption",extras,"TextDark")
             footer.TextSize=10;footer.Font=Enum.Font.Gotham;footer.TextXAlignment=Enum.TextXAlignment.Left
@@ -10597,7 +10590,7 @@ function UI.CreateWindow(title, subtitle, version, extra)
                 rail.Position=UDim2.fromOffset(12,84);rail.Size=UDim2.new(0,sidebar,1,-98)
                 rail.BackgroundTransparency=core.PanelTransparency or 0
                 caption.Visible=not compact;caption.Position=UDim2.fromOffset(26,96);caption.Size=UDim2.fromOffset(sidebar-28,16)
-                footer.Visible=not compact;footer.Text="LIB DARK  ·  "..tostring(#Tabs).." abas"
+                footer.Visible=not compact;footer.Text="LIB DARK  \194\183  "..tostring(#Tabs).." abas"
                 footer.Position=UDim2.new(0,26,1,-41);footer.Size=UDim2.fromOffset(sidebar-28,16)
                 TabFrame.Position=UDim2.fromOffset(12,compact and 92 or 120)
                 TabFrame.Size=UDim2.new(0,sidebar,1,compact and -114 or -168)
