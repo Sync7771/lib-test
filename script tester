@@ -6,10 +6,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LP = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
--- Carrega a Lib AURA
 local Aura = loadstring(game:HttpGet("https://raw.githubusercontent.com/Sync7771/lib-test/refs/heads/main/AURA%20HUB"))()
 
--- Cria a Janela Principal
 local win = Aura:CreateWindow({
     Title = "MI HUB | HELL", 
     Subtitle = "Scanner & Executor",
@@ -23,6 +21,42 @@ win:SetAccent(Color3.fromRGB(255, 0, 0))
 
 local backdoorRemote = nil
 local selectedTarget = ""
+local isGodmode = false
+local isInvisible = false
+
+-- ==========================================
+-- LOOPS DE BACKGROUND (Godmode e Invisibilidade)
+-- ==========================================
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if isGodmode and LP.Character then
+            local h = LP.Character:FindFirstChildOfClass("Humanoid")
+            if h then
+                h.MaxHealth = math.huge
+                h.Health = math.huge
+            end
+            local r = LP.Character:FindFirstChild("HumanoidRootPart")
+            -- Se cair do mapa, teleporta de volta pro centro
+            if r and r.Position.Y < -100 then
+                r.CFrame = CFrame.new(0, 50, 0)
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        if isInvisible and LP.Character then
+            for _, v in ipairs(LP.Character:GetDescendants()) do
+                if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                    v.Transparency = 1
+                end
+            end
+        end
+    end
+end)
 
 -- ==========================================
 -- ABA 1: SCANNER / EXECUTOR
@@ -51,7 +85,7 @@ tabExec:CreateButton({
         
         if #remotes == 0 then
             statusLabel:Set("Status: Nenhum remote encontrado.")
-            win:Notify({Title = "Falha", Content = "Nenhum remote encontrado no jogo.", Duration = 5})
+            win:Notify({Title = "Falha", Content = "Nenhum remote encontrado.", Duration = 5})
             return
         end
 
@@ -115,22 +149,18 @@ tabExec:CreateButton({
             win:Notify({Title = "Aviso", Content = "A textbox está vazia.", Duration = 3})
             return
         end
-
         if backdoorRemote then
             pcall(function()
                 if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(src) else backdoorRemote:InvokeServer(src) end
             end)
         end
-
         local func, err = loadstring(src, "=MI_HUB")
         if not func then
             win:Notify({Title = "Erro (Loadstring)", Content = tostring(err), Duration = 5})
             return
         end
-        
         if setfenv then pcall(setfenv, func, getfenv(0)) end
         local ok, runErr = pcall(func)
-        
         if ok then
             win:Notify({Title = "Executado", Content = "Script rodou localmente.", Duration = 3})
         else
@@ -146,35 +176,32 @@ tabExec:CreateButton({
 local tabUtil = win:CreateTab({Name = "Utilidades", Icon = "user"})
 local grpLocal = tabUtil:CreateGroup({Name = "Local Player"})
 
-grpLocal:CreateButton({Name = "Godmode Local", Icon = "shield", Callback = function()
-    local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-    if h then h.MaxHealth = math.huge; h.Health = math.huge end
-end})
-
-grpLocal:CreateButton({Name = "Invisibilidade", Icon = "eye-off", Callback = function()
-    local c = LP.Character
-    if c then for _, v in ipairs(c:GetDescendants()) do if v:IsA("BasePart") then v.Transparency = 1 end end end
-end})
-
-grpLocal:CreateButton({Name = "Super Velocidade (Speed 200)", Icon = "wind", Callback = function()
-    local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-    if h then h.WalkSpeed = 200 end
-end})
-
-grpLocal:CreateButton({Name = "Pular Alto (Jump 500)", Icon = "arrow-up", Callback = function()
-    local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-    if h then h.JumpPower = 500 end
-end})
-
-grpLocal:CreateButton({Name = "Fling (Se jogar longe)", Icon = "zap", Callback = function()
-    local r = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-    if r then
-        local bv = Instance.new("BodyVelocity")
-        bv.Velocity = Vector3.new(math.random(-1000, 1000), 5000, math.random(-1000, 1000))
-        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        bv.Parent = r
-        task.delay(2, function() if bv then bv:Destroy() end end)
+grpLocal:CreateToggle({Name = "Godmode (Imortal)", Icon = "shield", Default = false, Callback = function(state)
+    isGodmode = state
+    if not state then
+        local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+        if h then h.MaxHealth = 100; h.Health = 100 end
     end
+end})
+
+grpLocal:CreateToggle({Name = "Invisibilidade Real", Icon = "eye-off", Default = false, Callback = function(state)
+    isInvisible = state
+    if not state then
+        local c = LP.Character
+        if c then for _, v in ipairs(c:GetDescendants()) do if v:IsA("BasePart") then v.Transparency = 0 end end end
+    end
+end})
+
+local speedInput = grpLocal:CreateInput({Name = "Velocidade (Speed)", PlaceholderText = "Ex: 100", Default = "16"})
+grpLocal:CreateButton({Name = "Aplicar Velocidade", Icon = "wind", Callback = function()
+    local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+    if h then h.WalkSpeed = tonumber(speedInput:Get()) or 16 end
+end})
+
+local jumpInput = grpLocal:CreateInput({Name = "Pulo (Jump)", PlaceholderText = "Ex: 100", Default = "50"})
+grpLocal:CreateButton({Name = "Aplicar Pulo", Icon = "arrow-up", Callback = function()
+    local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+    if h then h.JumpPower = tonumber(jumpInput:Get()) or 50 end
 end})
 
 
@@ -244,6 +271,20 @@ local function sendCmd(cmd, args)
                 end)
             end
         ]], args.target)
+    elseif cmd == "fling" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then
+                local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local bv = Instance.new("BodyVelocity")
+                    bv.Velocity = Vector3.new(math.random(-1000,1000), 5000, math.random(-1000,1000))
+                    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                    bv.Parent = hrp
+                    task.delay(2, function() if bv then bv:Destroy() end end)
+                end
+            end
+        ]], args.target)
     end
     
     pcall(function()
@@ -261,6 +302,9 @@ end})
 grpAcoes:CreateButton({Name = "Arco-íris (Rainbow)", Icon = "palette", Callback = function()
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("rainbow", {target = p.Name}) end end else sendCmd("rainbow", {target = selectedTarget}) end
 end})
+grpAcoes:CreateButton({Name = "Fling Alvo", Icon = "wind", Callback = function()
+    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("fling", {target = p.Name}) end end else sendCmd("fling", {target = selectedTarget}) end
+end})
 
 
 -- ==========================================
@@ -272,16 +316,13 @@ local grpServer = tabServer:CreateGroup({Name = "Destruição Server-Side"})
 grpServer:CreateButton({Name = "Explodir Tudo", Icon = "bomb", Callback = function() sendCmd("explode") end})
 grpServer:CreateButton({Name = "Lag Server (Pesado)", Icon = "zap", Callback = function() sendCmd("lag") end})
 
--- O MÁGICO: Mudar a cor de TUDO
 grpServer:CreateButton({Name = "Color Spray (Tudo Fica Vermelho)", Icon = "palette", Callback = function()
     if not backdoorRemote then 
         win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
         return 
     end
     local code = [[
-        local targetColor = Color3.fromRGB(255, 0, 0) -- Vermelho Infernal
-        
-        -- Muda tudo no Workspace
+        local targetColor = Color3.fromRGB(255, 0, 0)
         for _, v in ipairs(workspace:GetDescendants()) do
             if v:IsA("BasePart") then
                 pcall(function() v.Color = targetColor end)
@@ -289,8 +330,6 @@ grpServer:CreateButton({Name = "Color Spray (Tudo Fica Vermelho)", Icon = "palet
                 pcall(function() v.Color3 = targetColor end)
             end
         end
-
-        -- Muda a GUI de todos os jogadores (se o servidor mandar)
         for _, p in ipairs(game.Players:GetPlayers()) do
             local pg = p:FindFirstChild("PlayerGui")
             if pg then
