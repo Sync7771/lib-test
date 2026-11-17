@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox
--- MI HUB | HELL - Destruição Server-Side Real
+-- MI HUB | HELL - Destruição Server-Side Real (Atualizado)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -169,20 +169,6 @@ local function sendCmd(cmd, args)
                 end
             end
         ]]
-    elseif cmd == "fling" then
-        code = string.format([[
-            local p = game.Players:FindFirstChild("%s")
-            if p and p.Character then
-                local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    local bv = Instance.new("BodyVelocity")
-                    bv.Velocity = Vector3.new(math.random(-1000,1000), 5000, math.random(-1000,1000))
-                    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-                    bv.Parent = hrp
-                    task.delay(2, function() if bv then bv:Destroy() end end)
-                end
-            end
-        ]], args.target)
     elseif cmd == "godmode_on" then
         code = string.format([[
             local p = game.Players:FindFirstChild("%s")
@@ -235,16 +221,11 @@ end})
 grpAcoes:CreateButton({Name = "Matar Alvo", Icon = "skull", Callback = function() 
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP and p.Character then p.Character:BreakJoints() end end else sendCmd("kill", {target = selectedTarget}) end
 end})
-grpAcoes:CreateButton({Name = "Fling Alvo", Icon = "wind", Callback = function()
-    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("fling", {target = p.Name}) end end else sendCmd("fling", {target = selectedTarget}) end
-end})
-
 grpAcoes:CreateToggle({Name = "Godmode (Server-Side)", Icon = "shield", Default = false, Callback = function(state)
     if selectedTarget == "" then return end
     local cmd = state and "godmode_on" or "godmode_off"
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd(cmd, {target = p.Name}) end end else sendCmd(cmd, {target = selectedTarget}) end
 end})
-
 grpAcoes:CreateToggle({Name = "Invisibilidade (Server-Side)", Icon = "eye-off", Default = false, Callback = function(state)
     if selectedTarget == "" then return end
     local cmd = state and "invis_on" or "invis_off"
@@ -260,8 +241,8 @@ local grpServer = tabServer:CreateGroup({Name = "Destruição Server-Side"})
 grpServer:CreateButton({Name = "Explodir Mapa Inteiro", Icon = "bomb", Callback = function() sendCmd("explode") end})
 grpServer:CreateButton({Name = "Lag Server Massivo", Icon = "zap", Callback = function() sendCmd("lag") end})
 
--- CRIPTO ALL SERVER-SIDE (Cria uma parede de Hints criptografados na tela de todo mundo)
-grpServer:CreateToggle({Name = "CRIPTO ALL (Bugar Tela de Todos)", Icon = "terminal", Default = false, Callback = function(state)
+-- O MÁGICO: CRIPTO ALL (Agora com Tools automáticas e velocidade insana)
+grpServer:CreateToggle({Name = "CRIPTO ALL (Bugar Tela e Tools)", Icon = "terminal", Default = false, Callback = function(state)
     if not backdoorRemote then return end
     
     if state then
@@ -277,34 +258,64 @@ grpServer:CreateToggle({Name = "CRIPTO ALL (Bugar Tela de Todos)", Icon = "termi
                     return table.concat(out)
                 end
 
-                while _G.MI_ServerCrypto do
-                    for _, p in ipairs(game.Players:GetPlayers()) do
-                        -- Cria um Hint piscando na tela do jogador
-                        local hint = Instance.new("Hint")
-                        hint.Text = "HACKED: " .. scramble("SYSTEM FAILURE")
-                        hint.Parent = workspace
-                        task.delay(0.1, function() if hint then hint:Destroy() end end)
-                        
-                        -- Altera os nomes dos objetos no PlayerGui (se der)
-                        local pg = p:FindFirstChild("PlayerGui")
-                        if pg then
-                            for _, obj in ipairs(pg:GetDescendants()) do
-                                if obj.Name ~= "Humanoid" and obj.Name ~= "HumanoidRootPart" then
-                                    pcall(function() obj.Name = scramble(obj.Name) end)
-                                end
+                -- Loop que criptografa o mapa e cria tools
+                task.spawn(function()
+                    while _G.MI_ServerCrypto do
+                        -- 1. Cria tools com física e equipa
+                        for _, p in ipairs(game.Players:GetPlayers()) do
+                            local bp = p:FindFirstChild("Backpack")
+                            if bp then
+                                local tool = Instance.new("Tool")
+                                tool.Name = "HACKED_" .. scramble("TOOL")
+                                tool.RequiresHandle = true
+                                
+                                local handle = Instance.new("Part")
+                                handle.Name = "Handle"
+                                handle.Size = Vector3.new(2, 2, 2) -- Um pouco maior
+                                handle.BrickColor = BrickColor.random()
+                                handle.Material = Enum.Material.Neon
+                                handle.Parent = tool
+                                
+                                -- Física Insana (Faz a tool voar em velocidade máxima)
+                                local bodyVel = Instance.new("BodyVelocity")
+                                bodyVel.Velocity = Vector3.new(math.random(-500, 500), math.random(100, 500), math.random(-500, 500))
+                                bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                                bodyVel.Parent = handle
+                                
+                                tool.Parent = bp
+                                
+                                local hum = p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+                                if hum then pcall(function() hum:EquipTool(tool) end) end
                             end
                         end
-                    end
-                    
-                    -- Altera os nomes de TUDO na workspace
-                    for _, v in ipairs(workspace:GetDescendants()) do
-                        if v.Name ~= "Humanoid" and v.Name ~= "HumanoidRootPart" and not v:IsA("Player") then
-                            pcall(function() v.Name = scramble(v.Name) end)
+
+                        -- 2. Muda o nome de tudo no mapa e da GUI (Garante que não vai flingar)
+                        for _, v in ipairs(workspace:GetDescendants()) do
+                            if v.Name ~= "Humanoid" and v.Name ~= "HumanoidRootPart" and not v:IsA("Player") then
+                                pcall(function() v.Name = scramble(v.Name) end)
+                            end
                         end
+                        
+                        for _, p in ipairs(game.Players:GetPlayers()) do
+                            local pg = p:FindFirstChild("PlayerGui")
+                            if pg then
+                                for _, obj in ipairs(pg:GetDescendants()) do
+                                    if obj.Name ~= "Humanoid" and obj.Name ~= "HumanoidRootPart" then
+                                        pcall(function() obj.Name = scramble(obj.Name) end)
+                                    end
+                                end
+                            end
+                            
+                            -- 3. Cria Hints criptografados na tela
+                            local hint = Instance.new("Hint")
+                            hint.Text = "HACKED: " .. scramble("SYSTEM FAILURE")
+                            hint.Parent = workspace
+                            task.delay(0.1, function() if hint then hint:Destroy() end end)
+                        end
+                        
+                        task.wait(0.1)
                     end
-                    
-                    task.wait(0.1)
-                end
+                end)
             end)
         ]]
         pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
@@ -316,53 +327,27 @@ grpServer:CreateToggle({Name = "CRIPTO ALL (Bugar Tela de Todos)", Icon = "termi
     end
 end})
 
--- TOOLS VOADORAS BUGADAS
-grpServer:CreateButton({Name = "Injetar Tools Voadoras Bugadas", Icon = "hammer", Callback = function()
+-- O NOVO: DUPE TOOL MASSIVO
+grpServer:CreateButton({Name = "Clonar Tools (Dupe)", Icon = "copy", Callback = function()
     if not backdoorRemote then return end
     
     local code = [[
-        local function getRandName()
-            local chars = "!@#$%^&*()_+{}|:<>?~"
-            local out = {}
-            for i = 1, 10 do local r = math.random(1, #chars); out[i] = chars:sub(r, r) end
-            return "HACKED_" .. table.concat(out)
-        end
-
-        -- Loop cria tools em todo mundo e aplica física
         task.spawn(function()
-            for i = 1, 50 do
-                for _, p in ipairs(game.Players:GetPlayers()) do
-                    local bp = p:FindFirstChild("Backpack")
-                    if bp then
-                        local tool = Instance.new("Tool")
-                        tool.Name = getRandName()
-                        tool.RequiresHandle = true
-                        
-                        local handle = Instance.new("Part")
-                        handle.Name = "Handle"
-                        handle.Size = Vector3.new(1, 1, 1)
-                        handle.BrickColor = BrickColor.random()
-                        handle.Material = Enum.Material.Neon
-                        handle.Parent = tool
-                        
-                        -- Joga a tool voando pra todo lado
-                        local bodyVel = Instance.new("BodyVelocity")
-                        bodyVel.Velocity = Vector3.new(math.random(-100, 100), math.random(10, 100), math.random(-100, 100))
-                        bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-                        bodyVel.Parent = handle
-                        
-                        tool.Parent = bp
-                        
-                        local hum = p.Character and p.Character:FindFirstChildOfClass("Humanoid")
-                        if hum then
-                            pcall(function() hum:EquipTool(tool) end)
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                local bp = p:FindFirstChild("Backpack")
+                if bp then
+                    for _, item in ipairs(bp:GetChildren()) do
+                        if item:IsA("Tool") then
+                            for i = 1, 10 do -- Cria 10 cópias de cada tool que o cara tiver
+                                local clone = item:Clone()
+                                clone.Parent = bp
+                            end
                         end
                     end
                 end
-                task.wait(0.1)
             end
         end)
     ]]
     pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
-    win:Notify({Title = "Tools Injetadas", Content = "Enviando tools bugadas via servidor.", Duration = 3})
+    win:Notify({Title = "Dupe", Content = "Ferramentas duplicadas no servidor.", Duration = 3})
 end})
