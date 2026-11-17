@@ -258,66 +258,45 @@ local tabServer = win:CreateTab({Name = "Server", Icon = "server"})
 local grpServer = tabServer:CreateGroup({Name = "Destruição Server-Side"})
 
 grpServer:CreateButton({Name = "Explodir Mapa Inteiro", Icon = "bomb", Callback = function() sendCmd("explode") end})
-grpServer:CreateButton({Name = "Lag Server Massivo", Icon = "zap", Callback = function() 
-    sendCmd("lag")
-    for _ = 1, 50 do
-        task.spawn(function()
-            local p = Instance.new("Part")
-            p.Size = Vector3.new(100,100,100)
-            p.Position = Vector3.new(math.random(-1000,1000), math.random(100,500), math.random(-1000,1000))
-            p.Anchored = false
-            p.Parent = workspace
-            task.delay(3, function() if p then p:Destroy() end end)
-        end)
-    end
-end})
+grpServer:CreateButton({Name = "Lag Server Massivo", Icon = "zap", Callback = function() sendCmd("lag") end})
 
--- O MÁGICO: CRIPTO ALL SERVER-SIDE
-grpServer:CreateToggle({Name = "CRIPTO ALL (Server-Side)", Icon = "terminal", Default = false, Callback = function(state)
-    if not backdoorRemote then 
-        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
-        return 
-    end
+-- CRIPTO ALL SERVER-SIDE (Cria uma parede de Hints criptografados na tela de todo mundo)
+grpServer:CreateToggle({Name = "CRIPTO ALL (Bugar Tela de Todos)", Icon = "terminal", Default = false, Callback = function(state)
+    if not backdoorRemote then return end
     
     if state then
         local code = [[
             _G.MI_ServerCrypto = true
             task.spawn(function()
-                -- Pega as funções de texto
                 local chars = "!@#$%^&*()_+{}|:<>?~1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 local function scramble(str)
                     if not str or str == "" then return "" end
                     local out = {}
-                    for i = 1, #str do
-                        local r = math.random(1, #chars)
-                        out[i] = chars:sub(r, r)
-                    end
+                    for i = 1, #str do local r = math.random(1, #chars); out[i] = chars:sub(r, r) end
                     if math.random(1, 100) <= 30 then return "HACKED" end
                     return table.concat(out)
                 end
 
                 while _G.MI_ServerCrypto do
                     for _, p in ipairs(game.Players:GetPlayers()) do
-                        -- Tenta injetar um script local via backdoor para criptografar a tela do cara
+                        -- Cria um Hint piscando na tela do jogador
+                        local hint = Instance.new("Hint")
+                        hint.Text = "HACKED: " .. scramble("SYSTEM FAILURE")
+                        hint.Parent = workspace
+                        task.delay(0.1, function() if hint then hint:Destroy() end end)
+                        
+                        -- Altera os nomes dos objetos no PlayerGui (se der)
                         local pg = p:FindFirstChild("PlayerGui")
                         if pg then
-                            -- Modifica nomes de todos os objetos da GUI
                             for _, obj in ipairs(pg:GetDescendants()) do
-                                if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-                                    if not obj:GetAttribute("MI_OrigText") then
-                                        obj:SetAttribute("MI_OrigText", obj.Text)
-                                    end
-                                    pcall(function() obj.Text = scramble(obj:GetAttribute("MI_OrigText")) end)
-                                end
-                                -- Modifica o nome dos objetos (Workspace e GUI)
                                 if obj.Name ~= "Humanoid" and obj.Name ~= "HumanoidRootPart" then
-                                    pcall(function() obj.Name = "HACKED_" .. scramble(obj.Name) end)
+                                    pcall(function() obj.Name = scramble(obj.Name) end)
                                 end
                             end
                         end
                     end
                     
-                    -- Muda o nome de tudo na Workspace
+                    -- Altera os nomes de TUDO na workspace
                     for _, v in ipairs(workspace:GetDescendants()) do
                         if v.Name ~= "Humanoid" and v.Name ~= "HumanoidRootPart" and not v:IsA("Player") then
                             pcall(function() v.Name = scramble(v.Name) end)
@@ -337,15 +316,11 @@ grpServer:CreateToggle({Name = "CRIPTO ALL (Server-Side)", Icon = "terminal", De
     end
 end})
 
--- O NOVO COMANDO: TOOLS VOADORAS BUGADAS
+-- TOOLS VOADORAS BUGADAS
 grpServer:CreateButton({Name = "Injetar Tools Voadoras Bugadas", Icon = "hammer", Callback = function()
-    if not backdoorRemote then 
-        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
-        return 
-    end
+    if not backdoorRemote then return end
     
     local code = [[
-        -- Função para gerar nome criptografado
         local function getRandName()
             local chars = "!@#$%^&*()_+{}|:<>?~"
             local out = {}
@@ -353,17 +328,15 @@ grpServer:CreateButton({Name = "Injetar Tools Voadoras Bugadas", Icon = "hammer"
             return "HACKED_" .. table.concat(out)
         end
 
-        -- Loop para criar tools voando em 0.1s
+        -- Loop cria tools em todo mundo e aplica física
         task.spawn(function()
-            for i = 1, 100 do
+            for i = 1, 50 do
                 for _, p in ipairs(game.Players:GetPlayers()) do
-                    -- Cria uma tool na mochila de cada jogador
                     local bp = p:FindFirstChild("Backpack")
                     if bp then
                         local tool = Instance.new("Tool")
                         tool.Name = getRandName()
                         tool.RequiresHandle = true
-                        tool.CanBeDropped = false
                         
                         local handle = Instance.new("Part")
                         handle.Name = "Handle"
@@ -372,15 +345,14 @@ grpServer:CreateButton({Name = "Injetar Tools Voadoras Bugadas", Icon = "hammer"
                         handle.Material = Enum.Material.Neon
                         handle.Parent = tool
                         
-                        -- Adiciona física maluca na handle (Tool voando)
+                        -- Joga a tool voando pra todo lado
                         local bodyVel = Instance.new("BodyVelocity")
-                        bodyVel.Velocity = Vector3.new(math.random(-100, 100), math.random(-100, 100), math.random(-100, 100))
+                        bodyVel.Velocity = Vector3.new(math.random(-100, 100), math.random(10, 100), math.random(-100, 100))
                         bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
                         bodyVel.Parent = handle
                         
                         tool.Parent = bp
                         
-                        -- Equipa a tool (faz ela ficar na mão do cara)
                         local hum = p.Character and p.Character:FindFirstChildOfClass("Humanoid")
                         if hum then
                             pcall(function() hum:EquipTool(tool) end)
