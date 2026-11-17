@@ -1,0 +1,509 @@
+-- language: Lua, target: Roblox (detecta server/client automaticamente)
+-- Painel adaptativo: server → RemoteEvent + GUI em cada PlayerGui; client → GUI local
+-- Fix: CellPadding em todos os UIGridLayout é UDim2 (não UDim)
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local IS_SERVER = RunService:IsServer()
+local LP = Players.LocalPlayer
+
+local function getHum(p)
+    local c = p and p.Character
+    return c and c:FindFirstChildOfClass("Humanoid")
+end
+local function getHRP(p)
+    local c = p and p.Character
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
+
+-- ============================================================
+-- SERVER HANDLERS
+-- ============================================================
+local HS = {}
+
+HS.kick = function(_, a)
+    local t = Players:FindFirstChild(a.target or "")
+    if t then t:Kick(a.reason or "kicked") end
+end
+HS.kill = function(_, a) local t = Players:FindFirstChild(a.target or ""); local h = getHum(t); if h then h.Health = 0 end end
+HS.heal = function(_, a) local t = Players:FindFirstChild(a.target or ""); local h = getHum(t); if h then h.Health = h.MaxHealth end end
+HS.god = function(_, a) local t = Players:FindFirstChild(a.target or ""); local h = getHum(t); if h then h.MaxHealth = math.huge; h.Health = math.huge end end
+HS.ungod = function(_, a) local t = Players:FindFirstChild(a.target or ""); local h = getHum(t); if h then h.MaxHealth = 100; h.Health = 100 end end
+HS.speed = function(_, a) local t = Players:FindFirstChild(a.target or ""); local h = getHum(t); if h then h.WalkSpeed = tonumber(a.value) or 16 end end
+HS.jump = function(_, a) local t = Players:FindFirstChild(a.target or ""); local h = getHum(t); if h then h.JumpPower = tonumber(a.value) or 50 end end
+HS.damage = function(_, a) local t = Players:FindFirstChild(a.target or ""); local h = getHum(t); if h then h:TakeDamage(tonumber(a.value) or 10) end end
+HS.freeze = function(_, a) local t = Players:FindFirstChild(a.target or ""); local r = getHRP(t); if r then r.Anchored = true end end
+HS.unfreeze = function(_, a) local t = Players:FindFirstChild(a.target or ""); local r = getHRP(t); if r then r.Anchored = false end end
+HS.invisible = function(_, a) local t = Players:FindFirstChild(a.target or ""); local c = t and t.Character; if c then for _, v in ipairs(c:GetDescendants()) do if v:IsA("BasePart") then v.Transparency = 1 end end end end
+HS.visible = function(_, a) local t = Players:FindFirstChild(a.target or ""); local c = t and t.Character; if c then for _, v in ipairs(c:GetDescendants()) do if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then v.Transparency = 0 end end end end
+HS.fling = function(_, a)
+    local t = Players:FindFirstChild(a.target or ""); local r = getHRP(t); if not r then return end
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.new(math.random(-1500,1500), math.random(500,3000), math.random(-1500,1500))
+    bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+    bv.Parent = r
+    task.delay(2, function() if bv then bv:Destroy() end end)
+end
+
+HS.explode = function(_, a)
+    local t = Players:FindFirstChild(a.target or ""); local r = getHRP(t); if not r then return end
+    local ex = Instance.new("Explosion")
+    ex.BlastRadius = 25; ex.BlastPressure = 500000; ex.Position = r.Position; ex.Parent = workspace
+end
+HS.spin = function(_, a)
+    local t = Players:FindFirstChild(a.target or ""); local r = getHRP(t); if not r then return end
+    local av = Instance.new("BodyAngularVelocity")
+    av.AngularVelocity = Vector3.new(0,50,0); av.MaxTorque = Vector3.new(math.huge,math.huge,math.huge)
+    av.Parent = r
+    task.delay(5, function() if av then av:Destroy() end end)
+end
+HS.rainbow = function(_, a)
+    local t = Players:FindFirstChild(a.target or ""); local c = t and t.Character; if not c then return end
+    task.spawn(function()
+        for i = 1, 200 do
+            if not c.Parent then return end
+            local hue = ((tick()*0.4 + i*0.05) % 1)
+            for _, v in ipairs(c:GetDescendants()) do
+                if v:IsA("BasePart") then pcall(function() v.Color = Color3.fromHSV(hue,1,1) end) end
+            end
+            task.wait(0.08)
+        end
+    end)
+end
+HS.size = function(_, a)
+    local t = Players:FindFirstChild(a.target or ""); local h = getHum(t); if not h then return end
+    local n = tonumber(a.size) or 1
+    pcall(function() h.BodyDepthScale.Value = n end)
+    pcall(function() h.BodyWidthScale.Value = n end)
+    pcall(function() h.BodyHeightScale.Value = n end)
+    pcall(function() h.HeadScale.Value = n end)
+end
+HS.headthrow = function(_, a)
+    local t = Players:FindFirstChild(a.target or ""); local c = t and t.Character; if not c then return end
+    local head = c:FindFirstChild("Head"); if not head then return end
+    head.Anchored = false; head.CanCollide = false
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.new(math.random(-200,200), 150, math.random(-200,200))
+    bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+    bv.Parent = head
+end
+HS.ragdoll = function(_, a)
+    local t = Players:FindFirstChild(a.target or ""); local c = t and t.Character; if not c then return end
+    for _, v in ipairs(c:GetDescendants()) do
+        if v:IsA("Motor6D") then
+            pcall(function()
+                local a0 = Instance.new("Attachment", v.Part0)
+                local a1 = Instance.new("Attachment", v.Part1)
+                local bs = Instance.new("BallSocketConstraint")
+                bs.Attachment0 = a0; bs.Attachment1 = a1; bs.Parent = v.Part0
+                v:Destroy()
+            end)
+        end
+    end
+end
+HS.fire = function(_, a)
+    local t = Players:FindFirstChild(a.target or ""); local r = getHRP(t); if not r then return end
+    local f = Instance.new("Fire"); f.Size = 15; f.Heat = 20; f.Parent = r
+    task.delay(6, function() if f then f:Destroy() end end)
+end
+HS.nuke = function(_, a)
+    local t = Players:FindFirstChild(a.target or ""); local r = getHRP(t); if not r then return end
+    local pos = r.Position
+    local ex = Instance.new("Explosion")
+    ex.BlastRadius = 120; ex.BlastPressure = 2000000; ex.Position = pos; ex.Parent = workspace
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and v ~= r and (v.Position-pos).Magnitude < 120 then
+            pcall(function() v:Destroy() end)
+        end
+    end
+end
+HS.skyfall = function(_, a) local t = Players:FindFirstChild(a.target or ""); local r = getHRP(t); if r then r.CFrame = r.CFrame + Vector3.new(0,1500,0) end end
+HS.yeet = function(_, a)
+    local t = Players:FindFirstChild(a.target or ""); local r = getHRP(t); if not r then return end
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.new(math.random(-800,800), 6000, math.random(-800,800))
+    bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+    bv.Parent = r
+    task.delay(4, function() if bv then bv:Destroy() end end)
+end
+
+HS.clearWorkspace = function() for _, v in ipairs(workspace:GetChildren()) do if v:IsA("Model") or v:IsA("BasePart") then pcall(function() v:Destroy() end) end end end
+HS.killAll = function() for _, p in ipairs(Players:GetPlayers()) do local h = getHum(p); if h then pcall(function() h.Health = 0 end) end end end
+HS.breakAll = function() for _, v in ipairs(workspace:GetDescendants()) do if v:IsA("BasePart") then pcall(function() v.Anchored = false; v.CanCollide = false end) end end end
+HS.anchorAll = function() for _, v in ipairs(workspace:GetDescendants()) do if v:IsA("BasePart") then pcall(function() v.Anchored = true end) end end end
+HS.unanchorAll = function() for _, v in ipairs(workspace:GetDescendants()) do if v:IsA("BasePart") then pcall(function() v.Anchored = false end) end end end
+HS.lagServer = function()
+    for _ = 1, 50 do
+        task.spawn(function()
+            local p = Instance.new("Part")
+            p.Size = Vector3.new(80,80,80)
+            p.Position = Vector3.new(math.random(-800,800), math.random(100,800), math.random(-800,800))
+            p.Anchored = false; p.BrickColor = BrickColor.random(); p.Parent = workspace
+            task.delay(3, function() if p then p:Destroy() end end)
+        end)
+    end
+end
+HS.kickAll = function(requester) for _, p in ipairs(Players:GetPlayers()) do if p ~= requester then pcall(function() p:Kick("wiped") end) end end end
+HS.shutdown = function()
+    for _, p in ipairs(Players:GetPlayers()) do pcall(function() p:Kick("shutdown") end) end
+    task.wait(0.5)
+    pcall(function() game:Shutdown() end)
+end
+HS.gravity = function(_, a) workspace.Gravity = tonumber(a.value) or 196.2 end
+HS.broadcast = function(requester, a)
+    local msg = tostring(a.msg or "hi")
+    for _, p in ipairs(Players:GetPlayers()) do
+        local hint = Instance.new("Hint")
+        hint.Text = "[" .. (requester and requester.Name or "MI") .. "] " .. msg
+        hint.Parent = workspace
+        task.delay(5, function() if hint then hint:Destroy() end end)
+    end
+end
+HS.giveTools = function()
+    for _, p in ipairs(Players:GetPlayers()) do
+        local bp = p:FindFirstChild("Backpack")
+        if bp then
+            local tool = Instance.new("Tool")
+            tool.Name = "MI_Sword"; tool.RequiresHandle = true
+            local handle = Instance.new("Part")
+            handle.Name = "Handle"; handle.Size = Vector3.new(1,1,4)
+            handle.BrickColor = BrickColor.new("Really red"); handle.Material = Enum.Material.Neon
+            handle.Parent = tool; tool.Parent = bp
+        end
+    end
+end
+
+-- ============================================================
+-- CLIENT HANDLERS
+-- ============================================================
+local HC = {}
+
+HC.kick = function() warn("[MI] kick requer server-side") end
+HC.kill = function() local h = getHum(LP); if h then h.Health = 0 end end
+HC.heal = function() local h = getHum(LP); if h then h.Health = h.MaxHealth end end
+HC.god = function() local h = getHum(LP); if h then h.MaxHealth = math.huge; h.Health = math.huge end end
+HC.ungod = function() local h = getHum(LP); if h then h.MaxHealth = 100; h.Health = 100 end end
+HC.speed = function(_, a) local h = getHum(LP); if h then h.WalkSpeed = tonumber(a.value) or 16 end end
+HC.jump = function(_, a) local h = getHum(LP); if h then h.JumpPower = tonumber(a.value) or 50 end end
+HC.damage = function(_, a) local h = getHum(LP); if h then h:TakeDamage(tonumber(a.value) or 10) end end
+HC.freeze = function() local r = getHRP(LP); if r then r.Anchored = true end end
+HC.unfreeze = function() local r = getHRP(LP); if r then r.Anchored = false end end
+HC.invisible = function() local c = LP.Character; if c then for _, v in ipairs(c:GetDescendants()) do if v:IsA("BasePart") then v.Transparency = 1 end end end end
+HC.visible = function() local c = LP.Character; if c then for _, v in ipairs(c:GetDescendants()) do if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then v.Transparency = 0 end end end end
+HC.fling = function()
+    local r = getHRP(LP); if not r then return end
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.new(math.random(-1500,1500), math.random(500,3000), math.random(-1500,1500))
+    bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+    bv.Parent = r
+    task.delay(2, function() if bv then bv:Destroy() end end)
+end
+HC.explode = function()
+    local r = getHRP(LP); if not r then return end
+    local ex = Instance.new("Explosion")
+    ex.BlastRadius = 25; ex.BlastPressure = 0
+    ex.Position = r.Position; ex.Parent = workspace
+end
+HC.spin = function()
+    local r = getHRP(LP); if not r then return end
+    local av = Instance.new("BodyAngularVelocity")
+    av.AngularVelocity = Vector3.new(0,50,0); av.MaxTorque = Vector3.new(math.huge,math.huge,math.huge)
+    av.Parent = r
+    task.delay(5, function() if av then av:Destroy() end end)
+end
+HC.rainbow = function()
+    local c = LP.Character; if not c then return end
+    task.spawn(function()
+        for i = 1, 200 do
+            if not c.Parent then return end
+            local hue = ((tick()*0.4 + i*0.05) % 1)
+            for _, v in ipairs(c:GetDescendants()) do
+                if v:IsA("BasePart") then pcall(function() v.Color = Color3.fromHSV(hue,1,1) end) end
+            end
+            task.wait(0.08)
+        end
+    end)
+end
+HC.size = function(_, a)
+    local h = getHum(LP); if not h then return end
+    local n = tonumber(a.size) or 1
+    pcall(function() h.BodyDepthScale.Value = n end)
+    pcall(function() h.BodyWidthScale.Value = n end)
+    pcall(function() h.BodyHeightScale.Value = n end)
+    pcall(function() h.HeadScale.Value = n end)
+end
+HC.headthrow = function()
+    local c = LP.Character; if not c then return end
+    local head = c:FindFirstChild("Head"); if not head then return end
+    head.Anchored = false; head.CanCollide = false
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.new(math.random(-200,200), 150, math.random(-200,200))
+    bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+    bv.Parent = head
+end
+HC.ragdoll = function()
+    local c = LP.Character; if not c then return end
+    for _, v in ipairs(c:GetDescendants()) do
+        if v:IsA("Motor6D") then
+            pcall(function()
+                local a0 = Instance.new("Attachment", v.Part0)
+                local a1 = Instance.new("Attachment", v.Part1)
+                local bs = Instance.new("BallSocketConstraint")
+                bs.Attachment0 = a0; bs.Attachment1 = a1; bs.Parent = v.Part0
+                v:Destroy()
+            end)
+        end
+    end
+end
+HC.fire = function()
+    local r = getHRP(LP); if not r then return end
+    local f = Instance.new("Fire"); f.Size = 15; f.Heat = 20; f.Parent = r
+    task.delay(6, function() if f then f:Destroy() end end)
+end
+HC.nuke = function()
+    local r = getHRP(LP); if not r then return end
+    local pos = r.Position
+    local ex = Instance.new("Explosion")
+    ex.BlastRadius = 120; ex.BlastPressure = 0; ex.Position = pos; ex.Parent = workspace
+end
+HC.skyfall = function() local r = getHRP(LP); if r then r.CFrame = r.CFrame + Vector3.new(0,1500,0) end end
+HC.yeet = function()
+    local r = getHRP(LP); if not r then return end
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.new(math.random(-800,800), 6000, math.random(-800,800))
+    bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+    bv.Parent = r
+    task.delay(4, function() if bv then bv:Destroy() end end)
+end
+HC.clearWorkspace = function() warn("[MI] clearWorkspace requer server-side") end
+HC.killAll = function() warn("[MI] killAll requer server-side") end
+HC.breakAll = function() for _, v in ipairs(workspace:GetDescendants()) do if v:IsA("BasePart") then pcall(function() v.Anchored = false; v.CanCollide = false end) end end end
+HC.anchorAll = function() for _, v in ipairs(workspace:GetDescendants()) do if v:IsA("BasePart") then pcall(function() v.Anchored = true end) end end end
+HC.unanchorAll = function() for _, v in ipairs(workspace:GetDescendants()) do if v:IsA("BasePart") then pcall(function() v.Anchored = false end) end end end
+HC.lagServer = function()
+    for _ = 1, 30 do
+        task.spawn(function()
+            local p = Instance.new("Part")
+            p.Size = Vector3.new(50,50,50)
+            p.Position = Vector3.new(math.random(-400,400), math.random(100,400), math.random(-400,400))
+            p.Anchored = false; p.BrickColor = BrickColor.random(); p.Parent = workspace
+            task.delay(2, function() if p then p:Destroy() end end)
+        end)
+    end
+end
+HC.kickAll = function() warn("[MI] kickAll requer server-side") end
+HC.shutdown = function() warn("[MI] shutdown requer server-side") end
+HC.gravity = function(_, a) workspace.Gravity = tonumber(a.value) or 196.2 end
+HC.broadcast = function(_, a)
+    local hint = Instance.new("Hint")
+    hint.Text = tostring(a.msg or "hi")
+    hint.Parent = workspace
+    task.delay(5, function() if hint then hint:Destroy() end end)
+end
+HC.giveTools = function() warn("[MI] giveTools requer server-side") end
+
+-- ============================================================
+-- TABS
+-- ============================================================
+local TABS = {
+    {name="Player", color=Color3.fromRGB(120, 90, 255), buttons={
+        {label="Kick", cmd="kick"}, {label="Kill", cmd="kill"}, {label="Heal", cmd="heal"},
+        {label="God", cmd="god"}, {label="Ungod", cmd="ungod"},
+        {label="Speed 100", cmd="speed", args={value=100}},
+        {label="Jump 500", cmd="jump", args={value=500}},
+        {label="Damage 50", cmd="damage", args={value=50}},
+        {label="Freeze", cmd="freeze"}, {label="Unfreeze", cmd="unfreeze"},
+        {label="Invisible", cmd="invisible"}, {label="Visible", cmd="visible"},
+        {label="Fling", cmd="fling"},
+    }},
+    {name="Fun", color=Color3.fromRGB(0, 220, 200), buttons={
+        {label="Explode", cmd="explode"}, {label="Spin", cmd="spin"},
+        {label="Rainbow", cmd="rainbow"},
+        {label="Big 2x", cmd="size", args={size=2}},
+        {label="Small 0.5x", cmd="size", args={size=0.5}},
+        {label="Head throw", cmd="headthrow"}, {label="Ragdoll", cmd="ragdoll"},
+        {label="On fire", cmd="fire"}, {label="Nuke", cmd="nuke"},
+        {label="Sky fall", cmd="skyfall"}, {label="Yeet", cmd="yeet"},
+    }},
+    {name="Destructive", color=Color3.fromRGB(255, 70, 90), buttons={
+        {label="Clear workspace", cmd="clearWorkspace"},
+        {label="Kill all", cmd="killAll"},
+        {label="Break all parts", cmd="breakAll"},
+        {label="Anchor all", cmd="anchorAll"},
+        {label="Unanchor all", cmd="unanchorAll"},
+        {label="Lag server", cmd="lagServer"},
+        {label="Kick everyone", cmd="kickAll"},
+    }},
+    {name="Server", color=Color3.fromRGB(255, 190, 70), buttons={
+        {label="Shutdown", cmd="shutdown"},
+        {label="Gravity 50", cmd="gravity", args={value=50}},
+        {label="Gravity 196", cmd="gravity", args={value=196.2}},
+        {label="Broadcast", cmd="broadcast", args={msg="MI HUB was here"}},
+        {label="Give swords", cmd="giveTools"},
+    }},
+}
+
+-- ============================================================
+-- MODO SERVER
+-- ============================================================
+if IS_SERVER then
+    for _, c in ipairs(RS:GetChildren()) do
+        if c:IsA("RemoteEvent") and c.Name == "__MI_PANEL_CMD" then c:Destroy() end
+    end
+    for _, p in ipairs(Players:GetPlayers()) do
+        local pg = p:FindFirstChild("PlayerGui")
+        if pg and pg:FindFirstChild("MI_PANEL_TEST") then pg.MI_PANEL_TEST:Destroy() end
+    end
+
+    local remote = Instance.new("RemoteEvent")
+    remote.Name = "__MI_PANEL_CMD"
+    remote.Parent = RS
+
+    remote.OnServerEvent:Connect(function(player, cmd, args)
+        if type(cmd) ~= "string" then return end
+        args = type(args) == "table" and args or {}
+        local h = HS[cmd]
+        if not h then return end
+        local ok, err = pcall(h, player, args)
+        if not ok then warn("[MI PANEL] " .. cmd .. ": " .. tostring(err)) end
+    end)
+
+    local CLIENT = [==[
+local screen = script.Parent
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("__MI_PANEL_CMD")
+local TABS = {
+    {name="Player", color=Color3.fromRGB(120, 90, 255), buttons={
+        {label="Kick", cmd="kick"}, {label="Kill", cmd="kill"}, {label="Heal", cmd="heal"},
+        {label="God", cmd="god"}, {label="Ungod", cmd="ungod"},
+        {label="Speed 100", cmd="speed", args={value=100}},
+        {label="Jump 500", cmd="jump", args={value=500}},
+        {label="Damage 50", cmd="damage", args={value=50}},
+        {label="Freeze", cmd="freeze"}, {label="Unfreeze", cmd="unfreeze"},
+        {label="Invisible", cmd="invisible"}, {label="Visible", cmd="visible"},
+        {label="Fling", cmd="fling"},
+    }},
+    {name="Fun", color=Color3.fromRGB(0, 220, 200), buttons={
+        {label="Explode", cmd="explode"}, {label="Spin", cmd="spin"},
+        {label="Rainbow", cmd="rainbow"},
+        {label="Big 2x", cmd="size", args={size=2}},
+        {label="Small 0.5x", cmd="size", args={size=0.5}},
+        {label="Head throw", cmd="headthrow"}, {label="Ragdoll", cmd="ragdoll"},
+        {label="On fire", cmd="fire"}, {label="Nuke", cmd="nuke"},
+        {label="Sky fall", cmd="skyfall"}, {label="Yeet", cmd="yeet"},
+    }},
+    {name="Destructive", color=Color3.fromRGB(255, 70, 90), buttons={
+        {label="Clear workspace", cmd="clearWorkspace"},
+        {label="Kill all", cmd="killAll"},
+        {label="Break all parts", cmd="breakAll"},
+        {label="Anchor all", cmd="anchorAll"},
+        {label="Unanchor all", cmd="unanchorAll"},
+        {label="Lag server", cmd="lagServer"},
+        {label="Kick everyone", cmd="kickAll"},
+    }},
+    {name="Server", color=Color3.fromRGB(255, 190, 70), buttons={
+        {label="Shutdown", cmd="shutdown"},
+        {label="Gravity 50", cmd="gravity", args={value=50}},
+        {label="Gravity 196", cmd="gravity", args={value=196.2}},
+        {label="Broadcast", cmd="broadcast", args={msg="MI HUB was here"}},
+        {label="Give swords", cmd="giveTools"},
+    }},
+}
+
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 540, 0, 440)
+main.Position = UDim2.new(0.5, -270, 0.5, -220)
+main.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+main.BorderSizePixel = 0
+main.Active = true
+main.Parent = screen
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+local mstr = Instance.new("UIStroke", main); mstr.Color = Color3.fromRGB(60, 60, 75)
+
+local bar = Instance.new("Frame", main)
+bar.Size = UDim2.new(1, 0, 0, 40)
+bar.BackgroundColor3 = Color3.fromRGB(26, 26, 32)
+bar.BorderSizePixel = 0
+Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 10)
+local bm = Instance.new("Frame", bar)
+bm.Size = UDim2.new(1, 0, 0, 12); bm.Position = UDim2.new(0, 0, 1, -12)
+bm.BackgroundColor3 = Color3.fromRGB(26, 26, 32); bm.BorderSizePixel = 0
+
+local ttl = Instance.new("TextLabel", bar)
+ttl.Size = UDim2.new(1, -50, 1, 0); ttl.Position = UDim2.new(0, 14, 0, 0)
+ttl.BackgroundTransparency = 1; ttl.Text = "MI HUB TEST BACKDOOR"
+ttl.Font = Enum.Font.GothamBold; ttl.TextSize = 14
+ttl.TextColor3 = Color3.fromRGB(230, 230, 240); ttl.TextXAlignment = Enum.TextXAlignment.Left
+
+local xbtn = Instance.new("TextButton", bar)
+xbtn.Size = UDim2.new(0, 24, 0, 24); xbtn.Position = UDim2.new(1, -32, 0.5, -12)
+xbtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50); xbtn.Text = "X"
+xbtn.Font = Enum.Font.GothamBold; xbtn.TextSize = 12
+xbtn.TextColor3 = Color3.fromRGB(255, 90, 110); xbtn.BorderSizePixel = 0; xbtn.AutoButtonColor = false
+Instance.new("UICorner", xbtn).CornerRadius = UDim.new(0, 6)
+xbtn.MouseButton1Click:Connect(function() screen:Destroy() end)
+
+local dragging, ds, sp
+bar.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        dragging = true; ds = i.Position; sp = main.Position
+        i.Changed:Connect(function() if i.UserInputState == Enum.UserInputState.End then dragging = false end end)
+    end
+end)
+bar.InputChanged:Connect(function(i)
+    if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+        local d = i.Position - ds
+        main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
+    end
+end)
+
+local targetBox = Instance.new("TextBox", main)
+targetBox.Size = UDim2.new(1, -28, 0, 30); targetBox.Position = UDim2.new(0, 14, 0, 50)
+targetBox.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+targetBox.PlaceholderText = "target player name"; targetBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 115)
+targetBox.Font = Enum.Font.Code; targetBox.TextSize = 13
+targetBox.TextColor3 = Color3.fromRGB(220, 220, 230); targetBox.Text = ""
+targetBox.ClearTextOnFocus = false; targetBox.BorderSizePixel = 0
+Instance.new("UICorner", targetBox).CornerRadius = UDim.new(0, 8)
+local tbs = Instance.new("UIStroke", targetBox); tbs.Color = Color3.fromRGB(45, 45, 58)
+
+local tabBar = Instance.new("Frame", main)
+tabBar.Size = UDim2.new(1, -28, 0, 32); tabBar.Position = UDim2.new(0, 14, 0, 88)
+tabBar.BackgroundTransparency = 1
+local tl = Instance.new("UIListLayout", tabBar); tl.FillDirection = Enum.FillDirection.Horizontal; tl.Padding = UDim.new(0, 6)
+
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1, -28, 1, -176); content.Position = UDim2.new(0, 14, 0, 128)
+content.BackgroundColor3 = Color3.fromRGB(22, 22, 28); content.BorderSizePixel = 0
+Instance.new("UICorner", content).CornerRadius = UDim.new(0, 8)
+local cs = Instance.new("UIStroke", content); cs.Color = Color3.fromRGB(45, 45, 58)
+
+local scroll = Instance.new("ScrollingFrame", content)
+scroll.Size = UDim2.new(1, -16, 1, -16); scroll.Position = UDim2.new(0, 8, 0, 8)
+scroll.BackgroundTransparency = 1; scroll.BorderSizePixel = 0
+scroll.ScrollBarThickness = 4; scroll.ScrollBarImageColor3 = Color3.fromRGB(70, 70, 90)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0); scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+local gl = Instance.new("UIGridLayout", scroll)
+gl.CellSize = UDim2.new(0.5, -6, 0, 32)
+gl.CellPadding = UDim2.new(0, 8, 0, 6)
+gl.SortOrder = Enum.SortOrder.LayoutOrder
+
+local tabButtons, contentButtons = {}, {}
+local function clearContent() for _, b in ipairs(contentButtons) do b:Destroy() end; contentButtons = {} end
+
+local function renderTab(idx)
+    clearContent()
+    local tab = TABS[idx]
+    for i, b in ipairs(tab.buttons) do
+        local btn = Instance.new("TextButton", scroll)
+        btn.LayoutOrder = i; btn.BackgroundColor3 = Color3.fromRGB(34, 34, 42)
+        btn.Text = b.label; btn.Font = Enum.Font.GothamMedium; btn.TextSize = 12
+        btn.TextColor3 = Color3.fromRGB(220, 220, 230); btn.BorderSizePixel = 0; btn.AutoButtonColor = false
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+        local s = Instance.new("UIStroke", btn); s.Color = Color3.fromRGB(50, 50, 62)
+        btn.MouseButton1Click:Connect(function()
+            local args = {target = targetBox.Text}
+            if b.args then for k, v in pairs(b.args) do args[k] = v end end
+            remote:FireServer(b.cmd, args)
+            btn.BackgroundColor3 = tab.color
+            task
