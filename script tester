@@ -4,7 +4,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LP = Players.LocalPlayer
-local RunService = game:GetService("RunService")
 
 local Aura = loadstring(game:HttpGet("https://raw.githubusercontent.com/Sync7771/lib-test/refs/heads/main/AURA%20HUB"))()
 
@@ -12,7 +11,7 @@ local win = Aura:CreateWindow({
     Title = "MI HUB | HELL", 
     Subtitle = "Scanner & Executor",
     Theme = "HighContrast", 
-    Size = Vector2.new(650, 500),
+    Size = Vector2.new(650, 520),
     ToggleKey = Enum.KeyCode.RightControl
 })
 win:SetTitleGradient({From = "#FF0000", To = "#8B0000", Rotation = 45})
@@ -21,42 +20,6 @@ win:SetAccent(Color3.fromRGB(255, 0, 0))
 
 local backdoorRemote = nil
 local selectedTarget = ""
-local isGodmode = false
-local isInvisible = false
-
--- ==========================================
--- LOOPS DE BACKGROUND (Godmode e Invisibilidade)
--- ==========================================
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-        if isGodmode and LP.Character then
-            local h = LP.Character:FindFirstChildOfClass("Humanoid")
-            if h then
-                h.MaxHealth = math.huge
-                h.Health = math.huge
-            end
-            local r = LP.Character:FindFirstChild("HumanoidRootPart")
-            -- Se cair do mapa, teleporta de volta pro centro
-            if r and r.Position.Y < -100 then
-                r.CFrame = CFrame.new(0, 50, 0)
-            end
-        end
-    end
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(0.2)
-        if isInvisible and LP.Character then
-            for _, v in ipairs(LP.Character:GetDescendants()) do
-                if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
-                    v.Transparency = 1
-                end
-            end
-        end
-    end
-end)
 
 -- ==========================================
 -- ABA 1: SCANNER / EXECUTOR
@@ -176,22 +139,6 @@ tabExec:CreateButton({
 local tabUtil = win:CreateTab({Name = "Utilidades", Icon = "user"})
 local grpLocal = tabUtil:CreateGroup({Name = "Local Player"})
 
-grpLocal:CreateToggle({Name = "Godmode (Imortal)", Icon = "shield", Default = false, Callback = function(state)
-    isGodmode = state
-    if not state then
-        local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-        if h then h.MaxHealth = 100; h.Health = 100 end
-    end
-end})
-
-grpLocal:CreateToggle({Name = "Invisibilidade Real", Icon = "eye-off", Default = false, Callback = function(state)
-    isInvisible = state
-    if not state then
-        local c = LP.Character
-        if c then for _, v in ipairs(c:GetDescendants()) do if v:IsA("BasePart") then v.Transparency = 0 end end end
-    end
-end})
-
 local speedInput = grpLocal:CreateInput({Name = "Velocidade (Speed)", PlaceholderText = "Ex: 100", Default = "16"})
 grpLocal:CreateButton({Name = "Aplicar Velocidade", Icon = "wind", Callback = function()
     local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
@@ -255,22 +202,6 @@ local function sendCmd(cmd, args)
                 end)
             end
         ]]
-    elseif cmd == "rainbow" then
-        code = string.format([[
-            local p = game.Players:FindFirstChild("%s")
-            if p and p.Character then
-                task.spawn(function()
-                    for i = 1, 200 do
-                        if not p.Character then return end
-                        local hue = ((tick()*0.4 + i*0.05) % 1)
-                        for _, v in ipairs(p.Character:GetDescendants()) do
-                            if v:IsA("BasePart") then v.Color = Color3.fromHSV(hue, 1, 1) end
-                        end
-                        task.wait(0.08)
-                    end
-                end)
-            end
-        ]], args.target)
     elseif cmd == "fling" then
         code = string.format([[
             local p = game.Players:FindFirstChild("%s")
@@ -282,6 +213,44 @@ local function sendCmd(cmd, args)
                     bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
                     bv.Parent = hrp
                     task.delay(2, function() if bv then bv:Destroy() end end)
+                end
+            end
+        ]], args.target)
+    elseif cmd == "godmode_on" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then
+                local h = p.Character:FindFirstChildOfClass("Humanoid")
+                if h then h.MaxHealth = math.huge; h.Health = math.huge end
+                local r = p.Character:FindFirstChild("HumanoidRootPart")
+                if r then r.Anchored = true end
+            end
+        ]], args.target)
+    elseif cmd == "godmode_off" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then
+                local h = p.Character:FindFirstChildOfClass("Humanoid")
+                if h then h.MaxHealth = 100; h.Health = 100 end
+                local r = p.Character:FindFirstChild("HumanoidRootPart")
+                if r then r.Anchored = false end
+            end
+        ]], args.target)
+    elseif cmd == "invis_on" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then
+                for _, v in ipairs(p.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then v.Transparency = 1 end
+                end
+            end
+        ]], args.target)
+    elseif cmd == "invis_off" then
+        code = string.format([[
+            local p = game.Players:FindFirstChild("%s")
+            if p and p.Character then
+                for _, v in ipairs(p.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then v.Transparency = 0 end
                 end
             end
         ]], args.target)
@@ -299,11 +268,20 @@ end})
 grpAcoes:CreateButton({Name = "Matar Alvo", Icon = "skull", Callback = function() 
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP and p.Character then p.Character:BreakJoints() end end else sendCmd("kill", {target = selectedTarget}) end
 end})
-grpAcoes:CreateButton({Name = "Arco-íris (Rainbow)", Icon = "palette", Callback = function()
-    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("rainbow", {target = p.Name}) end end else sendCmd("rainbow", {target = selectedTarget}) end
-end})
 grpAcoes:CreateButton({Name = "Fling Alvo", Icon = "wind", Callback = function()
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("fling", {target = p.Name}) end end else sendCmd("fling", {target = selectedTarget}) end
+end})
+
+grpAcoes:CreateToggle({Name = "Godmode (Server-Side)", Icon = "shield", Default = false, Callback = function(state)
+    if selectedTarget == "" then return end
+    local cmd = state and "godmode_on" or "godmode_off"
+    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd(cmd, {target = p.Name}) end end else sendCmd(cmd, {target = selectedTarget}) end
+end})
+
+grpAcoes:CreateToggle({Name = "Invisibilidade (Server-Side)", Icon = "eye-off", Default = false, Callback = function(state)
+    if selectedTarget == "" then return end
+    local cmd = state and "invis_on" or "invis_off"
+    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd(cmd, {target = p.Name}) end end else sendCmd(cmd, {target = selectedTarget}) end
 end})
 
 
@@ -316,34 +294,97 @@ local grpServer = tabServer:CreateGroup({Name = "Destruição Server-Side"})
 grpServer:CreateButton({Name = "Explodir Tudo", Icon = "bomb", Callback = function() sendCmd("explode") end})
 grpServer:CreateButton({Name = "Lag Server (Pesado)", Icon = "zap", Callback = function() sendCmd("lag") end})
 
-grpServer:CreateButton({Name = "Color Spray (Tudo Fica Vermelho)", Icon = "palette", Callback = function()
-    if not backdoorRemote then 
-        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
-        return 
-    end
-    local code = [[
-        local targetColor = Color3.fromRGB(255, 0, 0)
-        for _, v in ipairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") then
-                pcall(function() v.Color = targetColor end)
-            elseif v:IsA("Decal") or v:IsA("Texture") then
-                pcall(function() v.Color3 = targetColor end)
-            end
-        end
-        for _, p in ipairs(game.Players:GetPlayers()) do
-            local pg = p:FindFirstChild("PlayerGui")
-            if pg then
-                for _, gui in ipairs(pg:GetDescendants()) do
-                    if gui:IsA("Frame") or gui:IsA("TextLabel") or gui:IsA("TextButton") then
-                        pcall(function() gui.BackgroundColor3 = targetColor end)
-                        pcall(function() gui.TextColor3 = Color3.new(0,0,0) end)
+grpServer:CreateToggle({Name = "Rainbow Workspace (Loop Infinito)", Icon = "palette", Default = false, Callback = function(state)
+    if not backdoorRemote then return end
+    if state then
+        local code = [[
+            _G.MI_Rainbow = true
+            task.spawn(function()
+                while _G.MI_Rainbow do
+                    local hue = tick() % 1
+                    local color = Color3.fromHSV(hue, 1, 1)
+                    for _, v in ipairs(workspace:GetDescendants()) do
+                        if v:IsA("BasePart") then pcall(function() v.Color = color end) end
                     end
+                    for _, p in ipairs(game.Players:GetPlayers()) do
+                        local pg = p:FindFirstChild("PlayerGui")
+                        if pg then
+                            for _, gui in ipairs(pg:GetDescendants()) do
+                                if gui:IsA("Frame") or gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                                    pcall(function() gui.BackgroundColor3 = color end)
+                                end
+                            end
+                        end
+                    end
+                    task.wait(0.1)
                 end
+            end)
+        ]]
+        pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
+    else
+        local code = [[ _G.MI_Rainbow = false ]]
+        pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
+    end
+end})
+
+grpServer:CreateToggle({Name = "CRIPTO ALL (Bagunçar Tudo)", Icon = "terminal", Default = false, Callback = function(state)
+    if not backdoorRemote then return end
+    if state then
+        local code = [[
+            _G.MI_Crypto = true
+            local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+            local function scramble(str)
+                local out = {}
+                for i = 1, #str do
+                    local r = math.random(1, #chars)
+                    out[i] = chars:sub(r, r)
+                end
+                return table.concat(out)
             end
-        end
-    ]]
-    pcall(function()
-        if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end
-    end)
-    win:Notify({Title = "Color Spray", Content = "Comando enviado ao servidor.", Duration = 3})
+
+            task.spawn(function()
+                while _G.MI_Crypto do
+                    for _, v in ipairs(workspace:GetDescendants()) do
+                        if v:IsA("BasePart") then
+                            pcall(function() v.Anchored = false; v.CanCollide = false; v.Material = Enum.Material.Neon end)
+                        end
+                    end
+                    
+                    for _, p in ipairs(game.Players:GetPlayers()) do
+                        local pg = p:FindFirstChild("PlayerGui")
+                        if pg then
+                            for _, gui in ipairs(pg:GetDescendants()) do
+                                if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                                    if not gui:GetAttribute("MI_OrigText") then
+                                        gui:SetAttribute("MI_OrigText", gui.Text)
+                                    end
+                                    pcall(function() gui.Text = scramble(gui:GetAttribute("MI_OrigText")) end)
+                                end
+                            end
+                        end
+                    end
+                    
+                    -- Tenta bagunçar o CoreGui (Menu do Roblox)
+                    pcall(function()
+                        local cg = game:GetService("CoreGui")
+                        for _, gui in ipairs(cg:GetDescendants()) do
+                            if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                                if not gui:GetAttribute("MI_OrigText") then
+                                    gui:SetAttribute("MI_OrigText", gui.Text)
+                                end
+                                gui.Text = scramble(gui:GetAttribute("MI_OrigText"))
+                            end
+                        end
+                    end)
+                    
+                    task.wait(0.1)
+                end
+            end)
+        ]]
+        pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
+        win:Notify({Title = "Criptografia", Content = "Servidor sendo hackeado...", Duration = 3})
+    else
+        local code = [[ _G.MI_Crypto = false ]]
+        pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
+    end
 end})
