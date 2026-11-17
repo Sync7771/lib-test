@@ -1,133 +1,13 @@
--- language: Lua, target: Roblox Server (via backdoor)
--- Painel Server-Side com AURA UI (Tema Hell)
-
+-- language: Lua, target: Roblox Client
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LP = Players.LocalPlayer
 
-local IS_SERVER = RunService:IsServer()
-
--- ============================================================
--- 1. LÓGICA DO SERVIDOR (Handlers)
--- ============================================================
-if IS_SERVER then
-    -- Limpeza de execuções anteriores
-    if ReplicatedStorage:FindFirstChild("MI_HUB_REMOTE_CMD") then
-        ReplicatedStorage.MI_HUB_REMOTE_CMD:Destroy()
-    end
-
-    local remote = Instance.new("RemoteEvent")
-    remote.Name = "MI_HUB_REMOTE_CMD"
-    remote.Parent = ReplicatedStorage
-
-    local function getHum(p) return p.Character and p.Character:FindFirstChildOfClass("Humanoid") end
-    local function getHRP(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
-    local function getTarget(name)
-        if name == "ALL" then return "ALL" end
-        return Players:FindFirstChild(name)
-    end
-
-    remote.OnServerEvent:Connect(function(player, cmd, args)
-        args = type(args) == "table" and args or {}
-        
-        -- Comandos de Admin
-        if cmd == "kick" then
-            local target = getTarget(args.target)
-            if target == "ALL" then
-                for _, p in ipairs(Players:GetPlayers()) do if p ~= player then p:Kick(args.reason or "Kicked") end end
-            elseif target then target:Kick(args.reason or "Kicked") end
-            
-        elseif cmd == "kill" then
-            local target = getTarget(args.target)
-            if target == "ALL" then
-                for _, p in ipairs(Players:GetPlayers()) do local h = getHum(p); if h then h.Health = 0 end end
-            elseif target then local h = getHum(target); if h then h.Health = 0 end end
-            
-        elseif cmd == "explode" then
-            local target = getTarget(args.target)
-            if target == "ALL" then
-                for _, p in ipairs(Players:GetPlayers()) do 
-                    local r = getHRP(p); if r then
-                        local ex = Instance.new("Explosion"); ex.BlastRadius = 30; ex.Position = r.Position; ex.Parent = workspace
-                    end
-                end
-            elseif target then 
-                local r = getHRP(target); if r then
-                    local ex = Instance.new("Explosion"); ex.BlastRadius = 30; ex.Position = r.Position; ex.Parent = workspace
-                end
-            end
-            
-        elseif cmd == "fling" then
-            local target = getTarget(args.target)
-            if target == "ALL" then
-                for _, p in ipairs(Players:GetPlayers()) do 
-                    local r = getHRP(p); if r then
-                        local bv = Instance.new("BodyVelocity"); bv.Velocity = Vector3.new(math.random(-1000,1000), 5000, math.random(-1000,1000)); bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge); bv.Parent = r
-                        task.delay(2, function() if bv then bv:Destroy() end end)
-                    end
-                end
-            elseif target then
-                local r = getHRP(target); if r then
-                    local bv = Instance.new("BodyVelocity"); bv.Velocity = Vector3.new(math.random(-1000,1000), 5000, math.random(-1000,1000)); bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge); bv.Parent = r
-                    task.delay(2, function() if bv then bv:Destroy() end end)
-                end
-            end
-            
-        -- Comandos Destrutivos (Server)
-        elseif cmd == "clear_workspace" then
-            for _, v in ipairs(workspace:GetChildren()) do
-                if v:IsA("Model") or v:IsA("BasePart") then pcall(function() v:Destroy() end) end
-            end
-            
-        elseif cmd == "break_all" then
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v:IsA("BasePart") then pcall(function() v.Anchored = false; v.CanCollide = false end) end
-            end
-            
-        elseif cmd == "anchor_all" then
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v:IsA("BasePart") then pcall(function() v.Anchored = true end) end
-            end
-            
-        elseif cmd == "lag_server" then
-            for _ = 1, 100 do
-                task.spawn(function()
-                    local p = Instance.new("Part")
-                    p.Size = Vector3.new(100,100,100)
-                    p.Position = Vector3.new(math.random(-1000,1000), math.random(100,500), math.random(-1000,1000))
-                    p.Anchored = false; p.Parent = workspace
-                    task.delay(3, function() if p then p:Destroy() end end)
-                end)
-            end
-            
-        elseif cmd == "kill_all" then
-            for _, p in ipairs(Players:GetPlayers()) do
-                local h = getHum(p); if h then h.Health = 0 end
-            end
-            
-        elseif cmd == "kick_all" then
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p ~= player then p:Kick("Server Wiped") end
-            end
-            
-        elseif cmd == "shutdown" then
-            for _, p in ipairs(Players:GetPlayers()) do pcall(function() p:Kick("Server Shutdown") end) end
-            task.wait(0.5)
-            pcall(function() game:Shutdown() end)
-        end
-    end)
-    
-    print("[MI HUB] Server-side handlers carregados.")
-end
-
--- ============================================================
--- 2. LÓGICA DO CLIENTE (AURA UI)
--- ============================================================
 local Aura = loadstring(game:HttpGet("https://raw.githubusercontent.com/Sync7771/lib-test/refs/heads/main/AURA%20HUB"))()
 
 local win = Aura:CreateWindow({
-    Title = "MI HUB | HELL (SERVER)", 
-    Subtitle = "Admin & Destruction",
+    Title = "MI HUB | HELL", 
+    Subtitle = "Admin & Client",
     Theme = "HighContrast", 
     Size = Vector2.new(600, 500),
     ToggleKey = Enum.KeyCode.RightControl
@@ -137,64 +17,67 @@ win:SetTitleGradient({From = "#FF0000", To = "#8B0000", Rotation = 45})
 win:SetFloatingButton({Text = "MI", Size = 50, TextColor = Color3.fromRGB(255, 0, 0)})
 win:SetAccent(Color3.fromRGB(255, 0, 0))
 
-local remote = ReplicatedStorage:WaitForChild("MI_HUB_REMOTE_CMD", 5)
-if not remote then
-    win:Notify({Title = "Erro Crítico", Content = "RemoteEvent do servidor não encontrado. Script não está server-side.", Duration = 10})
-    return
+local function getHRP()
+    local c = LP.Character
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
+local function getHum()
+    local c = LP.Character
+    return c and c:FindFirstChildOfClass("Humanoid")
 end
 
-local selectedTarget = ""
+-- ABA: CLIENT (SEU PERSONAGEM)
+local tabClient = win:CreateTab({Name = "Local", Icon = "user"})
+local grpSelf = tabClient:CreateGroup({Name = "Seu Personagem"})
 
--- ABA: ADMIN
-local tabAdmin = win:CreateTab({Name = "Admin", Icon = "shield"})
-local grpPlayer = tabAdmin:CreateGroup({Name = "Alvo", Description = "Selecione o jogador para as ações"})
+grpSelf:CreateButton({Name = "Godmode (Invisível e Invulnerável)", Icon = "shield", Callback = function()
+    local h = getHum(); if h then h.MaxHealth = math.huge; h.Health = math.huge end
+    local r = getHRP(); if r then r.Anchored = true end
+end})
 
-grpPlayer:CreatePlayerList({
-    Name = "Jogadores",
-    Height = 120,
-    Multi = false,
-    Callback = function(player)
-        if player then
-            selectedTarget = player.Name
-            win:Notify({Title = "Alvo Definido", Content = selectedTarget, Duration = 2})
+grpSelf:CreateButton({Name = "Resetar", Icon = "refresh-cw", Callback = function()
+    local h = getHum(); if h then h.Health = 0 end
+end})
+
+grpSelf:CreateButton({Name = "Ficar Invisível", Icon = "eye-off", Callback = function()
+    local c = LP.Character; if c then
+        for _, v in ipairs(c:GetDescendants()) do
+            if v:IsA("BasePart") then v.Transparency = 1 end
         end
     end
-})
+end})
 
-grpPlayer:CreateButton({
-    Name = "Selecionar Todos (ALL)",
-    Icon = "users",
-    Callback = function()
-        selectedTarget = "ALL"
-        win:Notify({Title = "Alvo Definido", Content = "TODOS os jogadores (exceto você)", Duration = 2})
-    end
-})
-
-local inputKickMsg = grpPlayer:CreateInput({
-    Name = "Mensagem de Kick",
-    PlaceholderText = "Motivo do kick...",
-    Default = "Kicked by MI HUB"
-})
-
-tabAdmin:CreateSpacer(10)
-
-local grpAcoes = tabAdmin:CreateGroup({Name = "Ações de Admin"})
-
-grpAcoes:CreateButton({Name = "Kick", Icon = "user-x", Callback = function() remote:FireServer("kick", {target = selectedTarget, reason = inputKickMsg:Get()}) end})
-grpAcoes:CreateButton({Name = "Matar", Icon = "skull", Callback = function() remote:FireServer("kill", {target = selectedTarget}) end})
-grpAcoes:CreateButton({Name = "Explodir", Icon = "bomb", Callback = function() remote:FireServer("explode", {target = selectedTarget}) end})
-grpAcoes:CreateButton({Name = "Fling (Arremessar)", Icon = "wind", Callback = function() remote:FireServer("fling", {target = selectedTarget}) end})
-
--- ABA: SERVER (Destruição)
+-- ABA: SERVER (SIMULAÇÃO LOCAL)
 local tabServer = win:CreateTab({Name = "Server", Icon = "server"})
-local grpServer = tabServer:CreateGroup({Name = "Destruição do Servidor", Description = "Cuidado: Ações irreversíveis"})
+local grpServer = tabServer:CreateGroup({Name = "Destruição Local", Description = "Ações que afetam o seu mapa visível"})
 
-grpServer:CreateButton({Name = "Lag Pesado (Congelar)", Icon = "zap", Callback = function() remote:FireServer("lag_server") end})
-grpServer:CreateButton({Name = "Quebrar Tudo", Icon = "hammer", Callback = function() remote:FireServer("break_all") end})
-grpServer:CreateButton({Name = "Ancorar Tudo", Icon = "lock", Callback = function() remote:FireServer("anchor_all") end})
-grpServer:CreateButton({Name = "Destruir Workspace", Icon = "trash-2", Callback = function() remote:FireServer("clear_workspace") end})
-grpServer:CreateButton({Name = "Matar Todos", Icon = "crosshair", Callback = function() remote:FireServer("kill_all") end})
-grpServer:CreateButton({Name = "Kick Todos", Icon = "log-out", Callback = function() remote:FireServer("kick_all") end})
-grpServer:CreateButton({Name = "Derrubar Servidor (Shutdown)", Icon = "power", Callback = function() remote:FireServer("shutdown") end})
+grpServer:CreateButton({Name = "Lag (Criar Partes)", Icon = "zap", Callback = function()
+    for _ = 1, 50 do
+        task.spawn(function()
+            local p = Instance.new("Part")
+            p.Size = Vector3.new(100, 100, 100)
+            p.Position = Vector3.new(math.random(-500, 500), math.random(100, 300), math.random(-500, 500))
+            p.Anchored = false
+            p.Parent = workspace
+            task.delay(3, function() if p then p:Destroy() end end)
+        end)
+    end
+end})
 
-win:Notify({Title = "MI HUB", Content = "Painel Server-Side carregado.", Duration = 5})
+grpServer:CreateButton({Name = "Quebrar Mapa (Anchored = false)", Icon = "hammer", Callback = function()
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and v ~= getHRP() then
+            pcall(function() v.Anchored = false; v.CanCollide = false end)
+        end
+    end
+end})
+
+grpServer:CreateButton({Name = "Apagar Mapa (Client-side)", Icon = "trash-2", Callback = function()
+    for _, v in ipairs(workspace:GetChildren()) do
+        if v:IsA("Model") or v:IsA("BasePart") then
+            pcall(function() v:Destroy() end)
+        end
+    end
+end})
+
+win:Notify({Title = "MI HUB", Content = "Modo local carregado. Nenhum servidor conectado.", Duration = 5})
