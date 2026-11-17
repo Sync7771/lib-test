@@ -1,12 +1,15 @@
 -- language: Lua, target: Roblox
--- MI HUB AURA EDITION - Scanner + Executor + Painel de Comandos
+-- MI HUB AURA EDITION - Scanner, Executor, Utilidades e Destruição
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LP = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
+-- Carrega a Lib AURA
 local Aura = loadstring(game:HttpGet("https://raw.githubusercontent.com/Sync7771/lib-test/refs/heads/main/AURA%20HUB"))()
 
+-- Cria a Janela Principal
 local win = Aura:CreateWindow({
     Title = "MI HUB | HELL", 
     Subtitle = "Scanner & Executor",
@@ -136,6 +139,7 @@ tabExec:CreateButton({
     end
 })
 
+
 -- ==========================================
 -- ABA 2: UTILIDADES (Para você)
 -- ==========================================
@@ -172,6 +176,7 @@ grpLocal:CreateButton({Name = "Fling (Se jogar longe)", Icon = "zap", Callback =
         task.delay(2, function() if bv then bv:Destroy() end end)
     end
 end})
+
 
 -- ==========================================
 -- ABA 3: ADMIN (Usa a backdoor)
