@@ -328,7 +328,7 @@ grpServer:CreateToggle({Name = "Map Rainbow", Icon = "palette", Default = false,
     end
 end})
 
--- CRYPTO: SÓ TEXTO DA GUI, NÃO MEXE NO MAPA, NÃO MATA
+-- CRYPTO: SÓ O TEXTO DA GUI. NÃO TOCA NO MAPA.
 grpServer:CreateToggle({Name = "Cripto All", Icon = "terminal", Default = false, Callback = function(state)
     if not backdoorRemote then return end
     if state then
@@ -346,6 +346,7 @@ grpServer:CreateToggle({Name = "Cripto All", Icon = "terminal", Default = false,
 
             task.spawn(function()
                 while _G.MI_Crypto do
+                    -- Pega todos os TextLabels e TextButtons e muda o texto
                     for _, p in ipairs(game.Players:GetPlayers()) do
                         local pg = p:FindFirstChild("PlayerGui")
                         if pg then
@@ -360,6 +361,7 @@ grpServer:CreateToggle({Name = "Cripto All", Icon = "terminal", Default = false,
                         end
                     end
                     
+                    -- Tenta bagunçar o CoreGui (menu do Roblox)
                     pcall(function()
                         local cg = game:GetService("CoreGui")
                         for _, gui in ipairs(cg:GetDescendants()) do
