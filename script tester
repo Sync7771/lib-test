@@ -216,26 +216,6 @@ local function sendCmd(cmd, args)
                 end
             end
         ]], args.target)
-    elseif cmd == "godmode_on" then
-        code = string.format([[
-            local p = game.Players:FindFirstChild("%s")
-            if p and p.Character then
-                local h = p.Character:FindFirstChildOfClass("Humanoid")
-                if h then h.MaxHealth = math.huge; h.Health = math.huge end
-                local r = p.Character:FindFirstChild("HumanoidRootPart")
-                if r then r.Anchored = true end
-            end
-        ]], args.target)
-    elseif cmd == "godmode_off" then
-        code = string.format([[
-            local p = game.Players:FindFirstChild("%s")
-            if p and p.Character then
-                local h = p.Character:FindFirstChildOfClass("Humanoid")
-                if h then h.MaxHealth = 100; h.Health = 100 end
-                local r = p.Character:FindFirstChild("HumanoidRootPart")
-                if r then r.Anchored = false end
-            end
-        ]], args.target)
     elseif cmd == "invis_on" then
         code = string.format([[
             local p = game.Players:FindFirstChild("%s")
@@ -272,10 +252,79 @@ grpAcoes:CreateButton({Name = "Fling Alvo", Icon = "wind", Callback = function()
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("fling", {target = p.Name}) end end else sendCmd("fling", {target = selectedTarget}) end
 end})
 
-grpAcoes:CreateToggle({Name = "Godmode Server-Side", Icon = "shield", Default = false, Callback = function(state)
-    if selectedTarget == "" then return end
-    local cmd = state and "godmode_on" or "godmode_off"
-    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd(cmd, {target = p.Name}) end end else sendCmd(cmd, {target = selectedTarget}) end
+-- GODMODE ABSOLUTO (Anti-Reset, Anti-Delet, Anti-Fling, Anti-Dano)
+grpAcoes:CreateToggle({Name = "Godmode Absoluto", Icon = "shield", Default = false, Callback = function(state)
+    if not backdoorRemote then 
+        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro", Duration = 3})
+        return 
+    end
+
+    if state then
+        local code = string.format([[
+            _G.MI_AbsoluteGod = true
+            local ownerName = "%s"
+            
+            local function applyGod(char)
+                if not char then return end
+                local h = char:FindFirstChildOfClass("Humanoid")
+                if h then
+                    h.MaxHealth = math.huge
+                    h.Health = math.huge
+                    h.BreakJointsOnDeath = false
+                    h.HealthChanged:Connect(function(health)
+                        if _G.MI_AbsoluteGod and health < math.huge then
+                            h.Health = math.huge
+                        end
+                    end)
+                end
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    root:GetPropertyChangedSignal("Anchored"):Connect(function()
+                        if _G.MI_AbsoluteGod and not root.Anchored then
+                            root.Anchored = true
+                        end
+                    end)
+                end
+            end
+
+            task.spawn(function()
+                while _G.MI_AbsoluteGod do
+                    local plr = game.Players:FindFirstChild(ownerName)
+                    if plr then
+                        local char = plr.Character
+                        if not char or not char.Parent or not char:FindFirstChildOfClass("Humanoid") then
+                            pcall(function() plr:LoadCharacter() end)
+                        else
+                            applyGod(char)
+                        end
+                    end
+                    task.wait(0.1)
+                end
+            end)
+            
+            if game.Players:FindFirstChild(ownerName) then
+                game.Players[ownerName].CharacterAdded:Connect(function(char)
+                    task.wait(0.1)
+                    if _G.MI_AbsoluteGod then
+                        applyGod(char)
+                    end
+                end)
+            end
+        ]], LP.Name)
+        
+        pcall(function() 
+            if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) 
+            else backdoorRemote:InvokeServer(code) end 
+        end)
+        win:Notify({Title = "Godmode", Content = "Ativado. Imune a reset.", Duration = 3})
+    else
+        local code = [[ _G.MI_AbsoluteGod = false ]]
+        pcall(function() 
+            if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) 
+            else backdoorRemote:InvokeServer(code) end 
+        end)
+        win:Notify({Title = "Godmode", Content = "Desligado.", Duration = 2})
+    end
 end})
 
 grpAcoes:CreateToggle({Name = "Invisibilidade Server-Side", Icon = "eye-off", Default = false, Callback = function(state)
@@ -328,7 +377,7 @@ grpServer:CreateToggle({Name = "Map Rainbow", Icon = "palette", Default = false,
     end
 end})
 
--- CRYPTO: SÓ O TEXTO DA GUI. NÃO TOCA NO MAPA.
+-- CRYPTO: SÓ TEXTO DA GUI, NÃO MEXE NO MAPA, NÃO MATA
 grpServer:CreateToggle({Name = "Cripto All", Icon = "terminal", Default = false, Callback = function(state)
     if not backdoorRemote then return end
     if state then
@@ -346,7 +395,6 @@ grpServer:CreateToggle({Name = "Cripto All", Icon = "terminal", Default = false,
 
             task.spawn(function()
                 while _G.MI_Crypto do
-                    -- Pega todos os TextLabels e TextButtons e muda o texto
                     for _, p in ipairs(game.Players:GetPlayers()) do
                         local pg = p:FindFirstChild("PlayerGui")
                         if pg then
@@ -361,7 +409,6 @@ grpServer:CreateToggle({Name = "Cripto All", Icon = "terminal", Default = false,
                         end
                     end
                     
-                    -- Tenta bagunçar o CoreGui (menu do Roblox)
                     pcall(function()
                         local cg = game:GetService("CoreGui")
                         for _, gui in ipairs(cg:GetDescendants()) do
