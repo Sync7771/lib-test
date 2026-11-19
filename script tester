@@ -153,7 +153,6 @@ grpLocal:CreateButton({Name = "Aplicar Pulo", Icon = "arrow-up", Callback = func
     if h then h.JumpPower = tonumber(jumpInput:Get()) or 50 end
 end})
 
--- NOVA ABA SEPARADA: TROLL PNS (WORLD SPACE COM ANIMAÇÃO)
 local grpTroll = tabUtil:CreateGroup({Name = "Troll"})
 
 grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callback = function(state)
@@ -169,7 +168,6 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
 
         local skinColor = Color3.fromRGB(210, 160, 130)
 
-        -- Base (Bolts)
         local base = Instance.new("Part")
         base.Name = "Base"
         base.Size = Vector3.new(1.4, 1.4, 1.4)
@@ -181,7 +179,6 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
         base.Massless = true
         base.Parent = model
 
-        -- Haste (Eixo)
         local shaft = Instance.new("Part")
         shaft.Name = "Shaft"
         shaft.Size = Vector3.new(0.7, 2.8, 0.7)
@@ -193,7 +190,6 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
         shaft.Massless = true
         shaft.Parent = model
 
-        -- Cabeça (Glande)
         local head = Instance.new("Part")
         head.Name = "Head"
         head.Size = Vector3.new(0.8, 0.8, 0.8)
@@ -205,15 +201,12 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
         head.Massless = true
         head.Parent = model
         
-        -- Solda (Weld) no HumanoidRootPart
         local weld = Instance.new("Weld")
         weld.Part0 = hrp
         weld.Part1 = base
-        -- Posiciona a base na frente da cintura
         weld.C0 = CFrame.new(0, -1, 1.5) * CFrame.Angles(math.rad(-90), 0, 0)
         weld.Parent = base
         
-        -- Soldas para haste e cabeça
         local weldShaft = Instance.new("Weld")
         weldShaft.Part0 = base
         weldShaft.Part1 = shaft
@@ -233,7 +226,6 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
                 return
             end
             spinAngle = spinAngle + dt * 5
-            -- Gira o eixo para dar o efeito de animação
             weldShaft.C0 = CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(90 + math.sin(spinAngle)*30), 0, 0)
         end)
         
@@ -266,7 +258,7 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
             end
         end)
         
-        -- Remove quando desligar o toggle
+        getgenv().TrollD = true
         local checkConn
         checkConn = RunService.Heartbeat:Connect(function()
             if not getgenv().TrollD then
@@ -277,6 +269,7 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
             end
         end)
     else
+        getgenv().TrollD = false
         local char = LP.Character
         if char then
             local model = char:FindFirstChild("Dick_Model")
@@ -386,7 +379,6 @@ grpAcoes:CreateButton({Name = "Fling Alvo", Icon = "wind", Callback = function()
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("fling", {target = p.Name}) end end else sendCmd("fling", {target = selectedTarget}) end
 end})
 
--- GODMODE ABSOLUTO
 grpAcoes:CreateToggle({Name = "Godmode Absoluto", Icon = "shield", Default = false, Callback = function(state)
     if not backdoorRemote then 
         win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro", Duration = 3})
@@ -491,6 +483,83 @@ local grpServer = tabServer:CreateGroup({Name = "Destruicao Server-Side"})
 
 grpServer:CreateButton({Name = "Explodir Tudo", Icon = "bomb", Callback = function() sendCmd("explode") end})
 grpServer:CreateButton({Name = "Lag Server Pesado", Icon = "zap", Callback = function() sendCmd("lag") end})
+
+-- ==========================================
+-- NOVO: FLING PART (TROLL EM TODOS OS JOGADORES)
+-- ==========================================
+grpServer:CreateToggle({Name = "Fling Part", Icon = "wind", Default = false, Callback = function(state)
+    if state then
+        getgenv().MI_FlingPart = true
+        
+        -- Cria um bloco gigante no workspace que flinga todos os jogadores
+        local flingPart = Instance.new("Part")
+        flingPart.Name = "MI_FlingPart"
+        flingPart.Size = Vector3.new(10, 10, 10)
+        flingPart.Color = Color3.fromRGB(255, 0, 0)
+        flingPart.Material = Enum.Material.Neon
+        flingPart.Transparency = 0.5
+        flingPart.Anchored = true
+        flingPart.CanCollide = false
+        flingPart.Position = Vector3.new(0, 500, 0)
+        flingPart.Parent = workspace
+        
+        -- Loop principal de fling
+        task.spawn(function()
+            while getgenv().MI_FlingPart do
+                local players = Players:GetPlayers()
+                
+                -- Move o bloco para cada jogador (exceto você) e aplica fling
+                for _, p in ipairs(players) do
+                    if p ~= LP and p.Character then
+                        local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            -- Teleporta o bloco para cima do jogador
+                            flingPart.CFrame = hrp.CFrame * CFrame.new(0, 3, 0)
+                            
+                            -- Cria BodyVelocity no HRP do jogador para flingar
+                            local bv = Instance.new("BodyVelocity")
+                            bv.Velocity = Vector3.new(
+                                math.random(-5000, 5000),
+                                math.random(5000, 10000),
+                                math.random(-5000, 5000)
+                            )
+                            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                            bv.Parent = hrp
+                            
+                            -- Cria BodyAngularVelocity para girar o jogador
+                            local bav = Instance.new("BodyAngularVelocity")
+                            bav.AngularVelocity = Vector3.new(
+                                math.random(-100, 100),
+                                math.random(-100, 100),
+                                math.random(-100, 100)
+                            )
+                            bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                            bav.Parent = hrp
+                            
+                            -- Remove depois de 0.5s
+                            task.delay(0.5, function()
+                                if bv then bv:Destroy() end
+                                if bav then bav:Destroy() end
+                            end)
+                        end
+                    end
+                end
+                
+                -- Efeito visual: gira o bloco
+                flingPart.CFrame = flingPart.CFrame * CFrame.Angles(0, math.rad(10), 0)
+                
+                task.wait(0.1)
+            end
+        end)
+        
+        win:Notify({Title = "Fling Part", Content = "Ativado! Todos os jogadores (menos voce) estao sendo flingados.", Duration = 3})
+    else
+        getgenv().MI_FlingPart = false
+        local existing = workspace:FindFirstChild("MI_FlingPart")
+        if existing then existing:Destroy() end
+        win:Notify({Title = "Fling Part", Content = "Desligado.", Duration = 2})
+    end
+end})
 
 -- MAP COLOR RAINBOW COM SINCRONIZATION
 grpServer:CreateToggle({Name = "Map Rainbow", Icon = "palette", Default = false, Callback = function(state)
