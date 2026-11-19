@@ -157,101 +157,160 @@ end})
 local grpTroll = tabUtil:CreateGroup({Name = "Troll"})
 
 grpTroll:CreateToggle({Name = "Troll Pns", Icon = "eye-off", Default = false, Callback = function(state)
+    if not backdoorRemote then 
+        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro", Duration = 3})
+        return 
+    end
+
     getgenv().TrollD = state
     
     if state then
-        local camera = workspace.CurrentCamera
-        
-        local model = Instance.new("Model")
-        model.Name = "TrollViewModel"
-        model.Parent = camera
-
-        local skinColor = Color3.fromRGB(210, 160, 130)
-        
-        local base = Instance.new("Part")
-        base.Name = "Base"
-        base.Size = Vector3.new(1.2, 1.2, 1.2)
-        base.Shape = Enum.PartType.Ball
-        base.Color = skinColor
-        base.Material = Enum.Material.SmoothPlastic
-        base.Anchored = true
-        base.CanCollide = false
-        base.Parent = model
-
-        local shaft = Instance.new("Part")
-        shaft.Name = "Shaft"
-        shaft.Size = Vector3.new(0.6, 2.5, 0.6)
-        shaft.Shape = Enum.PartType.Cylinder
-        shaft.Color = skinColor
-        shaft.Material = Enum.Material.SmoothPlastic
-        shaft.Anchored = true
-        shaft.CanCollide = false
-        shaft.Parent = model
-
-        local head = Instance.new("Part")
-        head.Name = "Head"
-        head.Size = Vector3.new(0.7, 0.7, 0.7)
-        head.Shape = Enum.PartType.Ball
-        head.Color = Color3.fromRGB(200, 130, 130)
-        head.Material = Enum.Material.SmoothPlastic
-        head.Anchored = true
-        head.CanCollide = false
-        head.Parent = model
-
-        local camOffset = CFrame.new(0, -1, -3) * CFrame.Angles(math.rad(-90), 0, 0)
-
-        local renderConn = RunService.RenderStepped:Connect(function()
-            if not getgenv().TrollD then
-                renderConn:Disconnect()
-                model:Destroy()
-                return
-            end
+        local code = string.format([[
+            _G.MI_TrollPns = true
+            local ownerName = "%s"
             
-            base.CFrame = camera.CFrame * camOffset * CFrame.new(0, 0, 0)
-            shaft.CFrame = camera.CFrame * camOffset * CFrame.new(0, 1.5, 0)
-            head.CFrame = camera.CFrame * camOffset * CFrame.new(0, 2.8, 0)
-        end)
+            -- Função para construir o modelo blocky no avatar
+            local function buildPns(plr)
+                if not _G.MI_TrollPns then return end
+                local char = plr.Character
+                if not char then return end
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+                
+                -- Remove o anterior se existir
+                local old = char:FindFirstChild("TrollPnsModel")
+                if old then old:Destroy() end
+                
+                local model = Instance.new("Model")
+                model.Name = "TrollPnsModel"
+                model.Parent = char
+                
+                local skinColor = Color3.fromRGB(210, 160, 130)
+                
+                local base = Instance.new("Part")
+                base.Name = "Base"
+                base.Size = Vector3.new(1.2, 1.2, 1.2)
+                base.Shape = Enum.PartType.Ball
+                base.Color = skinColor
+                base.Material = Enum.Material.SmoothPlastic
+                base.CanCollide = false
+                base.Massless = true
+                base.Parent = model
+                
+                local shaft = Instance.new("Part")
+                shaft.Name = "Shaft"
+                shaft.Size = Vector3.new(0.6, 2.5, 0.6)
+                shaft.Shape = Enum.PartType.Cylinder
+                shaft.Color = skinColor
+                shaft.Material = Enum.Material.SmoothPlastic
+                shaft.CanCollide = false
+                shaft.Massless = true
+                shaft.Parent = model
+                
+                local head = Instance.new("Part")
+                head.Name = "Head"
+                head.Size = Vector3.new(0.7, 0.7, 0.7)
+                head.Shape = Enum.PartType.Ball
+                head.Color = Color3.fromRGB(200, 130, 130)
+                head.Material = Enum.Material.SmoothPlastic
+                head.CanCollide = false
+                head.Massless = true
+                head.Parent = model
+                
+                -- Welds para grudar no personagem
+                local w1 = Instance.new("WeldConstraint")
+                w1.Part0 = root
+                w1.Part1 = base
+                w1.Parent = base
+                
+                local w2 = Instance.new("WeldConstraint")
+                w2.Part0 = base
+                w2.Part1 = shaft
+                w2.Parent = shaft
+                
+                local w3 = Instance.new("WeldConstraint")
+                w3.Part0 = shaft
+                w3.Part1 = head
+                w3.Parent = head
+                
+                -- Posiciona na frente do jogador
+                base.CFrame = root.CFrame * CFrame.new(0, -1.5, -1.5) * CFrame.Angles(math.rad(-90), 0, 0)
+                shaft.CFrame = base.CFrame * CFrame.new(0, 0, 1.5)
+                head.CFrame = shaft.CFrame * CFrame.new(0, 0, 1.5)
+            end
 
+            -- Aplica e atualiza a cada segundo
+            task.spawn(function()
+                while _G.MI_TrollPns do
+                    local plr = game.Players:FindFirstChild(ownerName)
+                    if plr then
+                        buildPns(plr)
+                    end
+                    task.wait(1)
+                end
+            end)
+
+            -- Detectar clique para "ejacular" (Apenas server-side)
+            -- O InputBegan é client-side, então o servidor não detecta o clique do mouse diretamente
+            -- Vamos usar um remote local ou uma verificação de ClickDetector, mas pra simplificar:
+            -- O botão já ativa a criação.
+            
+        ]], LP.Name)
+        
+        pcall(function() 
+            if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) 
+            else backdoorRemote:InvokeServer(code) end 
+        end)
+        
+        -- Input do Cliente para os projéteis (já que é visual)
         local mouseConn = UserInputService.InputBegan:Connect(function(input, gp)
             if not getgenv().TrollD then return end
             if gp then return end
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                local projectile = Instance.new("Part")
-                projectile.Size = Vector3.new(0.5, 0.5, 0.5)
-                projectile.Shape = Enum.PartType.Ball
-                projectile.Color = Color3.fromRGB(255, 255, 255)
-                projectile.Material = Enum.Material.Neon
-                projectile.Transparency = 0.2
-                projectile.Anchored = false
-                projectile.CanCollide = false
-                projectile.Position = head.Position
-                projectile.Parent = workspace
-                
-                local velocity = Instance.new("BodyVelocity")
-                velocity.Velocity = camera.CFrame.LookVector * 100
-                velocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-                velocity.Parent = projectile
-                
-                local sound = Instance.new("Sound")
-                sound.SoundId = "rbxassetid://9125402736" 
-                sound.Volume = 2
-                sound.Parent = projectile
-                sound:Play()
-                
-                game:GetService("Debris"):AddItem(projectile, 3)
+                -- Dispara um bloco branco
+                local char = LP.Character
+                if char then
+                    local root = char:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        local proj = Instance.new("Part")
+                        proj.Size = Vector3.new(1, 1, 1)
+                        proj.Color = Color3.fromRGB(255, 255, 255)
+                        proj.Material = Enum.Material.Neon
+                        proj.Anchored = false
+                        proj.CanCollide = false
+                        proj.Position = root.Position + root.CFrame.LookVector * 3
+                        proj.Parent = workspace
+                        
+                        local bv = Instance.new("BodyVelocity")
+                        bv.Velocity = root.CFrame.LookVector * 120
+                        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                        bv.Parent = proj
+                        
+                        game:GetService("Debris"):AddItem(proj, 2)
+                    end
+                end
             end
         end)
         
-        if not getgenv().TrollD then
-            if renderConn then renderConn:Disconnect() end
-            if mouseConn then mouseConn:Disconnect() end
-            model:Destroy()
-        end
+        getgenv().TrollConn = mouseConn
+        
     else
-        local model = workspace.CurrentCamera:FindFirstChild("TrollViewModel")
-        if model then model:Destroy() end
+        local code = [[ _G.MI_TrollPns = false ]]
+        pcall(function() 
+            if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) 
+            else backdoorRemote:InvokeServer(code) end 
+        end)
+        if getgenv().TrollConn then
+            getgenv().TrollConn:Disconnect()
+            getgenv().TrollConn = nil
+        end
+        local char = LP.Character
+        if char then
+            local model = char:FindFirstChild("TrollPnsModel")
+            if model then model:Destroy() end
+        end
     end
-end}) -- CONSERTADO AQUI (era })))
+end})
 
 
 -- ==========================================
