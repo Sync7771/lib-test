@@ -153,7 +153,7 @@ grpLocal:CreateButton({Name = "Aplicar Pulo", Icon = "arrow-up", Callback = func
     if h then h.JumpPower = tonumber(jumpInput:Get()) or 50 end
 end})
 
--- NOVA ABA SEPARADA: TROLL PNS (WORLD SPACE)
+-- NOVA ABA SEPARADA: TROLL PNS (WORLD SPACE COM ANIMAÇÃO)
 local grpTroll = tabUtil:CreateGroup({Name = "Troll"})
 
 grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callback = function(state)
@@ -165,7 +165,7 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
 
         local model = Instance.new("Model")
         model.Name = "Dick_Model"
-        model.Parent = workspace
+        model.Parent = char
 
         local skinColor = Color3.fromRGB(210, 160, 130)
 
@@ -176,8 +176,9 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
         base.Shape = Enum.PartType.Ball
         base.Color = skinColor
         base.Material = Enum.Material.SmoothPlastic
-        base.Anchored = true
+        base.Anchored = false
         base.CanCollide = false
+        base.Massless = true
         base.Parent = model
 
         -- Haste (Eixo)
@@ -187,8 +188,9 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
         shaft.Shape = Enum.PartType.Cylinder
         shaft.Color = skinColor
         shaft.Material = Enum.Material.SmoothPlastic
-        shaft.Anchored = true
+        shaft.Anchored = false
         shaft.CanCollide = false
+        shaft.Massless = true
         shaft.Parent = model
 
         -- Cabeça (Glande)
@@ -198,27 +200,88 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "box", Default = false, Callba
         head.Shape = Enum.PartType.Ball
         head.Color = Color3.fromRGB(200, 130, 130)
         head.Material = Enum.Material.SmoothPlastic
-        head.Anchored = true
+        head.Anchored = false
         head.CanCollide = false
+        head.Massless = true
         head.Parent = model
+        
+        -- Solda (Weld) no HumanoidRootPart
+        local weld = Instance.new("Weld")
+        weld.Part0 = hrp
+        weld.Part1 = base
+        -- Posiciona a base na frente da cintura
+        weld.C0 = CFrame.new(0, -1, 1.5) * CFrame.Angles(math.rad(-90), 0, 0)
+        weld.Parent = base
+        
+        -- Soldas para haste e cabeça
+        local weldShaft = Instance.new("Weld")
+        weldShaft.Part0 = base
+        weldShaft.Part1 = shaft
+        weldShaft.C0 = CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(90), 0, 0)
+        weldShaft.Parent = shaft
 
-        -- Posiciona na frente do jogador
-        local lookVector = hrp.CFrame.LookVector
-        local spawnPos = hrp.Position + lookVector * 4
+        local weldHead = Instance.new("Weld")
+        weldHead.Part0 = shaft
+        weldHead.Part1 = head
+        weldHead.C0 = CFrame.new(0, 1.5, 0)
+        weldHead.Parent = head
         
-        base.CFrame = CFrame.new(spawnPos)
-        shaft.CFrame = CFrame.new(spawnPos) * CFrame.Angles(math.rad(90), 0, 0) * CFrame.new(0, 1.8, 0)
-        head.CFrame = CFrame.new(spawnPos) * CFrame.Angles(math.rad(90), 0, 0) * CFrame.new(0, 3.5, 0)
+        local spinAngle = 0
+        local renderConn = RunService.RenderStepped:Connect(function(dt)
+            if not model.Parent then
+                renderConn:Disconnect()
+                return
+            end
+            spinAngle = spinAngle + dt * 5
+            -- Gira o eixo para dar o efeito de animação
+            weldShaft.C0 = CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(90 + math.sin(spinAngle)*30), 0, 0)
+        end)
         
-        -- Deixa visível por 10 segundos
-        task.delay(10, function()
-            if model and model.Parent then
+        local mouseConn = UserInputService.InputBegan:Connect(function(input, gp)
+            if gp or not model.Parent then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                local projectile = Instance.new("Part")
+                projectile.Size = Vector3.new(0.5, 0.5, 0.5)
+                projectile.Shape = Enum.PartType.Ball
+                projectile.Color = Color3.fromRGB(255, 255, 255)
+                projectile.Material = Enum.Material.Neon
+                projectile.Transparency = 0.2
+                projectile.Anchored = false
+                projectile.CanCollide = false
+                projectile.Position = head.Position
+                projectile.Parent = workspace
+                
+                local velocity = Instance.new("BodyVelocity")
+                velocity.Velocity = hrp.CFrame.LookVector * 100
+                velocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                velocity.Parent = projectile
+                
+                local sound = Instance.new("Sound")
+                sound.SoundId = "rbxassetid://9125402736" 
+                sound.Volume = 2
+                sound.Parent = projectile
+                sound:Play()
+                
+                game:GetService("Debris"):AddItem(projectile, 3)
+            end
+        end)
+        
+        -- Remove quando desligar o toggle
+        local checkConn
+        checkConn = RunService.Heartbeat:Connect(function()
+            if not getgenv().TrollD then
+                if renderConn then renderConn:Disconnect() end
+                if mouseConn then mouseConn:Disconnect() end
+                if checkConn then checkConn:Disconnect() end
                 model:Destroy()
             end
         end)
     else
-        local model = workspace:FindFirstChild("Dick_Model")
-        if model then model:Destroy() end
+        local char = LP.Character
+        if char then
+            local model = char:FindFirstChild("Dick_Model")
+            if model then model:Destroy() end
+        end
     end
 end})
 
