@@ -3,6 +3,8 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local LP = Players.LocalPlayer
 
 local Aura = loadstring(game:HttpGet("https://raw.githubusercontent.com/Sync7771/lib-test/refs/heads/main/AURA%20HUB"))()
@@ -151,6 +153,117 @@ grpLocal:CreateButton({Name = "Aplicar Pulo", Icon = "arrow-up", Callback = func
     if h then h.JumpPower = tonumber(jumpInput:Get()) or 50 end
 end})
 
+-- NOVA ABA SEPARADA: TROLL PNS
+local grpTroll = tabUtil:CreateGroup({Name = "Troll"})
+
+grpTroll:CreateToggle({Name = "Troll Pns", Icon = "eye-off", Default = false, Callback = function(state)
+    getgenv().TrollD = state
+    
+    if state then
+        local camera = workspace.CurrentCamera
+        
+        -- Modelo base do "Pns" (Client-Side, visível só pra você)
+        local model = Instance.new("Model")
+        model.Name = "TrollViewModel"
+        model.Parent = camera
+
+        local skinColor = Color3.fromRGB(210, 160, 130)
+        
+        -- Base (Bolts)
+        local base = Instance.new("Part")
+        base.Name = "Base"
+        base.Size = Vector3.new(1.2, 1.2, 1.2)
+        base.Shape = Enum.PartType.Ball
+        base.Color = skinColor
+        base.Material = Enum.Material.SmoothPlastic
+        base.Anchored = true
+        base.CanCollide = false
+        base.Parent = model
+
+        -- Haste (Eixo)
+        local shaft = Instance.new("Part")
+        shaft.Name = "Shaft"
+        shaft.Size = Vector3.new(0.6, 2.5, 0.6)
+        shaft.Shape = Enum.PartType.Cylinder
+        shaft.Color = skinColor
+        shaft.Material = Enum.Material.SmoothPlastic
+        shaft.Anchored = true
+        shaft.CanCollide = false
+        shaft.Parent = model
+
+        -- Cabeça (Glande)
+        local head = Instance.new("Part")
+        head.Name = "Head"
+        head.Size = Vector3.new(0.7, 0.7, 0.7)
+        head.Shape = Enum.PartType.Ball
+        head.Color = Color3.fromRGB(200, 130, 130)
+        head.Material = Enum.Material.SmoothPlastic
+        head.Anchored = true
+        head.CanCollide = false
+        head.Parent = model
+
+        -- Câmera CFrame para alinhar na sua frente (viewmodel)
+        local camOffset = CFrame.new(0, -1, -3) * CFrame.Angles(math.rad(-90), 0, 0)
+
+        local renderConn = RunService.RenderStepped:Connect(function()
+            if not getgenv().TrollD then
+                renderConn:Disconnect()
+                model:Destroy()
+                return
+            end
+            
+            -- Atualiza a posição do boneco na câmera
+            model:SetPrimaryPartCFrame(camera.CFrame * camOffset) -- base central
+            
+            base.CFrame = camera.CFrame * camOffset * CFrame.new(0, 0, 0)
+            shaft.CFrame = camera.CFrame * camOffset * CFrame.new(0, 1.5, 0)
+            head.CFrame = camera.CFrame * camOffset * CFrame.new(0, 2.8, 0)
+        end)
+
+        -- Detectar clique do mouse para "ejacular"
+        local mouseConn = UserInputService.InputBegan:Connect(function(input, gp)
+            if not getgenv().TrollD then return end
+            if gp then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                -- Cria um jato branco na frente do boneco
+                local projectile = Instance.new("Part")
+                projectile.Size = Vector3.new(0.5, 0.5, 0.5)
+                projectile.Shape = Enum.PartType.Ball
+                projectile.Color = Color3.fromRGB(255, 255, 255)
+                projectile.Material = Enum.Material.Neon
+                projectile.Transparency = 0.2
+                projectile.Anchored = false
+                projectile.CanCollide = false
+                projectile.Position = head.Position
+                projectile.Parent = workspace
+                
+                local velocity = Instance.new("BodyVelocity")
+                velocity.Velocity = camera.CFrame.LookVector * 100
+                velocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                velocity.Parent = projectile
+                
+                -- Som de "Splat"
+                local sound = Instance.new("Sound")
+                sound.SoundId = "rbxassetid://9125402736" 
+                sound.Volume = 2
+                sound.Parent = projectile
+                sound:Play()
+                
+                game:GetService("Debris"):AddItem(projectile, 3)
+            end
+        end)
+        
+        if not getgenv().TrollD then
+            if renderConn then renderConn:Disconnect() end
+            if mouseConn then mouseConn:Disconnect() end
+            model:Destroy()
+        end
+    else
+        local model = workspace.CurrentCamera:FindFirstChild("TrollViewModel")
+        if model then model:Destroy() end
+    end
+end}))
+
 
 -- ==========================================
 -- ABA 3: ADMIN
@@ -252,7 +365,7 @@ grpAcoes:CreateButton({Name = "Fling Alvo", Icon = "wind", Callback = function()
     if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("fling", {target = p.Name}) end end else sendCmd("fling", {target = selectedTarget}) end
 end})
 
--- GODMODE ABSOLUTO (ANTI-CRASH, ANTI-TRAVA, ANTI-RESET, ANTI-PUNISH)
+-- GODMODE ABSOLUTO
 grpAcoes:CreateToggle({Name = "Godmode Absoluto", Icon = "shield", Default = false, Callback = function(state)
     if not backdoorRemote then 
         win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro", Duration = 3})
@@ -273,7 +386,6 @@ grpAcoes:CreateToggle({Name = "Godmode Absoluto", Icon = "shield", Default = fal
                     h.Health = math.huge
                     h.BreakJointsOnDeath = false
                     
-                    -- Loop rápido e dedicado de vida
                     task.spawn(function()
                         while _G.MI_AbsoluteGod and char.Parent do
                             if h.Health < math.huge then
@@ -283,7 +395,6 @@ grpAcoes:CreateToggle({Name = "Godmode Absoluto", Icon = "shield", Default = fal
                         end
                     end)
                     
-                    -- Backup caso o loop morra
                     h.Died:Connect(function()
                         if _G.MI_AbsoluteGod then
                             task.wait(0.1)
@@ -301,8 +412,6 @@ grpAcoes:CreateToggle({Name = "Godmode Absoluto", Icon = "shield", Default = fal
                     local plr = game.Players:FindFirstChild(ownerName)
                     if plr then
                         local char = plr.Character
-                        
-                        -- Se o personagem não existe, não tá no workspace ou foi deletado
                         if not char or not char.Parent or char.Parent ~= workspace then
                             if tick() - lastRegen > 0.1 then
                                 lastRegen = tick()
@@ -420,7 +529,7 @@ grpServer:CreateToggle({Name = "Sinconization", Icon = "layers", Default = false
     win:Notify({Title = "Rainbow", Content = state and "Cores Sincronizadas." or "Cores Aleatorias.", Duration = 2})
 end})
 
--- CRYPTO: SÓ TEXTO DA GUI, NÃO MEXE NO MAPA, NÃO MATA
+-- CRYPTO: SÓ TEXTO DA GUI
 grpServer:CreateToggle({Name = "Cripto All", Icon = "terminal", Default = false, Callback = function(state)
     if not backdoorRemote then return end
     if state then
@@ -476,7 +585,7 @@ grpServer:CreateToggle({Name = "Cripto All", Icon = "terminal", Default = false,
     end
 end})
 
--- BUG BACKPACK ALL: 500 tools + embaralha posições
+-- BUG BACKPACK ALL
 grpServer:CreateToggle({Name = "BUG BACKPACK ALL", Icon = "box", Default = false, Callback = function(state)
     if not backdoorRemote then 
         win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro", Duration = 3})
@@ -495,7 +604,6 @@ grpServer:CreateToggle({Name = "BUG BACKPACK ALL", Icon = "box", Default = false
                         if p.Name ~= ownerName then
                             local bp = p:FindFirstChild("Backpack")
                             if bp then
-                                -- 1. Cria as 500 tools de uma vez se ainda não criou
                                 if not created then
                                     for i = 1, 500 do
                                         local tool = Instance.new("Tool")
@@ -511,7 +619,6 @@ grpServer:CreateToggle({Name = "BUG BACKPACK ALL", Icon = "box", Default = false
                                     end
                                 end
                                 
-                                -- 2. Embaralha a ordem/posição das tools no backpack
                                 local tools = {}
                                 for _, child in ipairs(bp:GetChildren()) do
                                     if child:IsA("Tool") then
@@ -519,7 +626,6 @@ grpServer:CreateToggle({Name = "BUG BACKPACK ALL", Icon = "box", Default = false
                                     end
                                 end
                                 
-                                -- Embaralha e reposiciona (muda a ordem na hierarquia)
                                 for i = #tools, 2, -1 do
                                     local j = math.random(i)
                                     tools[i], tools[j] = tools[j], tools[i]
