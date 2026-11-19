@@ -162,14 +162,12 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "eye-off", Default = false, Ca
     if state then
         local camera = workspace.CurrentCamera
         
-        -- Modelo base do "Pns" (Client-Side, visível só pra você)
         local model = Instance.new("Model")
         model.Name = "TrollViewModel"
         model.Parent = camera
 
         local skinColor = Color3.fromRGB(210, 160, 130)
         
-        -- Base (Bolts)
         local base = Instance.new("Part")
         base.Name = "Base"
         base.Size = Vector3.new(1.2, 1.2, 1.2)
@@ -180,7 +178,6 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "eye-off", Default = false, Ca
         base.CanCollide = false
         base.Parent = model
 
-        -- Haste (Eixo)
         local shaft = Instance.new("Part")
         shaft.Name = "Shaft"
         shaft.Size = Vector3.new(0.6, 2.5, 0.6)
@@ -191,7 +188,6 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "eye-off", Default = false, Ca
         shaft.CanCollide = false
         shaft.Parent = model
 
-        -- Cabeça (Glande)
         local head = Instance.new("Part")
         head.Name = "Head"
         head.Size = Vector3.new(0.7, 0.7, 0.7)
@@ -202,7 +198,6 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "eye-off", Default = false, Ca
         head.CanCollide = false
         head.Parent = model
 
-        -- Câmera CFrame para alinhar na sua frente (viewmodel)
         local camOffset = CFrame.new(0, -1, -3) * CFrame.Angles(math.rad(-90), 0, 0)
 
         local renderConn = RunService.RenderStepped:Connect(function()
@@ -212,20 +207,15 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "eye-off", Default = false, Ca
                 return
             end
             
-            -- Atualiza a posição do boneco na câmera
-            model:SetPrimaryPartCFrame(camera.CFrame * camOffset) -- base central
-            
             base.CFrame = camera.CFrame * camOffset * CFrame.new(0, 0, 0)
             shaft.CFrame = camera.CFrame * camOffset * CFrame.new(0, 1.5, 0)
             head.CFrame = camera.CFrame * camOffset * CFrame.new(0, 2.8, 0)
         end)
 
-        -- Detectar clique do mouse para "ejacular"
         local mouseConn = UserInputService.InputBegan:Connect(function(input, gp)
             if not getgenv().TrollD then return end
             if gp then return end
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                -- Cria um jato branco na frente do boneco
                 local projectile = Instance.new("Part")
                 projectile.Size = Vector3.new(0.5, 0.5, 0.5)
                 projectile.Shape = Enum.PartType.Ball
@@ -242,7 +232,6 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "eye-off", Default = false, Ca
                 velocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
                 velocity.Parent = projectile
                 
-                -- Som de "Splat"
                 local sound = Instance.new("Sound")
                 sound.SoundId = "rbxassetid://9125402736" 
                 sound.Volume = 2
@@ -262,7 +251,7 @@ grpTroll:CreateToggle({Name = "Troll Pns", Icon = "eye-off", Default = false, Ca
         local model = workspace.CurrentCamera:FindFirstChild("TrollViewModel")
         if model then model:Destroy() end
     end
-end}))
+end}) -- CONSERTADO AQUI (era })))
 
 
 -- ==========================================
