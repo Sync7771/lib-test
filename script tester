@@ -280,22 +280,321 @@ end})
 
 
 -- ==========================================
--- ABA 3: ADMIN
+-- ABA 3: ADMIN (COM TOGGLES)
 -- ==========================================
 local tabAdmin = win:CreateTab({Name = "Admin", Icon = "shield"})
+
+local adminSelected = ""
+local targetLabel
+
+-- Função auxiliar: executa em alvo único ou em todos
+local function forEachTarget(fn)
+    if adminSelected == "" then
+        win:Notify({Title = "Aviso", Content = "Selecione um alvo primeiro.", Duration = 3})
+        return false
+    end
+    if adminSelected == "ALL" then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LP then pcall(fn, p) end
+        end
+    else
+        local p = Players:FindFirstChild(adminSelected)
+        if p then pcall(fn, p) end
+    end
+    return true
+end
+
+-- ==========================================
+-- GRUPO 1: ALVO
+-- ==========================================
 local grpPlayer = tabAdmin:CreateGroup({Name = "Alvo", Description = "Escolha o alvo"})
+targetLabel = tabAdmin:CreateLabel({Name = "Alvo atual: Nenhum"})
 
 grpPlayer:CreatePlayerList({
     Name = "Jogadores",
-    Height = 120,
+    Height = 130,
     Multi = false,
-    Callback = function(player) if player then selectedTarget = player.Name end end
+    Callback = function(player)
+        if player then
+            adminSelected = player.Name
+            selectedTarget = player.Name
+            targetLabel:Set("Alvo atual: " .. player.Name)
+        end
+    end
 })
-grpPlayer:CreateButton({Name = "Selecionar Todos ALL", Icon = "users", Callback = function() selectedTarget = "ALL" end})
 
-tabAdmin:CreateSpacer(10)
-local grpAcoes = tabAdmin:CreateGroup({Name = "Acoes Via Backdoor"})
+grpPlayer:CreateButton({Name = "Selecionar Todos ALL", Icon = "users", Callback = function()
+    adminSelected = "ALL"
+    selectedTarget = "ALL"
+    targetLabel:Set("Alvo atual: TODOS")
+end})
+grpPlayer:CreateButton({Name = "Limpar Selecao", Icon = "x", Callback = function()
+    adminSelected = ""
+    selectedTarget = ""
+    targetLabel:Set("Alvo atual: Nenhum")
+end})
 
+tabAdmin:CreateSpacer(8)
+
+-- ==========================================
+-- GRUPO 2: TELEPORT (ações instantâneas)
+-- ==========================================
+local grpTP = tabAdmin:CreateGroup({Name = "Teleport"})
+
+grpTP:CreateButton({Name = "Teleport To Alvo", Icon = "map-pin", Callback = function()
+    forEachTarget(function(p)
+        if p.Character and LP.Character then
+            local thrp = p.Character:FindFirstChild("HumanoidRootPart")
+            local ohrp = LP.Character:FindFirstChild("HumanoidRootPart")
+            if thrp and ohrp then ohrp.CFrame = thrp.CFrame * CFrame.new(0, 0, 3) end
+        end
+    end)
+end})
+
+grpTP:CreateButton({Name = "Bring Alvo", Icon = "arrow-down", Callback = function()
+    if not backdoorRemote then win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro", Duration = 3}) return end
+    forEachTarget(function(p)
+        local code = string.format([[
+            local t=game.Players:FindFirstChild("%s") local o=game.Players:FindFirstChild("%s")
+            if t and o and o.Character and t.Character then
+                local th=t.Character:FindFirstChild("HumanoidRootPart")
+                local oh=o.Character:FindFirstChild("HumanoidRootPart")
+                if th and oh then th.CFrame=oh.CFrame*CFrame.new(0,0,3) end
+            end
+        ]], p.Name, LP.Name)
+        pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
+    end)
+end})
+
+grpTP:CreateButton({Name = "Bring All", Icon = "users", Callback = function()
+    if not backdoorRemote then win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro", Duration = 3}) return end
+    local code = string.format([[
+        local o=game.Players:FindFirstChild("%s")
+        if o and o.Character then
+            local oh=o.Character:FindFirstChild("HumanoidRootPart")
+            if oh then
+                for _,p in ipairs(game.Players:GetPlayers()) do
+                    if p~=o and p.Character then
+                        local th=p.Character:FindFirstChild("HumanoidRootPart")
+                        if th then th.CFrame=oh.CFrame+Vector3.new(math.random(-4,4),0,math.random(-4,4)) end
+                    end
+                end
+            end
+        end
+    ]], LP.Name)
+    pcall(function() if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) else backdoorRemote:InvokeServer(code) end end)
+end})
+
+tabAdmin:CreateSpacer(8)
+
+-- ==========================================
+-- GRUPO 3: CHARACTER (toggles)
+-- ==========================================
+local grpChar = tabAdmin:CreateGroup({Name = "Character"})
+
+grpChar:CreateToggle({Name = "Freeze Alvo", Icon = "pause", Default = false, Callback = function(state)
+    forEachTarget(function(p)
+        if p.Character then
+            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then hrp.Anchored = state end
+        end
+    end)
+end})
+
+grpChar:CreateToggle({Name = "Ragdoll Alvo", Icon = "user", Default = false, Callback = function(state)
+    forEachTarget(function(p)
+        if p.Character then
+            local h = p.Character:FindFirstChildOfClass("Humanoid")
+            if h then h.PlatformStand = state end
+        end
+    end)
+end})
+
+grpChar:CreateToggle({Name = "Strip Tools", Icon = "trash", Default = false, Callback = function(state)
+    if state then
+        forEachTarget(function(p)
+            local bp = p:FindFirstChild("Backpack")
+            if bp then for _,t in ipairs(bp:GetChildren()) do if t:IsA("Tool") then t:Destroy() end end end
+            if p.Character then for _,t in ipairs(p.Character:GetChildren()) do if t:IsA("Tool") then t:Destroy() end end
+        end)
+        win:Notify({Title = "Strip", Content = "Tools removidas.", Duration = 2})
+    end
+end})
+
+tabAdmin:CreateSpacer(8)
+
+-- ==========================================
+-- GRUPO 4: MOVEMENT (toggles)
+-- ==========================================
+local grpMove = tabAdmin:CreateGroup({Name = "Movement"})
+
+local speedTargetInput = grpMove:CreateInput({Name = "Speed do Alvo", PlaceholderText = "Ex 100", Default = "16"})
+grpMove:CreateToggle({Name = "Aplicar Speed", Icon = "wind", Default = false, Callback = function(state)
+    local val = tonumber(speedTargetInput:Get()) or 16
+    forEachTarget(function(p)
+        if p.Character then
+            local h = p.Character:FindFirstChildOfClass("Humanoid")
+            if h then h.WalkSpeed = state and val or 16 end
+        end
+    end)
+end})
+
+local jumpTargetInput = grpMove:CreateInput({Name = "Jump do Alvo", PlaceholderText = "Ex 100", Default = "50"})
+grpMove:CreateToggle({Name = "Aplicar Jump", Icon = "arrow-up", Default = false, Callback = function(state)
+    local val = tonumber(jumpTargetInput:Get()) or 50
+    forEachTarget(function(p)
+        if p.Character then
+            local h = p.Character:FindFirstChildOfClass("Humanoid")
+            if h then h.JumpPower = state and val or 50 end
+        end
+    end)
+end})
+
+tabAdmin:CreateSpacer(8)
+
+-- ==========================================
+-- GRUPO 5: VISUAL (toggles)
+-- ==========================================
+local grpVisual = tabAdmin:CreateGroup({Name = "Visual"})
+
+grpVisual:CreateToggle({Name = "Highlight Alvo", Icon = "square", Default = false, Callback = function(state)
+    forEachTarget(function(p)
+        if p.Character then
+            local old = p.Character:FindFirstChild("MI_Highlight")
+            if old then old:Destroy() end
+            if state then
+                local hl = Instance.new("Highlight")
+                hl.Name = "MI_Highlight"
+                hl.FillColor = Color3.fromRGB(255, 0, 0)
+                hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                hl.FillTransparency = 0.5
+                hl.Parent = p.Character
+            end
+        end
+    end)
+end})
+
+local spectateConn = nil
+grpVisual:CreateToggle({Name = "Spectate Alvo", Icon = "eye", Default = false, Callback = function(state)
+    if spectateConn then spectateConn:Disconnect() spectateConn = nil end
+    if state then
+        local target = Players:FindFirstChild(adminSelected)
+        if not target or not target.Character then
+            win:Notify({Title = "Aviso", Content = "Selecione um alvo valido.", Duration = 3})
+            return
+        end
+        spectateConn = RunService.RenderStepped:Connect(function()
+            if target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                workspace.CurrentCamera.CameraSubject = target.Character.HumanoidRootPart
+            end
+        end)
+    else
+        if LP.Character then
+            local h = LP.Character:FindFirstChildOfClass("Humanoid")
+            if h then workspace.CurrentCamera.CameraSubject = h end
+        end
+    end
+end})
+
+tabAdmin:CreateSpacer(8)
+
+-- ==========================================
+-- GRUPO 6: COMBAT (toggles)
+-- ==========================================
+local grpCombat = tabAdmin:CreateGroup({Name = "Combat"})
+
+local dmgInput = grpCombat:CreateInput({Name = "Dano", PlaceholderText = "Ex 50", Default = "50"})
+grpCombat:CreateToggle({Name = "Damage Continuo", Icon = "sword", Default = false, Callback = function(state)
+    if state then
+        local dmg = tonumber(dmgInput:Get()) or 50
+        getgenv().MI_DamageLoop = true
+        task.spawn(function()
+            while getgenv().MI_DamageLoop do
+                forEachTarget(function(p)
+                    if p.Character then
+                        local h = p.Character:FindFirstChildOfClass("Humanoid")
+                        if h and h.Health > 0 then h:TakeDamage(dmg) end
+                    end
+                end)
+                task.wait(0.5)
+            end
+        end)
+    else
+        getgenv().MI_DamageLoop = false
+    end
+end})
+
+grpCombat:CreateToggle({Name = "Heal Continuo", Icon = "heart", Default = false, Callback = function(state)
+    if state then
+        getgenv().MI_HealLoop = true
+        task.spawn(function()
+            while getgenv().MI_HealLoop do
+                forEachTarget(function(p)
+                    if p.Character then
+                        local h = p.Character:FindFirstChildOfClass("Humanoid")
+                        if h then h.Health = h.MaxHealth end
+                    end
+                end)
+                task.wait(0.5)
+            end
+        end)
+    else
+        getgenv().MI_HealLoop = false
+    end
+end})
+
+tabAdmin:CreateSpacer(8)
+
+-- ==========================================
+-- GRUPO 7: ACOES SERVER-SIDE (backdoor)
+-- ==========================================
+local grpAcoes = tabAdmin:CreateGroup({Name = "Acoes Server (Backdoor)"})
+
+grpAcoes:CreateButton({Name = "Kick Alvo", Icon = "user-x", Callback = function()
+    if adminSelected == "ALL" then
+        for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then p:Kick("Kicked by MI HUB") end end
+    else
+        sendCmd("kick", {target = adminSelected})
+    end
+end})
+
+grpAcoes:CreateButton({Name = "Matar Alvo", Icon = "skull", Callback = function()
+    if adminSelected == "ALL" then
+        for _, p in ipairs(Players:GetPlayers()) do if p ~= LP and p.Character then p.Character:BreakJoints() end end
+    else
+        sendCmd("kill", {target = adminSelected})
+    end
+end})
+
+grpAcoes:CreateButton({Name = "Fling Alvo", Icon = "wind", Callback = function()
+    if adminSelected == "ALL" then
+        for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("fling", {target = p.Name}) end end
+    else
+        sendCmd("fling", {target = adminSelected})
+    end
+end})
+
+grpAcoes:CreateToggle({Name = "Invisibilidade Server-Side", Icon = "eye-off", Default = false, Callback = function(state)
+    if adminSelected == "" then return end
+    local cmd = state and "invis_on" or "invis_off"
+    if adminSelected == "ALL" then
+        for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd(cmd, {target = p.Name}) end end
+    else
+        sendCmd(cmd, {target = adminSelected})
+    end
+end})
+
+-- ⚠️ GODMODE REMOVIDO - estrutura comentada para implementar depois
+--[[
+grpAcoes:CreateToggle({Name = "Godmode Absoluto", Icon = "shield", Default = false, Callback = function(state)
+    -- TODO: implementar
+end})
+--]]
+
+
+-- ==========================================
+-- FUNÇÃO sendCmd (necessária para o backdoor)
+-- ==========================================
 local function sendCmd(cmd, args)
     if not backdoorRemote then 
         win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro", Duration = 3})
@@ -369,111 +668,6 @@ local function sendCmd(cmd, args)
     win:Notify({Title = "Executado", Content = "Comando enviado.", Duration = 2})
 end
 
-grpAcoes:CreateButton({Name = "Kick Alvo", Icon = "user-x", Callback = function() 
-    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then p:Kick("Kicked by MI HUB") end end else sendCmd("kick", {target = selectedTarget}) end
-end})
-grpAcoes:CreateButton({Name = "Matar Alvo", Icon = "skull", Callback = function() 
-    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP and p.Character then p.Character:BreakJoints() end end else sendCmd("kill", {target = selectedTarget}) end
-end})
-grpAcoes:CreateButton({Name = "Fling Alvo", Icon = "wind", Callback = function()
-    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd("fling", {target = p.Name}) end end else sendCmd("fling", {target = selectedTarget}) end
-end})
-
-grpAcoes:CreateToggle({Name = "Godmode Absoluto", Icon = "shield", Default = false, Callback = function(state)
-    if not backdoorRemote then 
-        win:Notify({Title = "Aviso", Content = "Rode o INJECT primeiro", Duration = 3})
-        return 
-    end
-
-    if state then
-        local code = string.format([[
-            _G.MI_AbsoluteGod = true
-            local ownerName = "%s"
-            local lastRegen = 0
-            
-            local function applyGod(char)
-                if not char then return end
-                local h = char:FindFirstChildOfClass("Humanoid")
-                if h then
-                    h.MaxHealth = math.huge
-                    h.Health = math.huge
-                    h.BreakJointsOnDeath = false
-                    
-                    task.spawn(function()
-                        while _G.MI_AbsoluteGod and char.Parent do
-                            if h.Health < math.huge then
-                                h.Health = math.huge
-                            end
-                            task.wait(0.01)
-                        end
-                    end)
-                    
-                    h.Died:Connect(function()
-                        if _G.MI_AbsoluteGod then
-                            task.wait(0.1)
-                            local plr = game.Players:FindFirstChild(ownerName)
-                            if plr then
-                                pcall(function() plr:LoadCharacter() end)
-                            end
-                        end
-                    end)
-                end
-            end
-
-            task.spawn(function()
-                while _G.MI_AbsoluteGod do
-                    local plr = game.Players:FindFirstChild(ownerName)
-                    if plr then
-                        local char = plr.Character
-                        if not char or not char.Parent or char.Parent ~= workspace then
-                            if tick() - lastRegen > 0.1 then
-                                lastRegen = tick()
-                                pcall(function() 
-                                    local tempChar = plr:FindFirstChild("Character") or plr.Character
-                                    if not tempChar or not tempChar.Parent then
-                                        plr:LoadCharacter() 
-                                    end
-                                end)
-                            end
-                        else
-                            applyGod(char)
-                        end
-                    end
-                    task.wait(0.05)
-                end
-            end)
-            
-            if game.Players:FindFirstChild(ownerName) then
-                game.Players[ownerName].CharacterAdded:Connect(function(char)
-                    task.wait(0.1)
-                    if _G.MI_AbsoluteGod then
-                        applyGod(char)
-                    end
-                end)
-            end
-        ]], LP.Name)
-        
-        pcall(function() 
-            if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) 
-            else backdoorRemote:InvokeServer(code) end 
-        end)
-        win:Notify({Title = "Godmode", Content = "Ativado. Regeneracao Instantanea.", Duration = 3})
-    else
-        local code = [[ _G.MI_AbsoluteGod = false ]]
-        pcall(function() 
-            if backdoorRemote:IsA("RemoteEvent") then backdoorRemote:FireServer(code) 
-            else backdoorRemote:InvokeServer(code) end 
-        end)
-        win:Notify({Title = "Godmode", Content = "Desligado.", Duration = 2})
-    end
-end})
-
-grpAcoes:CreateToggle({Name = "Invisibilidade Server-Side", Icon = "eye-off", Default = false, Callback = function(state)
-    if selectedTarget == "" then return end
-    local cmd = state and "invis_on" or "invis_off"
-    if selectedTarget == "ALL" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then sendCmd(cmd, {target = p.Name}) end end else sendCmd(cmd, {target = selectedTarget}) end
-end})
-
 
 -- ==========================================
 -- ABA 4: SERVER
@@ -485,13 +679,12 @@ grpServer:CreateButton({Name = "Explodir Tudo", Icon = "bomb", Callback = functi
 grpServer:CreateButton({Name = "Lag Server Pesado", Icon = "zap", Callback = function() sendCmd("lag") end})
 
 -- ==========================================
--- NOVO: FLING PART (TROLL EM TODOS OS JOGADORES)
+-- FLING PART (TROLL EM TODOS OS JOGADORES)
 -- ==========================================
 grpServer:CreateToggle({Name = "Fling Part", Icon = "wind", Default = false, Callback = function(state)
     if state then
         getgenv().MI_FlingPart = true
         
-        -- Cria um bloco gigante no workspace que flinga todos os jogadores
         local flingPart = Instance.new("Part")
         flingPart.Name = "MI_FlingPart"
         flingPart.Size = Vector3.new(10, 10, 10)
@@ -503,20 +696,14 @@ grpServer:CreateToggle({Name = "Fling Part", Icon = "wind", Default = false, Cal
         flingPart.Position = Vector3.new(0, 500, 0)
         flingPart.Parent = workspace
         
-        -- Loop principal de fling
         task.spawn(function()
             while getgenv().MI_FlingPart do
-                local players = Players:GetPlayers()
-                
-                -- Move o bloco para cada jogador (exceto você) e aplica fling
-                for _, p in ipairs(players) do
+                for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= LP and p.Character then
                         local hrp = p.Character:FindFirstChild("HumanoidRootPart")
                         if hrp then
-                            -- Teleporta o bloco para cima do jogador
                             flingPart.CFrame = hrp.CFrame * CFrame.new(0, 3, 0)
                             
-                            -- Cria BodyVelocity no HRP do jogador para flingar
                             local bv = Instance.new("BodyVelocity")
                             bv.Velocity = Vector3.new(
                                 math.random(-5000, 5000),
@@ -526,7 +713,6 @@ grpServer:CreateToggle({Name = "Fling Part", Icon = "wind", Default = false, Cal
                             bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
                             bv.Parent = hrp
                             
-                            -- Cria BodyAngularVelocity para girar o jogador
                             local bav = Instance.new("BodyAngularVelocity")
                             bav.AngularVelocity = Vector3.new(
                                 math.random(-100, 100),
@@ -536,7 +722,6 @@ grpServer:CreateToggle({Name = "Fling Part", Icon = "wind", Default = false, Cal
                             bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
                             bav.Parent = hrp
                             
-                            -- Remove depois de 0.5s
                             task.delay(0.5, function()
                                 if bv then bv:Destroy() end
                                 if bav then bav:Destroy() end
@@ -545,14 +730,12 @@ grpServer:CreateToggle({Name = "Fling Part", Icon = "wind", Default = false, Cal
                     end
                 end
                 
-                -- Efeito visual: gira o bloco
                 flingPart.CFrame = flingPart.CFrame * CFrame.Angles(0, math.rad(10), 0)
-                
                 task.wait(0.1)
             end
         end)
         
-        win:Notify({Title = "Fling Part", Content = "Ativado! Todos os jogadores (menos voce) estao sendo flingados.", Duration = 3})
+        win:Notify({Title = "Fling Part", Content = "Ativado! Todos (menos voce) sendo flingados.", Duration = 3})
     else
         getgenv().MI_FlingPart = false
         local existing = workspace:FindFirstChild("MI_FlingPart")
